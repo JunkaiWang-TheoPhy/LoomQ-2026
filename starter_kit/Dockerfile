@@ -13,4 +13,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
-CMD ["python", "evaluator.py", "--json-out", "/tmp/loomq-public-report.json"]
+# This image's no-credential default is an L1 isolation smoke test. Formal L2
+# execution requires organizer-injected LOOMQ_LLM_* configuration.
+CMD ["python", "evaluator.py", "--level", "l1", "--target", "spinq,originq,braket", "--json-out", "/tmp/loomq-public-report.json"]

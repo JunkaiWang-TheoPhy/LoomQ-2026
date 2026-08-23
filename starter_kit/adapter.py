@@ -7,23 +7,36 @@ the functions directly or delegate to another language/runtime with subprocess.
 
 from typing import Any, Dict, List, Tuple
 
+try:
+    from . import llm_client
+    from .loomq.agent import chat
+    from .loomq.emitters import emit
+    from .loomq.qasm import parse_qasm
+    from .loomq.runtime import execute
+except ImportError:  # Direct execution from starter_kit/.
+    import llm_client
+    from loomq.agent import chat
+    from loomq.emitters import emit
+    from loomq.qasm import parse_qasm
+    from loomq.runtime import execute
+
 
 SUPPORTED_TARGETS = ("spinq", "originq", "braket")
 
 
 def transpile(qasm_str: str, target: str) -> str:
     """Translate OpenQASM 2.0 into the target backend's native representation."""
-    raise NotImplementedError("Implement transpile(qasm_str, target)")
+    return emit(parse_qasm(qasm_str), target)
 
 
 def run(qasm_str: str, target: str, shots: int) -> Dict[str, Any]:
     """Execute a circuit and return the unified result schema from the rules."""
-    raise NotImplementedError("Implement run(qasm_str, target, shots)")
+    return execute(parse_qasm(qasm_str), target, shots)
 
 
 def agent_chat(prompt: str) -> str:
     """Optional L2 entry point using the documented LOOMQ_LLM_* environment."""
-    raise NotImplementedError("L2 is optional; implement agent_chat(prompt) to enter")
+    return chat(prompt, llm_client.chat_completion)
 
 
 def compile_hybrid(hybrid_qasm_str: str) -> Tuple[List[str], str]:

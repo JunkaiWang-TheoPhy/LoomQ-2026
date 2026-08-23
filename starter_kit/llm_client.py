@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from typing import Any
 
@@ -61,7 +62,13 @@ def chat_completion(messages: list[dict[str, Any]], **extra: Any) -> dict[str, A
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        hostname = urllib.parse.urlparse(base_url).hostname
+        if hostname in {"127.0.0.1", "localhost", "::1"}:
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            opened = opener.open(request, timeout=timeout)
+        else:
+            opened = urllib.request.urlopen(request, timeout=timeout)
+        with opened as response:
             return json.loads(response.read())
     except urllib.error.HTTPError as exc:
         raise RuntimeError("LoomQ L2 API returned HTTP %d" % exc.code) from exc

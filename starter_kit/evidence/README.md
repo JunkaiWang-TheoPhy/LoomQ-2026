@@ -9,10 +9,10 @@
 把要申报项目的方框改成 `[x]`，并填写对应内容：
 
 - [ ] L1 真机
-- [ ] L2 交互体验
-- [ ] 工程与产品化
+- [x] L2 交互体验
+- [x] 工程与产品化
 - [ ] 自定义量子 RISC-V Bonus
-- [ ] 新手引导与视觉叙事 Bonus
+- [x] 新手引导与视觉叙事 Bonus
 
 ## L1 真机
 
@@ -43,13 +43,13 @@ evidence/files/spinq-screenshot.png
 请填写：
 
 ```text
-启动界面或 CLI 的命令：[填写]
-测试入口或页面地址：[填写，没有则写“无”]
+启动界面或 CLI 的命令：python3 -m starter_kit.loomq_cli --help
+测试入口或页面地址：无，使用仓库内 CLI
 用于交互体验评测的 3 个用户任务：
-1. [填写]
-2. [填写]
-3. [填写]
-截图或演示视频：[选填，填写仓库内路径或稳定只读链接]
+1. 运行 `python3 -m starter_kit.loomq_cli chat 生成一个三比特 GHZ 态并测量所有量子比特`，获得经过解析器校验的完整 QASM。
+2. 运行 `python3 -m starter_kit.loomq_cli chat 修复下面用于制备 Bell 态的代码：H q[0]; CX q[0] q[1]`，观察错误代码如何恢复为完整程序。
+3. 运行 `python3 -m starter_kit.loomq_cli run --target spinq --shots 1024 starter_kit/circuits/bell.qasm`，阅读文本柱状图与位序提示。
+截图或演示视频：无；所有流程均由最终 commit 中的代码直接运行。
 ```
 
 工作人员会在组委会统一模型环境中运行最终代码，测试新手是否看得懂、出错后能否得到有效帮助、结果是否清楚，以及多轮回答是否一致。选手自己的对话截图只用于说明产品流程，不直接证明得分。
@@ -59,10 +59,10 @@ evidence/files/spinq-screenshot.png
 已有内容可以直接引用主 README 或其他项目文档，不必复制到本目录。
 
 ```text
-干净环境中的构建和启动命令：[填写命令或文档路径]
-架构说明：[填写文档路径，或用几句话说明主要模块]
-目标用户和使用场景：[填写]
-完整使用流程：[填写文档、截图或演示路径]
+干净环境中的构建和启动命令：starter_kit/README.md 的“干净环境验证”
+架构说明：starter_kit/ARCHITECTURE.md
+目标用户和使用场景：会描述问题但没有学习 QASM、也不了解厂商 SDK 差异的普通开发者和跨界创作者；用于第一次生成、修复、转译并理解量子电路。
+完整使用流程：starter_kit/README.md 的“零基础首次运行”和“使用自然语言 Agent”
 ```
 
 工作人员会按最终 commit 实际构建和启动，并检查文档与代码是否一致、产品是否真的降低了量子计算的使用门槛。
@@ -82,10 +82,10 @@ evidence/files/spinq-screenshot.png
 请填写已有材料的路径，不要求为评分另写一套文档：
 
 ```text
-零基础首次运行指南：[填写]
-量子概念解释：[填写]
-结果可视化：[填写]
-错误恢复或无障碍引导：[填写]
+零基础首次运行指南：starter_kit/README.md 的“零基础首次运行”
+量子概念解释：starter_kit/README.md 的 Bell 结果解释，以及 starter_kit/QUANTUM_101.md
+结果可视化：starter_kit/loomq_cli.py 的文本柱状图；运行命令见本文件 L2 第 3 个任务
+错误恢复或无障碍引导：starter_kit/loomq/agent.py 的确定性 QASM 校验和诊断重试；CLI 错误以中文输出且不显示 traceback
 ```
 
 以上四项各 1 分。普通项目 README 完整不代表自动获得 Bonus。

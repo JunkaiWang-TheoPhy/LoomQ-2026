@@ -1,0 +1,85 @@
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class CLITests(unittest.TestCase):
+    def run_cli(self, *arguments):
+        return subprocess.run(
+            [sys.executable, "-m", "starter_kit.loomq_cli", *arguments],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def write_bell(self, directory):
+        path = Path(directory) / "bell.qasm"
+        path.write_text(
+            """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2]; creg c[2];
+h q[0]; cx q[0],q[1]; measure q -> c;
+""",
+            encoding="utf-8",
+        )
+        return path
+
+    def test_help_exposes_beginner_workflow(self):
+        result = self.run_cli("--help")
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("transpile", result.stdout)
+        self.assertIn("run", result.stdout)
+        self.assertIn("chat", result.stdout)
+
+    def test_transpile_prints_target_ir(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_bell(directory)
+            result = self.run_cli("transpile", "--target", "braket", str(path))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("OPENQASM 3.0", result.stdout)
+        self.assertIn("cnot q[0],q[1]", result.stdout)
+
+    def test_run_json_is_machine_readable_and_schema_complete(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_bell(directory)
+            result = self.run_cli(
+                "run", "--target", "spinq", "--shots", "64", "--json", str(path)
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["counts"], {"00": 32, "11": 32})
+        self.assertEqual(payload["bit_order"], "little")
+
+    def test_default_run_explains_counts_with_visible_bars(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_bell(directory)
+            result = self.run_cli("run", "--target", "originq", "--shots", "16", str(path))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("00 |", result.stdout)
+        self.assertIn("11 |", result.stdout)
+        self.assertIn("最右侧是 c[0]", result.stdout)
+
+    def test_invalid_qasm_returns_actionable_error_without_traceback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "bad.qasm"
+            path.write_text("h q[0];", encoding="utf-8")
+            result = self.run_cli("run", "--target", "spinq", str(path))
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("missing OPENQASM 2.0", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()

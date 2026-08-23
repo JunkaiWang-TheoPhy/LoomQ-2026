@@ -2,6 +2,67 @@
 
 本工具包定义参赛提交协议，并提供公开自测。它不包含正式评分器、隐藏答案、Mock 得分路径或任何 Level 的参考解答。
 
+## 本 fork 的实现
+
+本 fork 已实现 L1 和 L2：
+
+- L1 使用同一个解析器与 `Circuit` 中间表示生成 SpinQ OpenQASM 2.0、OriginIR 和 Braket OpenQASM 3.0；
+- 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
+- L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务，生成的 QASM 会经过确定性校验，失败时自动携带诊断重试一次；
+- 命令行入口为零基础用户提供转译、运行、结果柱状图和 Agent 对话。
+
+架构与边界见 [`ARCHITECTURE.md`](ARCHITECTURE.md)。
+
+### 零基础首次运行
+
+无需安装第三方包。在 fork 根目录运行：
+
+```bash
+python3 -m starter_kit.loomq_cli run \
+  --target spinq \
+  --shots 1024 \
+  starter_kit/circuits/bell.qasm
+```
+
+输出会显示两个主导态的文本柱状图，并说明经典位序。Bell 电路中 `00` 与 `11` 各占约一半，表示两个量子比特的测量结果相关，而不是两个比特各自独立随机。
+
+把电路转成目标平台指令：
+
+```bash
+python3 -m starter_kit.loomq_cli transpile \
+  --target braket \
+  starter_kit/circuits/ghz3.qasm
+```
+
+### 使用自然语言 Agent
+
+本地调试时设置自己的 OpenAI-compatible 服务；不要把 Key 写进文件或命令历史。正式评测由组委会注入同名环境变量。
+
+```bash
+export LOOMQ_LLM_BASE_URL=https://api.deepseek.com
+export LOOMQ_LLM_API_KEY='<在当前 shell 安全设置>'
+export LOOMQ_LLM_MODEL=deepseek-v4-flash
+export LOOMQ_LLM_TIMEOUT_SECONDS=120
+
+python3 -m starter_kit.loomq_cli chat \
+  生成一个三比特 GHZ 态并测量所有量子比特
+```
+
+### 干净环境验证
+
+```bash
+python3 -m unittest discover -s tests -v
+python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket
+docker build -t loomq-submission starter_kit
+docker run --rm loomq-submission
+```
+
+上述 Docker 命令是 **L1 隔离环境烟测**，不会假装覆盖需要模型服务的 L2。L2 已在 `submission.yaml` 中声明参赛，正式运行必须由环境注入可用的 `LOOMQ_LLM_*`；仓库级 `tests/test_agent.py` 与 `tests/test_l2_contract.py` 使用本地 HTTP 服务验证真实请求、模型参数、能力表 grounding、QASM 诊断重试和凭据安全，无需把真实 Key 交给测试代码。若要手动运行公开 L2 evaluator，先按“使用自然语言 Agent”设置服务环境，再执行：
+
+```bash
+python3 starter_kit/evaluator.py --level l2
+```
+
 ## 提交结构
 
 ```text
