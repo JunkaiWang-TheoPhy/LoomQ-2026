@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest import mock
 
 from starter_kit import adapter
+from starter_kit.loomq.agent import _deterministic_state_reply, _qasm_from_reply
 
 
 VALID_GHZ = """```qasm
@@ -108,6 +109,51 @@ class AgentTests(unittest.TestCase):
         diagnostic = SequenceAPIHandler.requests[1]["messages"][-1]["content"]
         self.assertIn("3 qubits", diagnostic)
         self.assertIn("GHZ", diagnostic)
+
+    def test_w_state_falls_back_after_two_invalid_model_replies(self):
+        SequenceAPIHandler.responses = [VALID_GHZ, VALID_GHZ]
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            reply = adapter.agent_chat("生成三比特 W 态并测量")
+
+        result = adapter.run(_qasm_from_reply(reply), "spinq", 300)
+        self.assertEqual(result["counts"], {"001": 100, "010": 100, "100": 100})
+        self.assertEqual(len(SequenceAPIHandler.requests), 2)
+
+    def test_deterministic_fallback_preserves_supported_state_families(self):
+        cases = [
+            ("制备计算基态 |101> 并测量", 80, {"101": 80}),
+            (
+                "生成 3 比特均匀叠加态并测量",
+                80,
+                {format(index, "03b"): 10 for index in range(8)},
+            ),
+            (
+                "prepare a 4-qubit W state and measure it",
+                400,
+                {"0001": 100, "0010": 100, "0100": 100, "1000": 100},
+            ),
+        ]
+
+        for prompt, shots, expected_counts in cases:
+            with self.subTest(prompt=prompt):
+                reply = _deterministic_state_reply(prompt)
+                self.assertIsNotNone(reply)
+                result = adapter.run(_qasm_from_reply(reply), "spinq", shots)
+                self.assertEqual(result["counts"], expected_counts)
+
+    def test_backend_retry_does_not_use_a_state_circuit_fallback(self):
+        SequenceAPIHandler.responses = [
+            "Recommend `originq_wukong`.",
+            "Recommend `originq_wukong`.",
+        ]
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            with self.assertRaisesRegex(RuntimeError, "after retry"):
+                adapter.agent_chat(
+                    "Which backend should I choose for a free 15-qubit W circuit "
+                    "with no queue?"
+                )
 
     def test_backend_request_is_grounded_in_official_capability_ids(self):
         SequenceAPIHandler.responses = [

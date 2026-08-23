@@ -21,7 +21,7 @@
 ```text
 平台名称：本源量子云 — 本源悟空 180
 平台 job ID：9D182FA1EF76FF3807697CDF69DE7483
-运行时间：2026-08-24 12:34:05.914 至 12:35:07.744（UTC+8；平台页面原始时间为 UTC 04:34:05.914 至 04:35:07.744）
+运行时间：2026-08-24 04:34:05.914 至 04:35:07.744（平台页面显示时间；提交浏览器所在时区为 UTC+8）
 shots：1000
 实际执行的 QASM：starter_kit/evidence/files/originq-bell.qasm
 平台返回的原始结果：starter_kit/evidence/files/originq-result.json
@@ -30,6 +30,19 @@ shots：1000
 ```
 
 任务状态为“计算成功”，实际映射到 `q[157]`、`q[166]`。真机 counts 为 `00=482, 01=18, 10=24, 11=476`；Bell 理想主峰 `00/11` 共 958/1000 shots（95.8%）。JSON 中的数值逐项抄录自已登录的任务详情页；截图保留了可追溯任务元数据和结果主峰。
+
+```text
+平台名称：SpinQ Cloud — 2 比特核磁量子计算机
+平台 job ID：G-260824-0001（任务页 ID：61458）
+运行时间：2026-08-24 05:17:01 至 05:18:36（平台页面显示时间；提交浏览器所在时区为 UTC+8）
+结果类型：投影概率（核磁平台不返回 shots counts）
+实际执行的 QASM：starter_kit/evidence/files/spinq-bell.qasm
+平台返回的原始结果：starter_kit/evidence/files/spinq-result.msgpack
+原始结果的无损 JSON 解码：starter_kit/evidence/files/spinq-result.json
+任务页截图：starter_kit/evidence/files/spinq-task.jpg
+```
+
+任务状态为“运行成功”，平台明确标记为“2比特核磁量子计算机”。平台下载的原始 MessagePack 投影概率为 `00=0.42313008, 01=0.24553040, 10=0.08580911, 11=0.24553040`；Bell 理想峰 `00/11` 合计 `0.66866048`，全局主峰为理想态 `00`。核磁真机结果受噪声与标定偏差影响，因此这里只申报平台可追溯的实际结果，不把它描述为理想双峰或高保真结果。
 
 建议把文件放进 `evidence/files/`，比如：
 

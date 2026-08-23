@@ -271,6 +271,52 @@ def _validate_reply(prompt: str, reply: str) -> None:
         _validate_backend_reply(prompt, reply)
 
 
+def _deterministic_state_reply(prompt: str) -> str | None:
+    goal = _state_goal(prompt)
+    if goal is None:
+        return None
+    name, qubits = goal
+    operations: List[str] = []
+    if name in ("Bell", "GHZ"):
+        operations.append("h q[0];")
+        operations.extend(f"cx q[0],q[{index}];" for index in range(1, qubits))
+    elif name == "W":
+        operations.append("x q[0];")
+        for control in range(qubits - 1):
+            target = control + 1
+            half_angle = math.acos(1.0 / math.sqrt(qubits - control))
+            operations.extend(
+                [
+                    f"ry({half_angle:.17g}) q[{target}];",
+                    f"cx q[{control}],q[{target}];",
+                    f"ry({-half_angle:.17g}) q[{target}];",
+                    f"cx q[{control}],q[{target}];",
+                    f"cx q[{target}],q[{control}];",
+                ]
+            )
+    elif name == "uniform superposition":
+        operations.extend(f"h q[{index}];" for index in range(qubits))
+    elif name == "computational basis":
+        match = re.search(r"\|\s*([01]+)\s*>", prompt)
+        assert match is not None
+        operations.extend(
+            f"x q[{index}];"
+            for index, bit in enumerate(reversed(match.group(1)))
+            if bit == "1"
+        )
+    else:
+        return None
+    body = "\n".join(operations)
+    return f"""```qasm
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[{qubits}];
+creg c[{qubits}];
+{body}
+measure q -> c;
+```"""
+
+
 def chat(prompt: str, completion: ChatCompletion) -> str:
     if not isinstance(prompt, str) or not prompt.strip():
         raise ValueError("prompt must be a non-empty string")
@@ -302,5 +348,9 @@ def chat(prompt: str, completion: ChatCompletion) -> str:
     try:
         _validate_reply(prompt, repaired)
     except (QASMError, ValueError) as exc:
+        fallback = _deterministic_state_reply(prompt) if _expects_qasm(prompt) else None
+        if fallback is not None:
+            _validate_reply(prompt, fallback)
+            return fallback
         raise RuntimeError(f"model reply failed deterministic validation after retry: {exc}") from exc
     return repaired
