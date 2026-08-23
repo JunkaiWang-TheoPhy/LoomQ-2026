@@ -1,6 +1,6 @@
 import unittest
 
-from loomq.agent import _state_goal, _validate_state_goal
+from loomq.agent import _deterministic_state_reply, _qasm_from_reply, _state_goal, _validate_state_goal
 from loomq.qasm import QASMError
 
 
@@ -15,6 +15,27 @@ measure q -> c;
 
 
 class AgentSemanticTests(unittest.TestCase):
+    def test_w_state_positive_case_is_accepted(self):
+        prompt = "生成四比特 W 态并测量"
+        reply = _deterministic_state_reply(prompt)
+
+        self.assertIsNotNone(reply)
+        _validate_state_goal(prompt, _qasm_from_reply(reply))
+
+    def test_computational_basis_positive_case_is_accepted(self):
+        prompt = "制备计算基态 |101> 并测量"
+        reply = _deterministic_state_reply(prompt)
+
+        self.assertIsNotNone(reply)
+        _validate_state_goal(prompt, _qasm_from_reply(reply))
+
+    def test_uniform_superposition_positive_case_is_accepted(self):
+        prompt = "生成四比特均匀叠加态并测量"
+        reply = _deterministic_state_reply(prompt)
+
+        self.assertIsNotNone(reply)
+        _validate_state_goal(prompt, _qasm_from_reply(reply))
+
     def test_computational_basis_request_rejects_the_wrong_basis_state(self):
         wrong = measured("x q[0];", 3)
 

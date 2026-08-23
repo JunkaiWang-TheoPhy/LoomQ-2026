@@ -1,0 +1,65 @@
+{
+  "files": [
+    {
+      "bytes": 897,
+      "path": "hardware-analysis.json",
+      "sha256": "b03958748b3c718c81e544adf0523101b4cb2c2ed0bb58a4d92c191a5c679aba"
+    },
+    {
+      "bytes": 73,
+      "path": "files/originq-bell.originir",
+      "sha256": "72f26585bf6f87647d4cfd5abec66c091ed3bc30374fdf23b76b5cb7a79e79bc"
+    },
+    {
+      "bytes": 97,
+      "path": "files/originq-bell.qasm",
+      "sha256": "26594a7df50cc16b354391a5cdac02f56725bc1b0688c7f4c47ebce3b34e2773"
+    },
+    {
+      "bytes": 1243,
+      "path": "files/originq-result.json",
+      "sha256": "da35efb3181655fb6d5ac15dbdf1ca50934fb146c5ad1d698f2cd1b72b4e1781"
+    },
+    {
+      "bytes": 80149,
+      "path": "files/originq-task.jpg",
+      "sha256": "8a7e26369881efba5005647c712782d2e2785ef1ac40ed9c65ad1699bd9c4e84"
+    },
+    {
+      "bytes": 70,
+      "path": "files/spinq-bell.qasm",
+      "sha256": "728dfa162f433caf06878bd07c87b4a6299ea198a2ea68f22c8235dc41860b84"
+    },
+    {
+      "bytes": 956,
+      "path": "files/spinq-result.json",
+      "sha256": "9aa54b4e6af304adc3d60a7e050dadaf5688bd3d44ee29062b9b4c2a2ef6103a"
+    },
+    {
+      "bytes": 49,
+      "path": "files/spinq-result.msgpack",
+      "sha256": "d39c58d5f2aa4b293551376e6562f00fcc7051041bbdf818b989cae10b2ad00c"
+    },
+    {
+      "bytes": 66175,
+      "path": "files/spinq-task.jpg",
+      "sha256": "2575f75dc73cb13a3b4cf61e6fcad89582e6bd40d4ad0c948e1c8e49bfd879e0"
+    },
+    {
+      "bytes": 105285,
+      "path": "files/web-lab-desktop-current.jpg",
+      "sha256": "0fad9c8496578b21f9cb0bac65be5cfba5936461928bbbfb5de0f8ae939ad1a1"
+    },
+    {
+      "bytes": 71926,
+      "path": "files/web-lab-desktop.png",
+      "sha256": "1a8b35980339b4c238edb0849e4d34038e682cfd54a49ce31bd86a3a9dc05aa3"
+    },
+    {
+      "bytes": 36558,
+      "path": "files/web-lab-mobile-current.jpg",
+      "sha256": "3d027b17b26c1b8beb9b41e21d03612deefef36e4dac85c3f31bc6c269d850f6"
+    }
+  ],
+  "schema_version": "loomq-evidence-manifest-v1"
+}

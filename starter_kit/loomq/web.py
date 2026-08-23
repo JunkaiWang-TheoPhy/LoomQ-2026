@@ -23,6 +23,7 @@ _STATIC = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
+    "/enhancements.css": ("enhancements.css", "text/css; charset=utf-8"),
 }
 
 
@@ -38,6 +39,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
         self.send_header("Content-Security-Policy", "default-src 'self'; style-src 'self'; script-src 'self'")
         self.end_headers()
         self.wfile.write(body)
@@ -104,6 +108,15 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 f"请求执行失败：{type(exc).__name__}",
             )
 
+    def do_DELETE(self) -> None:
+        self._error(HTTPStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "该路径不支持 DELETE")
+
+    def do_PUT(self) -> None:
+        self._error(HTTPStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "该路径不支持 PUT")
+
+    def do_PATCH(self) -> None:
+        self._error(HTTPStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "该路径不支持 PATCH")
+
     def _run(self, payload: Dict[str, Any]) -> None:
         qasm = payload.get("qasm")
         target = payload.get("target", "spinq")
@@ -128,6 +141,8 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         prompt = payload.get("prompt")
         if not isinstance(prompt, str) or not prompt.strip():
             raise ValueError("prompt 必须是非空字符串")
+        if len(prompt) > 20_000:
+            raise ValueError("prompt 最多 20000 个字符")
         required = ("LOOMQ_LLM_BASE_URL", "LOOMQ_LLM_API_KEY", "LOOMQ_LLM_MODEL")
         missing = [name for name in required if not os.environ.get(name)]
         if missing:
@@ -164,4 +179,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

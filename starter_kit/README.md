@@ -9,9 +9,10 @@
 - L1 使用同一个解析器与 `Circuit` 中间表示生成 SpinQ OpenQASM 2.0、OriginIR 和 Braket OpenQASM 3.0；
 - 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
 - L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务；生成的 QASM 会验证 Bell/GHZ/W、计算基态和均匀叠加目标分布，后端推荐会复核比特数、排队、费用和设备类型，失败时自动携带诊断重试一次；
+- L2 附带固定种子、可恢复且带完整性哈希的 500 例真实模型压力 campaign，覆盖生成、修复、后端推荐、对抗输入和表述稳定性；
 - L3 将有界 Hybrid-QASM 经典块解析为 AST，并生成官方轻量模拟器可执行的 RISC-V 控制流；
 - Bonus 使用真实 32 位 RISC-V `custom-0` 机器字编码全部 12 门和测量，扩展模拟器完成编码、解码与执行闭环；
-- 零依赖 Web 实验台与命令行入口共同提供电路预览、转译、运行、概率图、Agent 对话和自然语言一键验证。
+- 零依赖 Web 实验台与命令行入口共同提供 Learn、Build、Repair、Backend Match、电路预览、三后端转译、运行、概率图/表和受验证 Agent 对话。
 
 架构与边界见 [`ARCHITECTURE.md`](ARCHITECTURE.md)。
 
@@ -78,6 +79,9 @@ python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket
 python3 starter_kit/evaluator.py --level l3
 docker build -t loomq-submission starter_kit
 docker run --rm loomq-submission
+
+# 无需凭据检查 500 例压力语料；真实模型运行见 L2_STRESS_CAMPAIGN.md
+python3 -m starter_kit.scripts.l2_stress_campaign --dry-run
 ```
 
 上述 Docker 命令是 **L1 隔离环境烟测**，不会假装覆盖需要模型服务的 L2。L2 已在 `submission.yaml` 中声明参赛，正式运行必须由环境注入可用的 `LOOMQ_LLM_*`；仓库级 `tests/test_agent.py` 与 `tests/test_l2_contract.py` 使用本地 HTTP 服务验证真实请求、模型参数、能力表 grounding、QASM 诊断重试和凭据安全，无需把真实 Key 交给测试代码。若要手动运行公开 L2 evaluator，先按“使用自然语言 Agent”设置服务环境，再执行：
@@ -103,6 +107,8 @@ starter_kit/
 ├── bonus_evaluator.py
 ├── riscv_emulator.py
 ├── QUANTUM_RISCV_SPEC.md
+├── L2_STRESS_CAMPAIGN.md
+├── WEB_QA.md
 ├── backend_capabilities.md
 ├── backend_capabilities.json
 ├── QUANTUM_101.md
@@ -113,7 +119,8 @@ starter_kit/
 ├── evidence/
 │   ├── README.md
 │   └── files/                # 可选附件
-├── tests/                    # 随正式提交归档的 46 项回归测试
+├── tests/                    # 随正式提交归档的 66 项回归测试
+├── scripts/                  # L2 压力 campaign 与真机证据验证器
 ├── web/                      # 零依赖响应式 Web UI
 ├── circuits/
 │   ├── bell.qasm

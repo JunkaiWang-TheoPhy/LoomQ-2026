@@ -1,0 +1,26 @@
+{
+  "method": "deterministic recomputation from committed provider evidence",
+  "platforms": {
+    "originq": {
+      "ideal_peak_probability": 0.958,
+      "ideal_peak_shots": 958,
+      "interpretation": "00 and 11 are the Bell ideal-support states",
+      "job_id": "9D182FA1EF76FF3807697CDF69DE7483",
+      "shots": 1000,
+      "wilson_95_interval": [
+        0.9437155747733968,
+        0.9687791144538346
+      ]
+    },
+    "spinq": {
+      "dominant_state": "00",
+      "ideal_peak_probability": 0.66866048,
+      "interpretation": "00 is an ideal-support state; noise prevents an ideal two-peak claim",
+      "job_id": "G-260824-0001",
+      "result_type": "projection_probabilities",
+      "total_variation_from_ideal_bell": 0.331339515,
+      "uncertainty_note": "provider returned projection probabilities, not shot counts"
+    }
+  },
+  "schema_version": "loomq-hardware-analysis-v1"
+}

@@ -30,6 +30,14 @@ def default_phases() -> list[tuple[str, list[str]]]:
             ],
         ),
         (
+            "l2-corpus",
+            [sys.executable, "-m", "scripts.l2_stress_campaign", "--dry-run"],
+        ),
+        (
+            "hardware-evidence",
+            [sys.executable, "-m", "scripts.validate_hardware_evidence"],
+        ),
+        (
             "l1",
             [
                 sys.executable,

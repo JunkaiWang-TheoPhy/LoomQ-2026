@@ -6,8 +6,10 @@
   <meta name="description" content="LoomQ 零依赖量子计算实验台">
   <title>LoomQ · 量子编织台</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/enhancements.css">
 </head>
 <body>
+  <a class="skip-link" href="#workspace">跳到实验区</a>
   <header class="masthead">
     <a class="brand" href="#top" aria-label="LoomQ 首页">
       <span class="brand-mark" aria-hidden="true">LQ</span>
@@ -30,7 +32,23 @@
       </ol>
     </section>
 
-    <section class="workspace" aria-label="量子实验区">
+    <section class="task-switcher" aria-labelledby="task-title">
+      <div>
+        <p class="eyebrow">FOUR GUIDED PATHS</p>
+        <h2 id="task-title">你现在想完成什么？</h2>
+      </div>
+      <div class="task-grid">
+        <button class="task-card" data-task="learn"><span>01 · LEARN</span><strong>第一次理解量子电路</strong><small>加载 Bell 态，并解释 H 与 CX 的作用</small></button>
+        <button class="task-card" data-task="build"><span>02 · BUILD</span><strong>编写并运行 QASM</strong><small>编辑电路、转译三种后端、查看概率</small></button>
+        <button class="task-card" data-task="repair"><span>03 · REPAIR</span><strong>修复一段错误 QASM</strong><small>把问题交给受确定性验证约束的 Agent</small></button>
+        <button class="task-card" data-task="backend"><span>04 · MATCH</span><strong>选择合适的后端</strong><small>按门集与任务目标比较 SpinQ、本源和 Braket</small></button>
+      </div>
+      <div id="lesson" class="lesson" tabindex="-1">
+        <strong>Bell 态只需要两步：</strong>H 门让 q[0] 同时保留 0 和 1 的振幅；CX 再把 q[1] 与它关联。测量时主要得到 00 和 11，这证明模拟结果具有经典相关性；单靠 Z 基测量不能完整证明真机纠缠。
+      </div>
+    </section>
+
+    <section id="workspace" class="workspace" aria-label="量子实验区" tabindex="-1">
       <div class="editor-panel">
         <div class="panel-heading">
           <div><span class="index">01</span><h2>电路织布机</h2></div>
@@ -76,6 +94,11 @@
         </div>
         <div id="results" hidden>
           <div id="chart" class="chart" aria-label="测量概率柱状图"></div>
+          <table id="result-table">
+            <caption>测量结果文本表</caption>
+            <thead><tr><th scope="col">量子态</th><th scope="col">计数</th><th scope="col">概率</th></tr></thead>
+            <tbody id="result-rows"></tbody>
+          </table>
           <p id="explanation" class="explanation"></p>
           <details>
             <summary>查看目标平台原生指令</summary>
@@ -89,10 +112,12 @@
       <div><p class="eyebrow">OPTIONAL · DEEPSEEK</p><h2 id="agent-title">用自然语言描述下一块电路</h2><p>Agent 的回答会经过门集、语法与目标态分布三重确定性校验。</p></div>
       <form id="agent-form">
         <label class="sr-only" for="prompt">自然语言需求</label>
-        <input id="prompt" placeholder="例如：生成三比特 W 态并测量" autocomplete="off">
+        <input id="prompt" placeholder="例如：生成三比特 W 态并测量" autocomplete="off" maxlength="20000" aria-describedby="prompt-help">
         <button class="secondary">发送给 Agent</button>
+        <p id="prompt-help">支持生成、修复与后端选择；需要通过环境变量配置模型，密钥不会写入浏览器或仓库。</p>
       </form>
       <pre id="agent-reply" class="agent-reply" hidden></pre>
+      <div id="agent-error" class="agent-error" role="alert" hidden></div>
     </section>
   </main>
 

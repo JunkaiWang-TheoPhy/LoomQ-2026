@@ -35,6 +35,7 @@ Web / CLI
 - `loomq/simulator.py`：实现 12 种门的状态向量语义和经典测量映射。
 - `loomq/runtime.py`：把精确概率按最大余数法转换为整数 shots，并产生统一结果 Schema。
 - `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次。
+- `scripts/l2_stress_campaign.py`：通过公开 `adapter.agent_chat()` 执行固定的 500 例真实模型语料，支持断点续跑、脱敏记录和逐层 SHA-256 完整性复核。
 - `loomq/hybrid.py`：解析赋值、算术、`if/else` 和测量位引用，检查 `creg` 边界并生成 `li/add/sub/addi/beq/bne/j` 子集。
 - `loomq/quantum_riscv.py`：把全部白名单量子门编码为真实 32 位 `custom-0` 机器字，并完成字节序列化和严格解码。
 - `riscv_emulator.py`：保持官方 L3 文本汇编路径，同时增加量子机器码加载、解码和执行入口。
@@ -54,5 +55,7 @@ Web / CLI
 - L3 使用 1,000 个固定种子随机经典程序、每个程序穷举 4 种测量输入，并与独立 Python 参考语义比较。
 - L2 每个 case 至少进行一次真实模型服务调用，模型地址、Key 和名称只从 `LOOMQ_LLM_*` 读取。
 - 模型生成的 QASM 先由确定性解析器与状态向量目标检查，后端 ID 再与官方 JSON 能力表复核。
+- L2 压力 campaign 的 500 条 prompt 在归档测试中检查唯一性和分类配额；证据验证器会重新生成语料并核对 prompt、记录及 JSONL 摘要。
 - Bonus 的 Bell 证明真实经历 `Circuit → 机器字 → 小端字节 → 解码 → 扩展模拟器 → counts`。
-- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录执行 46 项归档测试，避免依赖仓库外层测试。
+- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录执行 66 项归档测试，并复核 L2 语料与真机 evidence manifest，避免依赖仓库外层测试。
+- 真机证据验证器从 provider MessagePack、counts JSON 与 QASM 重算统计结果，并用 SHA-256 manifest 锁定原始材料、派生分析和桌面/移动端截图。
