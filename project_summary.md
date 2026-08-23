@@ -56,7 +56,8 @@ docker run --rm loomq-submission
 ## Current Risks
 
 - Docker verification requires the local Colima runtime; the baseline image has been built and run successfully on Linux/arm64.
-- Quafu is not one of the three official L1 target identifiers; it is only a development oracle or optional extension unless organizers explicitly accept it as hardware evidence.
+- L1 hardware evidence now includes a successful 1,000-shot Bell run on 本源悟空 180, job `9D182FA1EF76FF3807697CDF69DE7483`; `00/11` account for 95.8% of shots and the task-detail evidence is indexed in `starter_kit/evidence/README.md`.
+- Quafu is not one of the three official L1 target identifiers; it remains only a development oracle or optional extension unless organizers explicitly accept it as hardware evidence.
 - Formal L2 correctness depends on hidden prompt variants and the organizer-injected `deepseek-v4-flash` service.
 - L3 compiler correctness is protected by deterministic branch tests and 1,000 seeded random programs with exhaustive two-bit measurement inputs.
 - The bonus path encodes all 12 gates and measurement into 32-bit RISC-V `custom-0` words, decodes them through the extended lightweight emulator, and executes with the existing exact quantum runtime.

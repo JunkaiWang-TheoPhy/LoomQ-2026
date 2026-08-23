@@ -8,7 +8,7 @@
 
 把要申报项目的方框改成 `[x]`，并填写对应内容：
 
-- [ ] L1 真机
+- [x] L1 真机
 - [x] L2 交互体验
 - [x] 工程与产品化
 - [x] 自定义量子 RISC-V Bonus
@@ -19,14 +19,17 @@
 每个有效真机平台计 5 分，最多两个平台。模拟器不计真机分。每个平台复制并填写一次下面的信息：
 
 ```text
-平台名称：[填写]
-平台 job ID：[填写]
-运行时间：[填写，带时区]
-shots：[填写]
-实际执行的 QASM：[填写仓库内路径]
-平台返回的原始结果：[填写仓库内路径]
-任务页截图：[选填，填写仓库内路径]
+平台名称：本源量子云 — 本源悟空 180
+平台 job ID：9D182FA1EF76FF3807697CDF69DE7483
+运行时间：2026-08-24 12:34:05.914 至 12:35:07.744（UTC+8；平台页面原始时间为 UTC 04:34:05.914 至 04:35:07.744）
+shots：1000
+实际执行的 QASM：starter_kit/evidence/files/originq-bell.qasm
+平台返回的原始结果：starter_kit/evidence/files/originq-result.json
+平台实际 OriginIR：starter_kit/evidence/files/originq-bell.originir
+任务页截图：starter_kit/evidence/files/originq-task.jpg
 ```
+
+任务状态为“计算成功”，实际映射到 `q[157]`、`q[166]`。真机 counts 为 `00=482, 01=18, 10=24, 11=476`；Bell 理想主峰 `00/11` 共 958/1000 shots（95.8%）。JSON 中的数值逐项抄录自已登录的任务详情页；截图保留了可追溯任务元数据和结果主峰。
 
 建议把文件放进 `evidence/files/`，比如：
 

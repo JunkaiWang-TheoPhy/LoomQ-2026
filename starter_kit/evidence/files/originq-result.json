@@ -1,0 +1,34 @@
+{
+  "schema_version": "loomq-hardware-evidence-v1",
+  "platform": "Origin Quantum Cloud",
+  "backend": "本源悟空 180",
+  "job_id": "9D182FA1EF76FF3807697CDF69DE7483",
+  "status": "success",
+  "created_at": "2026-08-24T04:34:05.914Z",
+  "completed_at": "2026-08-24T04:35:07.744Z",
+  "created_at_asia_shanghai": "2026-08-24T12:34:05.914+08:00",
+  "completed_at_asia_shanghai": "2026-08-24T12:35:07.744+08:00",
+  "shots": 1000,
+  "logical_qubits": 4,
+  "physical_qubits": [157, 166],
+  "task_duration_seconds": 0.614,
+  "chip_runtime_seconds": 0.314,
+  "counts": {
+    "00": 482,
+    "01": 18,
+    "10": 24,
+    "11": 476
+  },
+  "probabilities": {
+    "00": 0.482,
+    "01": 0.018,
+    "10": 0.024,
+    "11": 0.476
+  },
+  "ideal_peak_shots": 958,
+  "ideal_peak_probability": 0.958,
+  "circuit_qasm": "starter_kit/evidence/files/originq-bell.qasm",
+  "platform_originir": "starter_kit/evidence/files/originq-bell.originir",
+  "evidence_source": "Values transcribed from the authenticated Origin Quantum Cloud task-detail page and preserved in the accompanying screenshots.",
+  "task_url": "https://console.originqc.com.cn/zh/jobs/9D182FA1EF76FF3807697CDF69DE7483"
+}
