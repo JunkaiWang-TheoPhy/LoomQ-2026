@@ -54,4 +54,4 @@ docker run --rm loomq-submission
 - Docker verification requires the local Colima runtime; the baseline image has been built and run successfully on Linux/arm64.
 - Quafu is not one of the three official L1 target identifiers; it is only a development oracle or optional extension unless organizers explicitly accept it as hardware evidence.
 - Formal L2 correctness depends on hidden prompt variants and the organizer-injected `deepseek-v4-flash` service.
-- L3 remains disabled until its compiler and randomized tests are complete.
+- L3 compiler correctness is protected by deterministic branch tests and 30 seeded random programs with exhaustive two-bit measurement inputs.

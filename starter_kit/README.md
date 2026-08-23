@@ -4,11 +4,12 @@
 
 ## 本 fork 的实现
 
-本 fork 已实现 L1 和 L2：
+本 fork 已实现 L1、L2 和 L3：
 
 - L1 使用同一个解析器与 `Circuit` 中间表示生成 SpinQ OpenQASM 2.0、OriginIR 和 Braket OpenQASM 3.0；
 - 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
 - L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务，生成的 QASM 会经过确定性校验，失败时自动携带诊断重试一次；
+- L3 将有界 Hybrid-QASM 经典块解析为 AST，并生成官方轻量模拟器可执行的 RISC-V 控制流；
 - 命令行入口为零基础用户提供转译、运行、结果柱状图和 Agent 对话。
 
 架构与边界见 [`ARCHITECTURE.md`](ARCHITECTURE.md)。
@@ -53,6 +54,7 @@ python3 -m starter_kit.loomq_cli chat \
 ```bash
 python3 -m unittest discover -s tests -v
 python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket
+python3 starter_kit/evaluator.py --level l3
 docker build -t loomq-submission starter_kit
 docker run --rm loomq-submission
 ```

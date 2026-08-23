@@ -6,7 +6,7 @@ Deliver, push, and formally submit a verified LoomQ competition implementation b
 
 ## Current Stage
 
-Early L1 + L2 submission baseline: implementation and local verification complete; independent review, commit, push, preflight, and accepted upstream archival receipt pending.
+L1 + L2 baseline is accepted and archived in upstream Issue #67. L3 implementation, independent review, and full local verification are complete; push, preflight, and replacement accepted receipt remain.
 
 ## Verified Facts
 
@@ -16,14 +16,14 @@ Early L1 + L2 submission baseline: implementation and local verification complet
 - Python bytecode compilation: passes.
 - GitHub CLI is authenticated as `JunkaiWang-TheoPhy`.
 - Docker/Colima Linux arm64 build and public L1 evaluator: passes all 6 cases.
+- Upstream Issue #67: `submission:accepted`, Artifact ID `9487379029`.
+- L3: 9 focused/randomized tests and the public evaluator pass; independent re-review found no remaining blocking issue.
 
 ## Next Steps
 
-1. Resolve independent code-review findings.
-2. Commit and push the early L1 + L2 baseline.
-3. Run pushed-HEAD submission preflight and create the upstream final-submission Issue.
-4. Confirm the accepted label and archive receipt.
-5. Implement and verify L3, then create a newer accepted Issue before the deadline.
+1. Commit and push L3.
+2. Run pushed-HEAD submission preflight and create a new L1+L2+L3 Issue.
+3. Confirm the newer Issue receives `submission:accepted` and an archival receipt.
 
 ## Exit Conditions
 

@@ -11,12 +11,14 @@ try:
     from . import llm_client
     from .loomq.agent import chat
     from .loomq.emitters import emit
+    from .loomq.hybrid import compile_hybrid as compile_hybrid_program
     from .loomq.qasm import parse_qasm
     from .loomq.runtime import execute
 except ImportError:  # Direct execution from starter_kit/.
     import llm_client
     from loomq.agent import chat
     from loomq.emitters import emit
+    from loomq.hybrid import compile_hybrid as compile_hybrid_program
     from loomq.qasm import parse_qasm
     from loomq.runtime import execute
 
@@ -41,6 +43,4 @@ def agent_chat(prompt: str) -> str:
 
 def compile_hybrid(hybrid_qasm_str: str) -> Tuple[List[str], str]:
     """Optional L3 entry point. Return quantum operations and RISC-V assembly."""
-    raise NotImplementedError(
-        "L3 is optional; implement compile_hybrid(hybrid_qasm_str) to enter"
-    )
+    return compile_hybrid_program(hybrid_qasm_str)
