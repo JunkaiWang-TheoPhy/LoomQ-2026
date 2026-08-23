@@ -112,6 +112,112 @@ def simulate_statevector(circuit: Circuit) -> StateVector:
     return state
 
 
+def _state_snapshot(state: Sequence[complex], num_qubits: int, max_states: int) -> Dict[str, object]:
+    populated = [
+        (index, amplitude, abs(amplitude) ** 2)
+        for index, amplitude in enumerate(state)
+        if abs(amplitude) ** 2 > 1e-15
+    ]
+    total = sum(probability for _index, _amplitude, probability in populated)
+    ranked = sorted(populated, key=lambda item: (-item[2], item[0]))
+    visible = ranked[:max_states]
+    states = []
+    for index, amplitude, probability in visible:
+        states.append(
+            {
+                "basis": format(index, f"0{num_qubits}b"),
+                "probability": round(probability / total, 15),
+                "amplitude_real": round(amplitude.real, 15),
+                "amplitude_imag": round(amplitude.imag, 15),
+                "phase_radians": round(cmath.phase(amplitude), 15),
+            }
+        )
+    return {
+        "states": states,
+        "truncated": len(populated) > max_states,
+        "omitted_states": max(0, len(populated) - max_states),
+    }
+
+
+def _gate_explanation(gate: Gate) -> str:
+    explanations = {
+        "h": "H 门混合 0 与 1 的振幅；后续门可以让这些路径相长或相消。",
+        "x": "X 门交换目标比特的 0 与 1 振幅。",
+        "s": "S 门给 |1⟩ 分量增加 π/2 相位，概率暂时不变。",
+        "sdg": "S† 门给 |1⟩ 分量减少 π/2 相位，概率暂时不变。",
+        "t": "T 门给 |1⟩ 分量增加 π/4 相位。",
+        "tdg": "T† 门给 |1⟩ 分量减少 π/4 相位。",
+        "rz": "RZ 门改变 0、1 分量的相对相位。",
+        "ry": "RY 门在 0 与 1 的振幅之间做实数旋转。",
+        "cx": "CX 仅在控制比特为 1 时翻转目标比特，可建立跨比特相关。",
+        "cu1": "CU1 仅给两个比特都为 1 的路径增加相位。",
+        "swap": "SWAP 交换两个量子比特承载的状态。",
+        "ccx": "CCX 仅在两个控制比特都为 1 时翻转目标比特。",
+    }
+    return explanations[gate.name]
+
+
+def trace_statevector(
+    circuit: Circuit, *, max_qubits: int = 8, max_states: int = 16
+) -> List[Dict[str, object]]:
+    """Return a bounded, JSON-safe state snapshot after every circuit step."""
+    if circuit.num_qubits > max_qubits:
+        raise ValueError(f"state trace supports at most {max_qubits} qubits")
+    if max_states <= 0:
+        raise ValueError("max_states must be positive")
+
+    state: StateVector = [0j] * (1 << circuit.num_qubits)
+    state[0] = 1 + 0j
+    events: List[Dict[str, object]] = []
+
+    def append(operation: Dict[str, object], explanation: str) -> None:
+        snapshot = _state_snapshot(state, circuit.num_qubits, max_states)
+        events.append(
+            {
+                "step": len(events),
+                "operation": operation,
+                "explanation": explanation,
+                **snapshot,
+            }
+        )
+
+    append(
+        {"kind": "initial", "label": "initial |0…0⟩"},
+        "所有量子比特从 |0⟩ 开始；位串左侧是高位，q[0] 在最右侧。",
+    )
+    measurements: List[Measurement] = []
+    measurement_seen = False
+    for operation in circuit.operations:
+        if isinstance(operation, Measurement):
+            measurement_seen = True
+            measurements.append(operation)
+            continue
+        if measurement_seen:
+            raise ValueError("mid-circuit measurement is outside the LoomQ L1 contract")
+        _apply_gate(state, operation)
+        append(
+            {
+                "kind": "gate",
+                "gate": operation.name,
+                "qubits": list(operation.qubits),
+                "parameter": operation.parameter,
+            },
+            _gate_explanation(operation),
+        )
+    if measurements:
+        append(
+            {
+                "kind": "measure",
+                "mappings": [
+                    {"qubit": item.qubit, "clbit": item.clbit}
+                    for item in measurements
+                ],
+            },
+            "测量把量子路径映射为经典位；这里展示的是测量前的精确概率，不是假造的单次结果。",
+        )
+    return events
+
+
 def probabilities(circuit: Circuit) -> Dict[str, float]:
     """Map final basis probabilities into normalized classical bit strings."""
     state = simulate_statevector(circuit)

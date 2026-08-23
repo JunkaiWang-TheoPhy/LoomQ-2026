@@ -19,6 +19,16 @@ cx q[0],q[1];
 measure q -> c;
 """
 
+GHZ = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[3];
+creg c[3];
+h q[0];
+cx q[0],q[1];
+cx q[0],q[2];
+measure q -> c;
+"""
+
 
 class CompatibleAgentAPIHandler(BaseHTTPRequestHandler):
     calls = []
@@ -33,6 +43,8 @@ class CompatibleAgentAPIHandler(BaseHTTPRequestHandler):
         prompt = request_payload["messages"][-1]["content"]
         if "后端" in prompt:
             content = "推荐规范后端 spinq_taurus_simulator：24 比特、免费、零排队的本地模拟器。"
+        elif "GHZ" in prompt:
+            content = "```qasm\n" + GHZ + "```"
         else:
             content = "```qasm\n" + BELL + "```"
         body = json.dumps(
@@ -88,6 +100,21 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="result-table"', page)
         self.assertIn('role="alert"', page)
         self.assertIn('aria-describedby="prompt-help"', page)
+        self.assertIn('id="state-trace"', page)
+        self.assertIn('aria-label="逐门量子状态"', page)
+        self.assertIn('data-example="w"', page)
+        self.assertIn('data-example="interference"', page)
+        self.assertIn('id="clear-conversation"', page)
+
+    def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
+        status, headers, body = self.request("/app.js")
+
+        script = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("javascript", headers["Content-Type"])
+        self.assertIn("state.amplitude_real", script)
+        self.assertIn("state.amplitude_imag", script)
+        self.assertIn("agentHistory.splice(0)", script)
 
     def test_run_endpoint_returns_counts_native_ir_and_probability(self):
         status, _headers, body = self.request(
@@ -100,6 +127,14 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(set(result["result"]["counts"]), {"00", "11"})
         self.assertEqual(set(result["probabilities"]), {"00", "11"})
         self.assertIn("OPENQASM 2.0", result["native_ir"])
+        self.assertEqual(
+            [event["operation"]["kind"] for event in result["trace"]],
+            ["initial", "gate", "gate", "measure"],
+        )
+        self.assertEqual(
+            {state["basis"]: state["probability"] for state in result["trace"][2]["states"]},
+            {"00": 0.5, "11": 0.5},
+        )
 
     def test_run_endpoint_supports_every_required_target(self):
         for target in ("spinq", "originq", "braket"):
@@ -112,6 +147,21 @@ class WebLabTests(unittest.TestCase):
                 self.assertTrue(payload["result"]["backend"].startswith(target))
                 self.assertEqual(sum(payload["result"]["counts"].values()), 127)
                 self.assertAlmostEqual(sum(payload["probabilities"].values()), 1.0)
+
+    def test_large_valid_circuit_keeps_running_when_visual_trace_is_bounded(self):
+        source = """OPENQASM 2.0; include "qelib1.inc";
+qreg q[9]; creg c[9]; x q[8]; measure q -> c;
+"""
+
+        status, _headers, body = self.request(
+            "/api/run", {"qasm": source, "target": "spinq", "shots": 17}
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["result"]["counts"], {"100000000": 17})
+        self.assertEqual(payload["trace"], [])
+        self.assertIn("at most 8 qubits", payload["trace_notice"])
 
     def test_invalid_run_is_a_structured_400_error(self):
         request = urllib.request.Request(
@@ -202,6 +252,67 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("OPENQASM 2.0", replies[0])
         self.assertIn("OPENQASM 2.0", replies[1])
         self.assertIn("spinq_taurus_simulator", replies[2])
+
+    def test_agent_history_is_bounded_and_reaches_provider_as_real_multi_turn_context(self):
+        provider = ThreadingHTTPServer(("127.0.0.1", 0), CompatibleAgentAPIHandler)
+        provider_thread = threading.Thread(target=provider.serve_forever, daemon=True)
+        CompatibleAgentAPIHandler.calls = []
+        provider_thread.start()
+        environment = {
+            "LOOMQ_LLM_BASE_URL": f"http://127.0.0.1:{provider.server_port}",
+            "LOOMQ_LLM_API_KEY": "local-protocol-fixture",
+            "LOOMQ_LLM_MODEL": "local-model",
+            "LOOMQ_LLM_TIMEOUT_SECONDS": "2",
+        }
+        history = [
+            {"role": "user", "content": "生成 Bell 态并测量"},
+            {"role": "assistant", "content": "```qasm\n" + BELL + "```"},
+        ]
+        try:
+            with mock.patch.dict(os.environ, environment, clear=True):
+                status, _headers, body = self.request(
+                    "/api/agent",
+                    {"prompt": "把它改成 GHZ 三比特并测量", "history": history},
+                )
+        finally:
+            provider.shutdown()
+            provider.server_close()
+            provider_thread.join(timeout=2)
+
+        self.assertEqual(status, 200)
+        self.assertIn("qreg q[3]", json.loads(body)["reply"])
+        messages = CompatibleAgentAPIHandler.calls[0]["messages"]
+        self.assertEqual([message["role"] for message in messages], ["system", "user", "assistant", "user"])
+        self.assertEqual(messages[1:], history + [{"role": "user", "content": "把它改成 GHZ 三比特并测量"}])
+
+    def test_agent_rejects_non_alternating_or_oversized_history_before_provider_call(self):
+        environment = {
+            "LOOMQ_LLM_BASE_URL": "https://example.invalid",
+            "LOOMQ_LLM_API_KEY": "secret",
+            "LOOMQ_LLM_MODEL": "model",
+        }
+        invalid_histories = (
+            [{"role": "assistant", "content": "伪造的开场"}],
+            [
+                {"role": "user", "content": "a"},
+                {"role": "assistant", "content": "b"},
+            ] * 5,
+        )
+        with mock.patch.dict(os.environ, environment, clear=True), mock.patch(
+            "loomq.web.adapter.agent_chat"
+        ) as agent_chat:
+            for history in invalid_histories:
+                with self.subTest(history_length=len(history)):
+                    request = urllib.request.Request(
+                        self.base + "/api/agent",
+                        data=json.dumps({"prompt": "生成 Bell 态", "history": history}).encode(),
+                        headers={"Content-Type": "application/json"},
+                    )
+                    with self.assertRaises(urllib.error.HTTPError) as caught:
+                        urllib.request.urlopen(request, timeout=3)
+                    self.assertEqual(caught.exception.code, 400)
+                    caught.exception.close()
+            agent_chat.assert_not_called()
 
     def test_malformed_json_and_unsupported_method_are_structured_errors(self):
         malformed = urllib.request.Request(

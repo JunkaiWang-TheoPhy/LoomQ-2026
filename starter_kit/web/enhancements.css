@@ -78,6 +78,90 @@
   border-left: 4px solid var(--acid);
 }
 
+.state-trace {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.trace-heading,
+.trace-step-heading,
+.conversation-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.trace-heading span,
+.conversation-tools {
+  color: #66716b;
+  font-size: 11px;
+}
+
+#trace-steps {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.trace-step {
+  background: #f8f6ef;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.trace-step p {
+  color: #66716b;
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 7px 0;
+}
+
+.trace-number {
+  color: var(--teal);
+  font: 10px var(--mono);
+}
+
+.trace-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.trace-state,
+.trace-more {
+  background: white;
+  border-radius: 7px;
+  display: grid;
+  gap: 2px;
+  padding: 6px 8px;
+}
+
+.trace-state small,
+.trace-more {
+  color: #66716b;
+  font: 9px var(--mono);
+}
+
+.conversation-tools {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  color: #c9e3dc;
+}
+
+.conversation-tools button {
+  background: transparent;
+  border: 1px solid #8dc9bc;
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
 @media (max-width: 1050px) {
   .task-grid { grid-template-columns: 1fr 1fr; }
   .task-card:nth-child(2) { border-right: 0; }

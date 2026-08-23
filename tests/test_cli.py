@@ -42,6 +42,7 @@ h q[0]; cx q[0],q[1]; measure q -> c;
         self.assertEqual(result.returncode, 0)
         self.assertIn("transpile", result.stdout)
         self.assertIn("run", result.stdout)
+        self.assertIn("trace", result.stdout)
         self.assertIn("chat", result.stdout)
 
     def test_transpile_prints_target_ir(self):
@@ -74,6 +75,38 @@ h q[0]; cx q[0],q[1]; measure q -> c;
         self.assertIn("00 |", result.stdout)
         self.assertIn("11 |", result.stdout)
         self.assertIn("最右侧是 c[0]", result.stdout)
+
+    def test_trace_explains_each_gate_and_phase_as_json(self):
+        source = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[1]; creg c[1];
+h q[0]; s q[0]; measure q -> c;
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "phase.qasm"
+            path.write_text(source, encoding="utf-8")
+            result = self.run_cli("trace", "--json", str(path))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(
+            [event["operation"]["kind"] for event in payload],
+            ["initial", "gate", "gate", "measure"],
+        )
+        self.assertEqual(payload[2]["operation"]["gate"], "s")
+        self.assertAlmostEqual(payload[2]["states"][1]["phase_radians"], 1.5707963267948966)
+
+    def test_trace_human_output_is_a_beginner_readable_gate_story(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_bell(directory)
+            result = self.run_cli("trace", str(path))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("逐门状态故事", result.stdout)
+        self.assertIn("01 · H · q[0]", result.stdout)
+        self.assertIn("02 · CX · q[0], q[1]", result.stdout)
+        self.assertIn("|00⟩ P=50.00%", result.stdout)
+        self.assertIn("|11⟩ P=50.00%", result.stdout)
 
     def test_invalid_qasm_returns_actionable_error_without_traceback(self):
         with tempfile.TemporaryDirectory() as directory:

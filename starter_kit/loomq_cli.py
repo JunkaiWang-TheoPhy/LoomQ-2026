@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Sequence
 
 from . import adapter
+from .loomq.qasm import parse_qasm
+from .loomq.simulator import trace_statevector
 
 
 def _read_qasm(path: str) -> str:
@@ -45,6 +47,29 @@ def _extract_qasm(reply: str) -> str:
     return match.group(0).strip()
 
 
+def _render_trace(events: list[dict]) -> str:
+    lines = ["逐门状态故事（精确状态向量；φ 为弧度）："]
+    for index, event in enumerate(events):
+        operation = event["operation"]
+        kind = operation["kind"]
+        if kind == "initial":
+            title = "初始态 |0…0⟩"
+        elif kind == "measure":
+            title = "测量映射"
+        else:
+            qubits = ", ".join(f"q[{qubit}]" for qubit in operation["qubits"])
+            title = f"{operation['gate'].upper()} · {qubits}"
+        lines.append(f"{index:02d} · {title}")
+        lines.append(f"     {event['explanation']}")
+        for state in event["states"]:
+            lines.append(
+                f"     |{state['basis']}⟩ P={state['probability']:.2%} "
+                f"amp={state['amplitude_real']:+.4f}{state['amplitude_imag']:+.4f}i "
+                f"φ={state['phase_radians']:+.4f}"
+            )
+    return "\n".join(lines)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="loomq",
@@ -61,6 +86,10 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--target", choices=adapter.SUPPORTED_TARGETS, required=True)
     run.add_argument("--shots", type=int, default=8192)
     run.add_argument("--json", action="store_true", help="输出机器可读 JSON")
+
+    trace = commands.add_parser("trace", help="逐门查看概率、振幅与相位如何变化")
+    trace.add_argument("qasm", help="OpenQASM 2.0 文件路径，或 -")
+    trace.add_argument("--json", action="store_true", help="输出机器可读 JSON")
 
     chat = commands.add_parser("chat", help="让 Agent 生成、修复 QASM 或推荐后端")
     chat.add_argument("prompt", nargs="+", help="用自然语言描述你的目标")
@@ -84,6 +113,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
             else:
                 print(_render_counts(payload))
+            return 0
+        if args.command == "trace":
+            events = trace_statevector(parse_qasm(_read_qasm(args.qasm)))
+            if args.json:
+                print(json.dumps(events, ensure_ascii=False, sort_keys=True))
+            else:
+                print(_render_trace(events))
             return 0
         if args.command == "chat":
             print(adapter.agent_chat(" ".join(args.prompt)))

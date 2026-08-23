@@ -36,9 +36,9 @@ def run(qasm_str: str, target: str, shots: int) -> Dict[str, Any]:
     return execute(parse_qasm(qasm_str), target, shots)
 
 
-def agent_chat(prompt: str) -> str:
+def agent_chat(prompt: str, history: object = None) -> str:
     """Optional L2 entry point using the documented LOOMQ_LLM_* environment."""
-    return chat(prompt, llm_client.chat_completion)
+    return chat(prompt, llm_client.chat_completion, history)
 
 
 def compile_hybrid(hybrid_qasm_str: str) -> Tuple[List[str], str]:

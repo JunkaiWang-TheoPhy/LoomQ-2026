@@ -13,8 +13,14 @@ from urllib.parse import urlparse
 
 try:
     from .. import adapter
+    from .agent import normalize_history
+    from .simulator import trace_statevector
+    from .qasm import parse_qasm
 except ImportError:  # Direct execution from starter_kit/.
     import adapter
+    from loomq.agent import normalize_history
+    from loomq.simulator import trace_statevector
+    from loomq.qasm import parse_qasm
 
 
 _WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
@@ -132,9 +138,21 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         probabilities = {
             state: count / result["shots"] for state, count in result["counts"].items()
         }
+        trace_notice = ""
+        try:
+            trace = trace_statevector(parse_qasm(qasm))
+        except ValueError as exc:
+            trace = []
+            trace_notice = str(exc)
         self._send_json(
             HTTPStatus.OK,
-            {"result": result, "probabilities": probabilities, "native_ir": native_ir},
+            {
+                "result": result,
+                "probabilities": probabilities,
+                "native_ir": native_ir,
+                "trace": trace,
+                "trace_notice": trace_notice,
+            },
         )
 
     def _agent(self, payload: Dict[str, Any]) -> None:
@@ -143,6 +161,7 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             raise ValueError("prompt 必须是非空字符串")
         if len(prompt) > 20_000:
             raise ValueError("prompt 最多 20000 个字符")
+        history = normalize_history(payload.get("history"))
         required = ("LOOMQ_LLM_BASE_URL", "LOOMQ_LLM_API_KEY", "LOOMQ_LLM_MODEL")
         missing = [name for name in required if not os.environ.get(name)]
         if missing:
@@ -152,7 +171,7 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 "请先在启动服务的 shell 配置 " + "、".join(missing),
             )
             return
-        reply = adapter.agent_chat(prompt)
+        reply = adapter.agent_chat(prompt, history)
         self._send_json(HTTPStatus.OK, {"reply": reply})
 
 

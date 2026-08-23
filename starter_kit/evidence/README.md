@@ -19,7 +19,7 @@
 | 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
 |---|---:|---|
 | L1 真机 | 10/10 分上限 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
-| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、`starter_kit/WEB_QA.md`、桌面/移动端截图、10 项 Web 测试 |
+| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、14 项 Web 测试 |
 | 工程与产品复核 | 5/5 分上限 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
 | 自定义量子 RISC-V | 8/8 分上限 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
 | 新手引导与视觉叙事 | 4/4 分上限 | Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
@@ -79,7 +79,7 @@ evidence/files/spinq-screenshot.png
 请填写：
 
 ```text
-启动界面或 CLI 的命令：`python3 -m starter_kit.loomq.web`（CLI 备用入口：`python3 -m starter_kit.loomq_cli --help`）
+启动界面或 CLI 的命令：`python3 -m starter_kit.loomq.web`（逐门 CLI：`python3 -m starter_kit.loomq_cli trace starter_kit/circuits/bell.qasm`）
 测试入口或页面地址：http://127.0.0.1:8765/
 用于交互体验评测的 3 个用户任务：
 1. **Learn + Build**：选择“第一次理解量子电路”，运行 Bell 后观察 H/CX 时间线、`00`/`11` 概率图和文本表、位序解释与 SpinQ 原生指令；再切换“均匀叠加”和 Braket，比较 8 个等概率基态与 OpenQASM 3.0。
@@ -137,7 +137,7 @@ PyQuafu 0.4.5 的固定种子验证覆盖 40 个唯一电路、全部 12 门和�
 零基础首次运行指南：starter_kit/README.md 的“零基础首次运行”
 量子概念解释：starter_kit/README.md 的 Bell 结果解释，以及 starter_kit/QUANTUM_101.md
 结果可视化：starter_kit/web/ 的响应式电路时间线与概率图，以及 starter_kit/loomq_cli.py 的文本柱状图
-错误恢复或无障碍引导：starter_kit/loomq/agent.py 的确定性 QASM 校验和诊断重试；Web 提供 Learn、Build、Repair、Backend Match 四条路径，并使用跳转链接、语义结果表、错误 `role=alert`、键盘焦点、`aria-live`、移动端断点和减少动画偏好
+错误恢复或无障碍引导：starter_kit/loomq/agent.py 的确定性 QASM 校验、诊断重试与有界多轮历史；Web 提供 Learn、Build、Repair、Backend Match、逐门状态故事和清空会话，并使用跳转链接、语义结果表、错误 `role=alert`、键盘焦点、`aria-live`、移动端断点和减少动画偏好
 ```
 
 以上四项各 1 分。普通项目 README 完整不代表自动获得 Bonus。

@@ -18,6 +18,36 @@ _QASM_BLOCK = re.compile(
 )
 
 
+def normalize_history(history: object) -> List[Dict[str, str]]:
+    """Validate a bounded sequence of completed user/assistant turns."""
+    if history is None:
+        return []
+    if not isinstance(history, list):
+        raise ValueError("history must be a list")
+    if len(history) > 8:
+        raise ValueError("history supports at most 8 messages")
+    if len(history) % 2:
+        raise ValueError("history must contain completed user/assistant pairs")
+    normalized: List[Dict[str, str]] = []
+    total_characters = 0
+    for index, message in enumerate(history):
+        expected_role = "user" if index % 2 == 0 else "assistant"
+        if not isinstance(message, dict) or set(message) != {"role", "content"}:
+            raise ValueError("history messages require only role and content")
+        if message.get("role") != expected_role:
+            raise ValueError("history roles must alternate user then assistant")
+        content = message.get("content")
+        if not isinstance(content, str) or not content.strip():
+            raise ValueError("history content must be a non-empty string")
+        if len(content) > 20_000:
+            raise ValueError("each history message is limited to 20000 characters")
+        total_characters += len(content)
+        normalized.append({"role": expected_role, "content": content})
+    if total_characters > 40_000:
+        raise ValueError("history is limited to 40000 characters")
+    return normalized
+
+
 def _capability_payload() -> Dict[str, Any]:
     path = Path(__file__).resolve().parents[1] / "backend_capabilities.json"
     return json.loads(path.read_text(encoding="utf-8"))
@@ -317,12 +347,17 @@ measure q -> c;
 ```"""
 
 
-def chat(prompt: str, completion: ChatCompletion) -> str:
+def chat(
+    prompt: str,
+    completion: ChatCompletion,
+    history: object = None,
+) -> str:
     if not isinstance(prompt, str) or not prompt.strip():
         raise ValueError("prompt must be a non-empty string")
 
     messages: List[Dict[str, Any]] = [
         {"role": "system", "content": _system_prompt()},
+        *normalize_history(history),
         {"role": "user", "content": prompt},
     ]
     first = _assistant_content(completion(messages))

@@ -13,7 +13,7 @@
 - L3 将有界 Hybrid-QASM 经典块解析为 AST，并生成官方轻量模拟器可执行的 RISC-V 控制流；
 - Bonus 使用真实 32 位 RISC-V `custom-0` 机器字编码全部 12 门和测量，扩展模拟器完成编码、解码与执行闭环；
 - 固定种子离线活动以独立断言执行 40,000 项检查，覆盖 L1、三目标、L3 差分、量子 RISC-V 往返和拒绝路径；
-- 零依赖 Web 实验台与命令行入口共同提供 Learn、Build、Repair、Backend Match、电路预览、三后端转译、运行、概率图/表和受验证 Agent 对话。
+- 零依赖 Web 实验台与命令行入口共同提供 Learn、Build、Repair、Backend Match、电路预览、三后端转译、运行、逐门概率/振幅/相位轨迹和受验证的多轮 Agent 对话。
 
 架构与边界见 [`ARCHITECTURE.md`](ARCHITECTURE.md)。
 
@@ -25,7 +25,7 @@
 python3 -m starter_kit.loomq.web
 ```
 
-打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ 或均匀叠加示例，然后点击“运行电路”。页面会同时显示量子门时间线、测量概率、位序解释和目标平台原生指令；服务默认只监听本机地址。
+打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ、W、均匀叠加或相位干涉示例，然后点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释和目标平台原生指令；服务默认只监听本机地址。
 
 也可以使用 CLI：
 
@@ -37,6 +37,12 @@ python3 -m starter_kit.loomq_cli run \
 ```
 
 输出会显示两个主导态的文本柱状图，并说明经典位序。Bell 电路中 `00` 与 `11` 各占约一半，表示两个量子比特的测量结果相关，而不是两个比特各自独立随机。
+
+逐门查看精确状态向量（也可加 `--json` 交给其他工具）：
+
+```bash
+python3 -m starter_kit.loomq_cli trace starter_kit/circuits/bell.qasm
+```
 
 把电路转成目标平台指令：
 
@@ -127,7 +133,7 @@ starter_kit/
 ├── evidence/
 │   ├── README.md
 │   └── files/                # 可选附件
-├── tests/                    # 随正式提交归档的 71 项回归测试
+├── tests/                    # 随正式提交归档的 78 项回归测试
 ├── scripts/                  # 压力活动、交叉验证与真机证据验证器
 ├── web/                      # 零依赖响应式 Web UI
 ├── circuits/

@@ -55,7 +55,9 @@
           <div class="examples" role="group" aria-label="示例电路">
             <button class="chip active" data-example="bell">Bell 纠缠</button>
             <button class="chip" data-example="ghz">GHZ 三比特</button>
+            <button class="chip" data-example="w">W 三比特</button>
             <button class="chip" data-example="uniform">均匀叠加</button>
+            <button class="chip" data-example="interference">相位干涉</button>
           </div>
         </div>
 
@@ -100,6 +102,13 @@
             <tbody id="result-rows"></tbody>
           </table>
           <p id="explanation" class="explanation"></p>
+          <section id="state-trace" class="state-trace" aria-label="逐门量子状态">
+            <div class="trace-heading">
+              <strong>逐门状态故事</strong>
+              <span>振幅包含概率看不到的相位</span>
+            </div>
+            <ol id="trace-steps"></ol>
+          </section>
           <details>
             <summary>查看目标平台原生指令</summary>
             <pre id="native"></pre>
@@ -116,6 +125,10 @@
         <button class="secondary">发送给 Agent</button>
         <p id="prompt-help">支持生成、修复与后端选择；需要通过环境变量配置模型，密钥不会写入浏览器或仓库。</p>
       </form>
+      <div class="conversation-tools">
+        <span id="conversation-status">当前为新会话</span>
+        <button id="clear-conversation" type="button">清空上下文</button>
+      </div>
       <pre id="agent-reply" class="agent-reply" hidden></pre>
       <div id="agent-error" class="agent-error" role="alert" hidden></div>
     </section>
