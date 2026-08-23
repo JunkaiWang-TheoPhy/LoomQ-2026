@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import List, Sequence, Tuple, Union
 
-from .qasm import Gate, Measurement, parse_qasm
+from .qasm import Circuit, Gate, Measurement, parse_qasm
 
 
 class HybridError(ValueError):
@@ -92,9 +92,10 @@ def _tokenize(source: str) -> List[Token]:
 
 
 class _Parser:
-    def __init__(self, source: str):
+    def __init__(self, source: str, classical_bits: int):
         self.tokens = _tokenize(source)
         self.position = 0
+        self.classical_bits = classical_bits
 
     @property
     def current(self) -> Token:
@@ -194,6 +195,8 @@ class _Parser:
             self.expect("LBRACKET")
             index = int(self.expect("NUMBER").value)
             self.expect("RBRACKET")
+            if index >= self.classical_bits:
+                raise HybridError("measurement index exceeds declared classical register")
             if index > 21:
                 raise HybridError("measurement index exceeds available RISC-V registers")
             return Reference(10 + index)
@@ -219,6 +222,16 @@ def _statement_measurements(statement: Statement) -> set[int]:
     for child in statement.when_true + statement.when_false:
         registers |= _statement_measurements(child)
     return registers
+
+
+def _references_register(expression: Expression, register: int) -> bool:
+    if isinstance(expression, Reference):
+        return expression.register == register
+    if isinstance(expression, Arithmetic):
+        return _references_register(expression.left, register) or _references_register(
+            expression.right, register
+        )
+    return False
 
 
 class _Compiler:
@@ -265,8 +278,40 @@ class _Compiler:
         self.lines.append(f"{instruction} x{target}, x{target}, x{right}")
         self.release(right)
 
+    def direct_expression(self, expression: Expression, target: int) -> None:
+        """Compile an expression into a destination absent from the input expression."""
+        if isinstance(expression, Number):
+            self.lines.append(f"li x{target}, {expression.value}")
+            return
+        if isinstance(expression, Reference):
+            self.lines.append(f"addi x{target}, x{expression.register}, 0")
+            return
+        self.direct_expression(expression.left, target)
+        if isinstance(expression.right, Number):
+            immediate = (
+                expression.right.value
+                if expression.operator == "+"
+                else -expression.right.value
+            )
+            self.lines.append(f"addi x{target}, x{target}, {immediate}")
+            return
+        if isinstance(expression.right, Reference):
+            instruction = "add" if expression.operator == "+" else "sub"
+            self.lines.append(
+                f"{instruction} x{target}, x{target}, x{expression.right.register}"
+            )
+            return
+        right = self.acquire()
+        self.expression(expression.right, right)
+        instruction = "add" if expression.operator == "+" else "sub"
+        self.lines.append(f"{instruction} x{target}, x{target}, x{right}")
+        self.release(right)
+
     def statement(self, statement: Statement) -> None:
         if isinstance(statement, Assignment):
+            if not _references_register(statement.expression, statement.target):
+                self.direct_expression(statement.expression, statement.target)
+                return
             temporary = self.acquire()
             self.expression(statement.expression, temporary)
             self.lines.append(f"addi x{statement.target}, x{temporary}, 0")
@@ -376,8 +421,7 @@ def _split_classical(source: str) -> Tuple[str, str]:
     return remainder, source[opening + 1 : closing]
 
 
-def _quantum_operations(source: str) -> List[str]:
-    circuit = parse_qasm(source)
+def _quantum_operations(circuit: Circuit) -> List[str]:
     operations: List[str] = []
     for operation in circuit.operations:
         if isinstance(operation, Measurement):
@@ -391,7 +435,8 @@ def _quantum_operations(source: str) -> List[str]:
 
 def compile_hybrid(source: str) -> Tuple[List[str], str]:
     quantum_source, classical_source = _split_classical(source)
-    quantum = _quantum_operations(quantum_source)
-    statements = _Parser(classical_source).parse()
+    circuit = parse_qasm(quantum_source)
+    quantum = _quantum_operations(circuit)
+    statements = _Parser(classical_source, circuit.num_clbits).parse()
     assembly = _Compiler(statements).compile(statements)
     return quantum, assembly

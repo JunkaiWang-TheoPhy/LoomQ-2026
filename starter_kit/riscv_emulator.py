@@ -16,6 +16,7 @@ class TinyRISCVEmulator:
         self.labels: Dict[str, int] = {}
         self.instructions: List[Tuple[str, List[str]]] = []
         self.max_steps = 1000  # 防止死循环
+        self.quantum_program = None
 
     def set_register(self, reg: str, value: int):
         idx = self._parse_reg_idx(reg)
@@ -147,6 +148,38 @@ class TinyRISCVEmulator:
         for idx, val in enumerate(self.registers):
             if val != 0:
                 result[f"x{idx}"] = val
+        return result
+
+    def load_quantum_program(self, program):
+        """Load and decode a 32-bit custom-opcode quantum program."""
+        try:
+            from .loomq.quantum_riscv import decode_program
+        except ImportError:
+            from loomq.quantum_riscv import decode_program
+
+        decode_program(program)
+        self.quantum_program = program
+
+    def execute_quantum(self, shots: int) -> Dict[str, Any]:
+        """Execute the decoded quantum program through LoomQ's exact runtime."""
+        if self.quantum_program is None:
+            raise RuntimeError("未载入量子 RISC-V 机器码程序")
+        try:
+            from .loomq.quantum_riscv import CUSTOM_0_OPCODE, decode_program
+            from .loomq.runtime import execute
+        except ImportError:
+            from loomq.quantum_riscv import CUSTOM_0_OPCODE, decode_program
+            from loomq.runtime import execute
+
+        circuit = decode_program(self.quantum_program)
+        result = execute(circuit, "spinq", shots)
+        result["backend"] = "loomq_quantum_riscv"
+        result["meta"].update(
+            {
+                "machine_words": len(self.quantum_program.words),
+                "custom_opcode": f"0x{CUSTOM_0_OPCODE:02x}",
+            }
+        )
         return result
 
 # 简易功能测试

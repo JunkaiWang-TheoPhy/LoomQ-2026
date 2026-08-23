@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 from .qasm import QASMError, parse_qasm
+from .simulator import probabilities
 
 
 ChatCompletion = Callable[[List[Dict[str, Any]]], Dict[str, Any]]
@@ -16,10 +18,13 @@ _QASM_BLOCK = re.compile(
 )
 
 
-def _capability_table() -> str:
+def _capability_payload() -> Dict[str, Any]:
     path = Path(__file__).resolve().parents[1] / "backend_capabilities.json"
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    return json.dumps(payload, ensure_ascii=False, indent=2)
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _capability_table() -> str:
+    return json.dumps(_capability_payload(), ensure_ascii=False, indent=2)
 
 
 def _system_prompt() -> str:
@@ -50,13 +55,41 @@ def _assistant_content(response: Dict[str, Any]) -> str:
 
 def _expects_qasm(prompt: str) -> bool:
     lowered = prompt.lower()
+    generation_intent = (
+        "生成",
+        "创建",
+        "制备",
+        "修复",
+        "纠错",
+        "改正",
+        "generate",
+        "create",
+        "prepare",
+        "repair",
+        "fix",
+    )
+    if any(term in lowered for term in generation_intent):
+        return True
+    selection_intent = (
+        "选哪个",
+        "选择哪个",
+        "推荐",
+        "应该选",
+        "应该用",
+        "后端",
+        "平台",
+        "which backend",
+        "which platform",
+        "choose",
+        "select",
+        "recommend",
+    )
+    if any(term in lowered for term in selection_intent):
+        return False
     qasm_terms = (
         "qasm",
         "电路",
         "量子态",
-        "纠错",
-        "修复",
-        "生成",
         "bell",
         "ghz",
         "测量",
@@ -64,15 +97,143 @@ def _expects_qasm(prompt: str) -> bool:
     )
     if any(term in lowered for term in qasm_terms):
         return True
-    backend_terms = ("后端", "平台", "排队", "费用", "成本", "backend")
+    backend_terms = ("排队", "费用", "成本", "backend")
     return not any(term in lowered for term in backend_terms)
 
 
-def _validate_qasm_reply(reply: str) -> None:
+def _qasm_from_reply(reply: str) -> str:
     match = _QASM_BLOCK.search(reply)
     if not match:
         raise QASMError("response contains no OpenQASM 2.0 program")
-    parse_qasm(match.group(0).strip())
+    return match.group(0).strip()
+
+
+def _qubit_count(prompt: str) -> int | None:
+    match = re.search(
+        r"(\d+)\s*-?\s*(?:个?\s*)?(?:量子)?(?:比特|qubits?)"
+        r"|(?:qubits?)\s*[:=]?\s*(\d+)",
+        prompt.lower(),
+    )
+    return int(match.group(1) or match.group(2)) if match else None
+
+
+def _state_goal(prompt: str) -> tuple[str, int] | None:
+    lowered = prompt.lower()
+    if "bell" in lowered or "贝尔" in lowered:
+        return "Bell", 2
+    if "ghz" not in lowered and "猫态" not in lowered and "最大纠缠" not in lowered:
+        return None
+    qubits = _qubit_count(prompt)
+    if qubits is not None:
+        return "GHZ", qubits
+    chinese_digits = {
+        "二": 2,
+        "两": 2,
+        "三": 3,
+        "四": 4,
+        "五": 5,
+        "六": 6,
+        "七": 7,
+        "八": 8,
+        "九": 9,
+    }
+    for character, value in chinese_digits.items():
+        if re.search(character + r"\s*(?:个?\s*)?(?:量子)?比特", lowered):
+            return "GHZ", value
+    return "GHZ", 3
+
+
+def _validate_state_goal(prompt: str, qasm: str) -> None:
+    goal = _state_goal(prompt)
+    if goal is None:
+        return
+    name, qubits = goal
+    circuit = parse_qasm(qasm)
+    if circuit.num_qubits != qubits or circuit.num_clbits != qubits:
+        raise QASMError(
+            f"{name} request requires exactly {qubits} qubits and {qubits} classical bits"
+        )
+    observed = probabilities(circuit)
+    expected = {"0" * qubits: 0.5, "1" * qubits: 0.5}
+    states = set(observed) | set(expected)
+    distance = math.sqrt(
+        sum(
+            (math.sqrt(observed.get(state, 0.0)) - math.sqrt(expected.get(state, 0.0)))
+            ** 2
+            for state in states
+        )
+    ) / math.sqrt(2.0)
+    if 1.0 - distance < 0.999999:
+        raise QASMError(f"QASM does not prepare the requested {name} target state")
+
+
+def _validate_qasm_reply(prompt: str, reply: str) -> None:
+    qasm = _qasm_from_reply(reply)
+    parse_qasm(qasm)
+    _validate_state_goal(prompt, qasm)
+
+
+def _backend_constraints(prompt: str) -> tuple[int | None, bool, bool, bool, bool]:
+    lowered = prompt.lower()
+    normalized = re.sub(r"[-_]+", " ", lowered)
+    qubits = _qubit_count(prompt)
+    no_queue = any(
+        term in normalized
+        for term in ("零排队", "无排队", "不排队", "zero queue", "no queue")
+    )
+    free = any(term in lowered for term in ("免费", "零成本", "free", "no cost"))
+    qpu = any(term in lowered for term in ("真机", "量子硬件", "qpu"))
+    simulator = any(term in lowered for term in ("模拟器", "simulator"))
+    return qubits, no_queue, free, qpu, simulator
+
+
+def _validate_backend_reply(prompt: str, reply: str) -> None:
+    qubits, no_queue, free, qpu, simulator = _backend_constraints(prompt)
+    compatible: List[str] = []
+    all_ids: List[str] = []
+    for backend in _capability_payload()["backends"]:
+        backend_id = backend["id"]
+        all_ids.append(backend_id)
+        if qubits is not None and backend["max_qubits"] < qubits:
+            continue
+        if no_queue and backend["queue"] != "none":
+            continue
+        if free and not backend["cost"].startswith("free"):
+            continue
+        if qpu and backend["kind"] != "qpu":
+            continue
+        if simulator and backend["kind"] != "simulator":
+            continue
+        compatible.append(backend_id)
+    mentioned = [
+        backend_id
+        for backend_id in all_ids
+        if re.search(r"\b" + re.escape(backend_id) + r"\b", reply)
+    ]
+    if not mentioned or not set(mentioned) & set(compatible):
+        requirements = []
+        if qubits is not None:
+            requirements.append(f">={qubits} qubits")
+        if no_queue:
+            requirements.append("queue=none")
+        if free:
+            requirements.append("cost=free")
+        if qpu:
+            requirements.append("kind=qpu")
+        if simulator:
+            requirements.append("kind=simulator")
+        detail = ", ".join(requirements) or "official backend id"
+        raise ValueError(
+            f"backend recommendation violates constraints ({detail}); compatible ids: "
+            + (", ".join(compatible) if compatible else "none")
+        )
+
+
+def _validate_reply(prompt: str, reply: str) -> None:
+    if _expects_qasm(prompt):
+        _validate_qasm_reply(prompt, reply)
+    else:
+        _validate_backend_reply(prompt, reply)
 
 
 def chat(prompt: str, completion: ChatCompletion) -> str:
@@ -84,13 +245,10 @@ def chat(prompt: str, completion: ChatCompletion) -> str:
         {"role": "user", "content": prompt},
     ]
     first = _assistant_content(completion(messages))
-    if not _expects_qasm(prompt) and not _QASM_BLOCK.search(first):
-        return first
-
     try:
-        _validate_qasm_reply(first)
+        _validate_reply(prompt, first)
         return first
-    except QASMError as exc:
+    except (QASMError, ValueError) as exc:
         messages.extend(
             [
                 {"role": "assistant", "content": first},
@@ -99,7 +257,7 @@ def chat(prompt: str, completion: ChatCompletion) -> str:
                     "content": (
                         "确定性校验未通过："
                         + str(exc)
-                        + "。请重新输出完整、语法正确且实现原意的 OpenQASM 2.0。"
+                        + "。请重新回答，并严格满足原始任务、官方能力表和输出格式。"
                     ),
                 },
             ]
@@ -107,7 +265,7 @@ def chat(prompt: str, completion: ChatCompletion) -> str:
 
     repaired = _assistant_content(completion(messages))
     try:
-        _validate_qasm_reply(repaired)
-    except QASMError as exc:
-        raise RuntimeError(f"model did not produce valid OpenQASM 2.0 after retry: {exc}") from exc
+        _validate_reply(prompt, repaired)
+    except (QASMError, ValueError) as exc:
+        raise RuntimeError(f"model reply failed deterministic validation after retry: {exc}") from exc
     return repaired

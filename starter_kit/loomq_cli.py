@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Sequence
@@ -33,6 +34,17 @@ def _render_counts(payload: dict) -> str:
     return "\n".join(lines)
 
 
+def _extract_qasm(reply: str) -> str:
+    match = re.search(
+        r"OPENQASM\s+2\.0;.*?(?=^\s*```|\Z)",
+        reply,
+        re.DOTALL | re.MULTILINE | re.IGNORECASE,
+    )
+    if not match:
+        raise ValueError("Agent 回答中没有可运行的 OpenQASM 2.0 程序")
+    return match.group(0).strip()
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="loomq",
@@ -52,6 +64,11 @@ def _parser() -> argparse.ArgumentParser:
 
     chat = commands.add_parser("chat", help="让 Agent 生成、修复 QASM 或推荐后端")
     chat.add_argument("prompt", nargs="+", help="用自然语言描述你的目标")
+
+    ask = commands.add_parser("ask", help="从自然语言生成电路并立即在本地验证")
+    ask.add_argument("prompt", nargs="+", help="用自然语言描述希望运行的量子电路")
+    ask.add_argument("--target", choices=adapter.SUPPORTED_TARGETS, default="spinq")
+    ask.add_argument("--shots", type=int, default=1024)
     return parser
 
 
@@ -70,6 +87,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if args.command == "chat":
             print(adapter.agent_chat(" ".join(args.prompt)))
+            return 0
+        if args.command == "ask":
+            reply = adapter.agent_chat(" ".join(args.prompt))
+            qasm = _extract_qasm(reply)
+            payload = adapter.run(qasm, args.target, args.shots)
+            print("Agent 生成并通过语义检查的电路：")
+            print(qasm)
+            print()
+            print(_render_counts(payload))
+            print("自然语言目标已经转换并完成本地验证；无需云平台账号。")
             return 0
     except (OSError, RuntimeError, ValueError) as exc:
         print(f"错误：{exc}", file=sys.stderr)

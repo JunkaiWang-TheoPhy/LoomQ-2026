@@ -17,7 +17,7 @@ def execute(assembly, **registers):
 class HybridCompilerTests(unittest.TestCase):
     def test_seeded_random_programs_match_independent_reference(self):
         generator = random.Random(20260823)
-        for case_index in range(30):
+        for case_index in range(1000):
             left = generator.randint(-20, 20)
             right = generator.randint(-20, 20)
             offset = generator.randint(-10, 10)
@@ -111,6 +111,27 @@ classical { if (c[2] == 1) { r3 = 8; } else { r3 = 2; } }
 
         self.assertEqual(execute(assembly, x12=0)["x3"], 2)
         self.assertEqual(execute(assembly, x12=1)["x3"], 8)
+
+    def test_rejects_measurement_reference_outside_declared_creg(self):
+        source = """OPENQASM 2.0; include "qelib1.inc";
+qreg q[1]; creg c[1]; measure q -> c;
+classical { r1 = c[1]; }
+"""
+
+        with self.assertRaisesRegex(ValueError, "declared classical register"):
+            adapter.compile_hybrid(source)
+
+    def test_sums_all_measurement_registers_without_temporary_aliasing(self):
+        terms = " + ".join(f"c[{index}]" for index in range(22))
+        source = f"""OPENQASM 2.0; include "qelib1.inc";
+qreg q[22]; creg c[22]; measure q -> c;
+classical {{ r1 = {terms}; }}
+"""
+
+        _, assembly = adapter.compile_hybrid(source)
+        registers = {f"x{10 + index}": index % 2 for index in range(22)}
+
+        self.assertEqual(execute(assembly, **registers)["x1"], 11)
 
     def test_temporary_registers_do_not_clobber_high_measurement_bits(self):
         source = """OPENQASM 2.0; include "qelib1.inc";

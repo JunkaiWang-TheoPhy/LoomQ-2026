@@ -6,7 +6,7 @@ Deliver, push, and formally submit a verified LoomQ competition implementation b
 
 ## Current Stage
 
-L1 + L2 baseline is accepted and archived in upstream Issue #67. L3 implementation, independent review, and full local verification are complete; push, preflight, and replacement accepted receipt remain.
+L1 + L2 + L3 is accepted and archived in upstream Issue #68. Full-score hardening is in progress: L2 semantic validation, L3 register-pressure handling, and the quantum RISC-V bonus are implemented locally; final review, push, and replacement receipt remain.
 
 ## Verified Facts
 
@@ -17,13 +17,16 @@ L1 + L2 baseline is accepted and archived in upstream Issue #67. L3 implementati
 - GitHub CLI is authenticated as `JunkaiWang-TheoPhy`.
 - Docker/Colima Linux arm64 build and public L1 evaluator: passes all 6 cases.
 - Upstream Issue #67: `submission:accepted`, Artifact ID `9487379029`.
-- L3: 9 focused/randomized tests and the public evaluator pass; independent re-review found no remaining blocking issue.
+- L3: 11 focused/randomized tests and the public evaluator pass; 1,000 fixed-seed programs are checked across all four measurement inputs.
+- Full-score hardening: L2 semantic/backend guardrails, 1,000-program L3 fuzzing, and 32-bit custom-opcode Bell execution pass locally.
 
 ## Next Steps
 
-1. Commit and push L3.
-2. Run pushed-HEAD submission preflight and create a new L1+L2+L3 Issue.
-3. Confirm the newer Issue receives `submission:accepted` and an archival receipt.
+1. Run the full test, Docker, privacy, and independent review gates.
+2. Commit and push the hardening and Bonus evidence.
+3. Run pushed-HEAD preflight and create a new L1+L2+L3 Issue.
+4. Confirm the newer Issue receives `submission:accepted` and an archival receipt.
+5. Add genuine hardware evidence only after an eligible platform task succeeds.
 
 ## Exit Conditions
 

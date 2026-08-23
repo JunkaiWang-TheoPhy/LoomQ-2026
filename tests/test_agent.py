@@ -19,6 +19,16 @@ cx q[0],q[2];
 measure q -> c;
 ```"""
 
+VALID_BELL = """```qasm
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+cx q[0],q[1];
+measure q -> c;
+```"""
+
 
 class SequenceAPIHandler(BaseHTTPRequestHandler):
     responses = []
@@ -78,14 +88,26 @@ class AgentTests(unittest.TestCase):
     def test_platform_qualified_generation_still_validates_qasm(self):
         SequenceAPIHandler.responses = [
             "OPENQASM 2.0; include \"qelib1.inc\"; qreg q[1]; creg c[1]; h q[9];",
-            VALID_GHZ,
+            VALID_BELL,
         ]
 
         with mock.patch.dict(os.environ, self.environment, clear=True):
             reply = adapter.agent_chat("请在 Braket 平台上生成 Bell 态并测量")
 
+        self.assertEqual(reply, VALID_BELL)
+        self.assertEqual(len(SequenceAPIHandler.requests), 2)
+
+    def test_semantically_wrong_ghz_is_retried(self):
+        SequenceAPIHandler.responses = [VALID_BELL, VALID_GHZ]
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            reply = adapter.agent_chat("请生成三比特最大纠缠 GHZ 态并测量全部比特")
+
         self.assertEqual(reply, VALID_GHZ)
         self.assertEqual(len(SequenceAPIHandler.requests), 2)
+        diagnostic = SequenceAPIHandler.requests[1]["messages"][-1]["content"]
+        self.assertIn("3 qubits", diagnostic)
+        self.assertIn("GHZ", diagnostic)
 
     def test_backend_request_is_grounded_in_official_capability_ids(self):
         SequenceAPIHandler.responses = [
@@ -100,6 +122,63 @@ class AgentTests(unittest.TestCase):
         system = SequenceAPIHandler.requests[0]["messages"][0]["content"]
         self.assertIn('"id": "braket_local_simulator"', system)
         self.assertIn("规范后端标识", system)
+
+    def test_incompatible_backend_is_retried_with_constraints(self):
+        SequenceAPIHandler.responses = [
+            "推荐 `spinq_cloud_qpu`，它很适合。",
+            "推荐 `braket_local_simulator`：支持 15 比特、免费且无排队。",
+        ]
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            reply = adapter.agent_chat("需要一个免费、零排队的 15 比特后端")
+
+        self.assertIn("braket_local_simulator", reply)
+        self.assertEqual(len(SequenceAPIHandler.requests), 2)
+        diagnostic = SequenceAPIHandler.requests[1]["messages"][-1]["content"]
+        self.assertIn("15 qubits", diagnostic)
+        self.assertIn("queue=none", diagnostic)
+        self.assertIn("cost=free", diagnostic)
+
+    def test_backend_selection_wins_when_prompt_also_mentions_circuit(self):
+        SequenceAPIHandler.responses = [
+            "推荐 `braket_local_simulator`：15 比特且无需排队。"
+        ]
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            reply = adapter.agent_chat(
+                "我需要运行一个 15 比特电路，而且要求零排队，应该选哪个平台？"
+            )
+
+        self.assertIn("braket_local_simulator", reply)
+        self.assertEqual(len(SequenceAPIHandler.requests), 1)
+
+    def test_english_hyphenated_backend_constraints_are_validated(self):
+        SequenceAPIHandler.responses = [
+            "Use `braket_local_simulator`; it is free and has no queue."
+        ]
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            reply = adapter.agent_chat(
+                "Which platform should I choose for a free 15-qubit circuit with no queue?"
+            )
+
+        self.assertIn("braket_local_simulator", reply)
+        self.assertEqual(len(SequenceAPIHandler.requests), 1)
+
+    def test_zero_queue_hyphen_rejects_a_queued_backend(self):
+        SequenceAPIHandler.responses = [
+            "Recommend `originq_wukong`.",
+            "Recommend `braket_local_simulator`.",
+        ]
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            reply = adapter.agent_chat("I need a free zero-queue 15-qubit backend")
+
+        self.assertIn("braket_local_simulator", reply)
+        self.assertEqual(len(SequenceAPIHandler.requests), 2)
+        self.assertIn(
+            "queue=none", SequenceAPIHandler.requests[1]["messages"][-1]["content"]
+        )
 
     def test_missing_choices_is_reported_without_credentials(self):
         class EmptyHandler(SequenceAPIHandler):

@@ -8,9 +8,10 @@
 
 - L1 使用同一个解析器与 `Circuit` 中间表示生成 SpinQ OpenQASM 2.0、OriginIR 和 Braket OpenQASM 3.0；
 - 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
-- L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务，生成的 QASM 会经过确定性校验，失败时自动携带诊断重试一次；
+- L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务；生成的 QASM 会验证 Bell/GHZ 目标分布，后端推荐会复核比特数、排队、费用和设备类型，失败时自动携带诊断重试一次；
 - L3 将有界 Hybrid-QASM 经典块解析为 AST，并生成官方轻量模拟器可执行的 RISC-V 控制流；
-- 命令行入口为零基础用户提供转译、运行、结果柱状图和 Agent 对话。
+- Bonus 使用真实 32 位 RISC-V `custom-0` 机器字编码全部 12 门和测量，扩展模拟器完成编码、解码与执行闭环；
+- 命令行入口为零基础用户提供转译、运行、结果柱状图、Agent 对话和自然语言一键验证。
 
 架构与边界见 [`ARCHITECTURE.md`](ARCHITECTURE.md)。
 
@@ -49,9 +50,20 @@ python3 -m starter_kit.loomq_cli chat \
   生成一个三比特 GHZ 态并测量所有量子比特
 ```
 
+生成后立即在本地运行并解释结果：
+
+```bash
+python3 -m starter_kit.loomq_cli ask \
+  --target spinq --shots 1024 \
+  生成一个三比特 GHZ 态并测量所有量子比特
+```
+
 ### 干净环境验证
 
 ```bash
+python3 starter_kit/verify_submission.py
+
+# 完整开发测试与容器复核
 python3 -m unittest discover -s tests -v
 python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket
 python3 starter_kit/evaluator.py --level l3
@@ -78,7 +90,10 @@ starter_kit/
 ├── l2_policy.json
 ├── evaluator.py
 ├── prepare_submission.py
+├── verify_submission.py
+├── bonus_evaluator.py
 ├── riscv_emulator.py
+├── QUANTUM_RISCV_SPEC.md
 ├── backend_capabilities.md
 ├── backend_capabilities.json
 ├── QUANTUM_101.md
@@ -150,6 +165,7 @@ python3 evaluator.py --json-out report.json
 python3 evaluator.py --level l1 --target spinq,originq,braket
 python3 evaluator.py --level l2
 python3 evaluator.py --level l3
+python3 bonus_evaluator.py
 ```
 
 退出码：全部公开测试通过为 `0`，存在失败为 `1`。`report.json` 只表示公开契约自测结果，不是正式分数。

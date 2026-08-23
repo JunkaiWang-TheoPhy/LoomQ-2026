@@ -54,4 +54,6 @@ docker run --rm loomq-submission
 - Docker verification requires the local Colima runtime; the baseline image has been built and run successfully on Linux/arm64.
 - Quafu is not one of the three official L1 target identifiers; it is only a development oracle or optional extension unless organizers explicitly accept it as hardware evidence.
 - Formal L2 correctness depends on hidden prompt variants and the organizer-injected `deepseek-v4-flash` service.
-- L3 compiler correctness is protected by deterministic branch tests and 30 seeded random programs with exhaustive two-bit measurement inputs.
+- L3 compiler correctness is protected by deterministic branch tests and 1,000 seeded random programs with exhaustive two-bit measurement inputs.
+- The bonus path encodes all 12 gates and measurement into 32-bit RISC-V `custom-0` words, decodes them through the extended lightweight emulator, and executes with the existing exact quantum runtime.
+- `python3 starter_kit/verify_submission.py` is the credential-free one-command check for L1, L3, compilation, and the quantum RISC-V closed loop.

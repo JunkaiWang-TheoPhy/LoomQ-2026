@@ -1,9 +1,14 @@
 import json
+import io
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
+
+from starter_kit import loomq_cli
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,6 +84,30 @@ h q[0]; cx q[0],q[1]; measure q -> c;
         self.assertEqual(result.returncode, 2)
         self.assertIn("missing OPENQASM 2.0", result.stderr)
         self.assertNotIn("Traceback", result.stderr)
+
+    def test_ask_generates_runs_and_explains_in_one_command(self):
+        reply = """当然可以：
+```qasm
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2]; creg c[2];
+h q[0]; cx q[0],q[1]; measure q -> c;
+```
+"""
+        output = io.StringIO()
+
+        with mock.patch.object(loomq_cli.adapter, "agent_chat", return_value=reply):
+            with redirect_stdout(output):
+                status = loomq_cli.main(
+                    ["ask", "--target", "spinq", "--shots", "16", "生成 Bell 态"]
+                )
+
+        rendered = output.getvalue()
+        self.assertEqual(status, 0)
+        self.assertIn("OPENQASM 2.0", rendered)
+        self.assertIn("00 |", rendered)
+        self.assertIn("11 |", rendered)
+        self.assertIn("自然语言目标已经转换并完成本地验证", rendered)
 
 
 if __name__ == "__main__":

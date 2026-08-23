@@ -11,7 +11,7 @@
 - [ ] L1 真机
 - [x] L2 交互体验
 - [x] 工程与产品化
-- [ ] 自定义量子 RISC-V Bonus
+- [x] 自定义量子 RISC-V Bonus
 - [x] 新手引导与视觉叙事 Bonus
 
 ## L1 真机
@@ -46,7 +46,7 @@ evidence/files/spinq-screenshot.png
 启动界面或 CLI 的命令：python3 -m starter_kit.loomq_cli --help
 测试入口或页面地址：无，使用仓库内 CLI
 用于交互体验评测的 3 个用户任务：
-1. 运行 `python3 -m starter_kit.loomq_cli chat 生成一个三比特 GHZ 态并测量所有量子比特`，获得经过解析器校验的完整 QASM。
+1. 运行 `python3 -m starter_kit.loomq_cli ask --target spinq --shots 1024 生成一个三比特 GHZ 态并测量所有量子比特`，一次获得经过目标态验证的 QASM、运行结果和解释。
 2. 运行 `python3 -m starter_kit.loomq_cli chat 修复下面用于制备 Bell 态的代码：H q[0]; CX q[0] q[1]`，观察错误代码如何恢复为完整程序。
 3. 运行 `python3 -m starter_kit.loomq_cli run --target spinq --shots 1024 starter_kit/circuits/bell.qasm`，阅读文本柱状图与位序提示。
 截图或演示视频：无；所有流程均由最终 commit 中的代码直接运行。
@@ -59,7 +59,7 @@ evidence/files/spinq-screenshot.png
 已有内容可以直接引用主 README 或其他项目文档，不必复制到本目录。
 
 ```text
-干净环境中的构建和启动命令：starter_kit/README.md 的“干净环境验证”
+干净环境中的构建和启动命令：`python3 starter_kit/verify_submission.py`；完整命令见 starter_kit/README.md 的“干净环境验证”
 架构说明：starter_kit/ARCHITECTURE.md
 目标用户和使用场景：会描述问题但没有学习 QASM、也不了解厂商 SDK 差异的普通开发者和跨界创作者；用于第一次生成、修复、转译并理解量子电路。
 完整使用流程：starter_kit/README.md 的“零基础首次运行”和“使用自然语言 Agent”
@@ -72,9 +72,9 @@ evidence/files/spinq-screenshot.png
 以下三项必须齐全且测试通过，才获得 8 分：
 
 ```text
-指令编码规格：[填写文档路径]
-模拟器扩展实现：[填写代码路径]
-端到端测试命令：[填写命令或文档路径]
+指令编码规格：starter_kit/QUANTUM_RISCV_SPEC.md
+模拟器扩展实现：starter_kit/loomq/quantum_riscv.py 与 starter_kit/riscv_emulator.py
+端到端测试命令：`python3 starter_kit/bonus_evaluator.py`（完整开发测试：`python3 -m unittest tests.test_quantum_riscv -v`）
 ```
 
 ## 新手引导与视觉叙事 Bonus
