@@ -117,15 +117,10 @@ def _qubit_count(prompt: str) -> int | None:
     return int(match.group(1) or match.group(2)) if match else None
 
 
-def _state_goal(prompt: str) -> tuple[str, int] | None:
-    lowered = prompt.lower()
-    if "bell" in lowered or "贝尔" in lowered:
-        return "Bell", 2
-    if "ghz" not in lowered and "猫态" not in lowered and "最大纠缠" not in lowered:
-        return None
+def _requested_qubits(prompt: str, default: int | None = None) -> int | None:
     qubits = _qubit_count(prompt)
     if qubits is not None:
-        return "GHZ", qubits
+        return qubits
     chinese_digits = {
         "二": 2,
         "两": 2,
@@ -138,9 +133,49 @@ def _state_goal(prompt: str) -> tuple[str, int] | None:
         "九": 9,
     }
     for character, value in chinese_digits.items():
-        if re.search(character + r"\s*(?:个?\s*)?(?:量子)?比特", lowered):
-            return "GHZ", value
-    return "GHZ", 3
+        if re.search(character + r"\s*(?:个?\s*)?(?:量子)?比特", prompt.lower()):
+            return value
+    return default
+
+
+def _state_goal(prompt: str) -> tuple[str, int] | None:
+    lowered = prompt.lower()
+    basis = re.search(r"\|\s*([01]+)\s*>", lowered)
+    if basis:
+        return "computational basis", len(basis.group(1))
+    if any(
+        term in lowered
+        for term in ("均匀叠加", "等概率叠加", "uniform superposition", "equal superposition")
+    ):
+        qubits = _requested_qubits(prompt)
+        return ("uniform superposition", qubits) if qubits is not None else None
+    if "w 态" in lowered or "w态" in lowered or re.search(r"\bw(?: state)?\b", lowered):
+        return "W", _requested_qubits(prompt, 3) or 3
+    if "bell" in lowered or "贝尔" in lowered:
+        return "Bell", 2
+    if "ghz" not in lowered and "猫态" not in lowered and "最大纠缠" not in lowered:
+        return None
+    return "GHZ", _requested_qubits(prompt, 3) or 3
+
+
+def _expected_distribution(prompt: str, name: str, qubits: int) -> Dict[str, float]:
+    if name in ("Bell", "GHZ"):
+        return {"0" * qubits: 0.5, "1" * qubits: 0.5}
+    if name == "W":
+        probability = 1.0 / qubits
+        return {
+            format(1 << index, f"0{qubits}b"): probability for index in range(qubits)
+        }
+    if name == "uniform superposition":
+        probability = 1.0 / (1 << qubits)
+        return {
+            format(index, f"0{qubits}b"): probability for index in range(1 << qubits)
+        }
+    if name == "computational basis":
+        match = re.search(r"\|\s*([01]+)\s*>", prompt)
+        assert match is not None
+        return {match.group(1): 1.0}
+    raise ValueError(f"unsupported target-state family: {name}")
 
 
 def _validate_state_goal(prompt: str, qasm: str) -> None:
@@ -154,7 +189,7 @@ def _validate_state_goal(prompt: str, qasm: str) -> None:
             f"{name} request requires exactly {qubits} qubits and {qubits} classical bits"
         )
     observed = probabilities(circuit)
-    expected = {"0" * qubits: 0.5, "1" * qubits: 0.5}
+    expected = _expected_distribution(prompt, name, qubits)
     states = set(observed) | set(expected)
     distance = math.sqrt(
         sum(

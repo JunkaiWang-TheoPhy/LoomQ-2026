@@ -33,7 +33,7 @@ class SubmissionVerifierTests(unittest.TestCase):
         self.assertTrue(report["passed"])
         self.assertEqual(
             [phase["name"] for phase in report["phases"]],
-            ["compile", "l1", "l3", "quantum-riscv"],
+            ["compile", "archive-tests", "l1", "l3", "quantum-riscv"],
         )
 
 

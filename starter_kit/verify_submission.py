@@ -18,6 +18,18 @@ def default_phases() -> list[tuple[str, list[str]]]:
     return [
         ("compile", [sys.executable, "-m", "compileall", "-q", str(ROOT)]),
         (
+            "archive-tests",
+            [
+                sys.executable,
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                str(ROOT / "tests"),
+                "-v",
+            ],
+        ),
+        (
             "l1",
             [
                 sys.executable,

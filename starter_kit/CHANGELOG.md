@@ -4,6 +4,9 @@
 
 - Use the importable `starter_kit/` name for the submission root.
 - Add `__init__.py` so tests can use `from starter_kit import adapter` directly.
+- Add a zero-dependency responsive Web lab backed by the public adapter API.
+- Validate W states, explicit computational basis states, and uniform superpositions in L2.
+- Ship a 46-test regression suite inside the formally archived `starter_kit/` directory.
 
 ## 1.1.0 - 2026-07-27
 

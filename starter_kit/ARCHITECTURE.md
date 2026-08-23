@@ -23,6 +23,9 @@ OpenQASM 2.0
   ├─ emitters.py ── Braket OpenQASM 3.0
   ├─ simulator.py ── 无依赖状态向量执行与统一 little-endian counts
   └─ quantum_riscv.py ── 32 位 custom-0 编码／解码 ── 扩展模拟器执行
+
+Web / CLI
+  └─ 只调用 adapter.py 公共契约，不复制解析、运行或 Agent 逻辑
 ```
 
 ## 模块边界
@@ -31,11 +34,12 @@ OpenQASM 2.0
 - `loomq/emitters.py`：只负责从统一 IR 生成三种目标文本，避免三套互不一致的字符串替换逻辑。
 - `loomq/simulator.py`：实现 12 种门的状态向量语义和经典测量映射。
 - `loomq/runtime.py`：把精确概率按最大余数法转换为整数 shots，并产生统一结果 Schema。
-- `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ 目标分布和后端约束，失败时携带具体诊断重试一次。
+- `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次。
 - `loomq/hybrid.py`：解析赋值、算术、`if/else` 和测量位引用，检查 `creg` 边界并生成 `li/add/sub/addi/beq/bne/j` 子集。
 - `loomq/quantum_riscv.py`：把全部白名单量子门编码为真实 32 位 `custom-0` 机器字，并完成字节序列化和严格解码。
 - `riscv_emulator.py`：保持官方 L3 文本汇编路径，同时增加量子机器码加载、解码和执行入口。
 - `loomq_cli.py`：面向零基础用户提供转译、执行、文本柱状图、自然语言 Agent 和一键生成运行。
+- `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图和原生 IR 展示；默认仅监听 `127.0.0.1`。
 
 ## 为什么基础评分路径不依赖平台 SDK
 
@@ -45,9 +49,10 @@ OpenQASM 2.0
 
 - 所有 target 都经过同一个 `Circuit` IR。
 - 量子位 `q[0]` 使用状态索引最低位；输出经典位串最右侧固定为 `c[0]`。
-- 公开 Bell/GHZ 电路覆盖跨比特纠缠；单元测试逐门覆盖所有 12 个门。
+- 公开 Bell/GHZ 电路覆盖跨比特纠缠；归档内测试逐门、逐目标交叉覆盖全部 12 门 × 3 target。
 - 固定种子的随机三比特电路与 PyQuafu 状态向量交叉验证。
 - L3 使用 1,000 个固定种子随机经典程序、每个程序穷举 4 种测量输入，并与独立 Python 参考语义比较。
 - L2 每个 case 至少进行一次真实模型服务调用，模型地址、Key 和名称只从 `LOOMQ_LLM_*` 读取。
 - 模型生成的 QASM 先由确定性解析器与状态向量目标检查，后端 ID 再与官方 JSON 能力表复核。
 - Bonus 的 Bell 证明真实经历 `Circuit → 机器字 → 小端字节 → 解码 → 扩展模拟器 → counts`。
+- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录执行 46 项归档测试，避免依赖仓库外层测试。

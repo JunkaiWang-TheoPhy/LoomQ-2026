@@ -11,6 +11,8 @@ LoomQ is a public competition fork whose scored submission root is `starter_kit/
 - `starter_kit/submission.yaml`: declared levels and runtime/network contract.
 - `starter_kit/loomq/`: participant implementation modules.
 - `starter_kit/loomq_cli.py`: beginner-facing command line interface.
+- `starter_kit/loomq/web.py` + `starter_kit/web/`: zero-dependency local Web API and responsive beginner lab.
+- `starter_kit/tests/`: 46 regressions that remain present when the organizer extracts only the scored root.
 - `starter_kit/evaluator.py`: public contract checker, not the formal scorer.
 - `starter_kit/evidence/README.md`: manual scoring claims and evidence index.
 - `competition/`: organizer submission intake/archive tooling.
@@ -28,7 +30,9 @@ LoomQ is a public competition fork whose scored submission root is `starter_kit/
 
 ```bash
 python3 -m unittest discover -s tests -v
+(cd starter_kit && python3 -m unittest discover -s tests -v)
 python3 -m compileall -q starter_kit competition tests
+python3 starter_kit/verify_submission.py
 python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket
 .venv/bin/python -m unittest tests.test_quafu_oracle -v
 python3 starter_kit/prepare_submission.py --team-id JunkaiWang-TheoPhy
@@ -56,4 +60,5 @@ docker run --rm loomq-submission
 - Formal L2 correctness depends on hidden prompt variants and the organizer-injected `deepseek-v4-flash` service.
 - L3 compiler correctness is protected by deterministic branch tests and 1,000 seeded random programs with exhaustive two-bit measurement inputs.
 - The bonus path encodes all 12 gates and measurement into 32-bit RISC-V `custom-0` words, decodes them through the extended lightweight emulator, and executes with the existing exact quantum runtime.
-- `python3 starter_kit/verify_submission.py` is the credential-free one-command check for L1, L3, compilation, and the quantum RISC-V closed loop.
+- `python3 starter_kit/verify_submission.py` is the credential-free one-command check for the archived regressions, L1, L3, compilation, and the quantum RISC-V closed loop.
+- L2 validates Bell/GHZ/W, explicit computational-basis and uniform-superposition distributions before accepting model output.
