@@ -6,6 +6,11 @@
       "sha256": "b03958748b3c718c81e544adf0523101b4cb2c2ed0bb58a4d92c191a5c679aba"
     },
     {
+      "bytes": 915,
+      "path": "files/offline-stress-summary.json",
+      "sha256": "5d038cfca5d1e01a3d6fbe059a6ce9a4a6da81d5b75ab7050f66af8bbd1212e6"
+    },
+    {
       "bytes": 73,
       "path": "files/originq-bell.originir",
       "sha256": "72f26585bf6f87647d4cfd5abec66c091ed3bc30374fdf23b76b5cb7a79e79bc"
@@ -24,6 +29,11 @@
       "bytes": 80149,
       "path": "files/originq-task.jpg",
       "sha256": "8a7e26369881efba5005647c712782d2e2785ef1ac40ed9c65ad1699bd9c4e84"
+    },
+    {
+      "bytes": 850,
+      "path": "files/pyquafu-cross-validation-summary.json",
+      "sha256": "7446e6e83253404e6cf46b7b5592345d8f67533b471a045372e4626f266534b3"
     },
     {
       "bytes": 70,

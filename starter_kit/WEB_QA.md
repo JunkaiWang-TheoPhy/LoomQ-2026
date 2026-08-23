@@ -9,7 +9,7 @@ cd starter_kit
 python3 -m unittest tests.test_web -v
 ```
 
-9 项测试覆盖：首页与四条任务路径、三种目标后端、Bell 计数与概率、非法 QASM、畸形 JSON、不支持的方法、20,000 字符 Agent 输入上限、无凭据安全降级，以及成功/失败响应的安全头。
+10 项测试覆盖：首页与四条任务路径、三种目标后端、Bell 计数与概率、非法 QASM、畸形 JSON、不支持的方法、20,000 字符 Agent 输入上限、无凭据安全降级、成功/失败响应的安全头，以及 Web API → OpenAI-compatible HTTP 服务 → `agent_chat` 确定性校验的完整链路。协议 fixture 分别通过生成、修复和后端选择三类任务；它验证真实网络协议，不冒充真实 DeepSeek 成绩。
 
 ## 真实浏览器验收
 

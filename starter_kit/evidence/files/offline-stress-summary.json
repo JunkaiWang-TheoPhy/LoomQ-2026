@@ -1,0 +1,43 @@
+{
+  "campaigns": {
+    "l1_simulator": {
+      "checks": 3000,
+      "failures": 0,
+      "passed": 3000
+    },
+    "l1_targets": {
+      "checks": 9000,
+      "failures": 0,
+      "passed": 9000
+    },
+    "l3_differential": {
+      "checks": 20000,
+      "failures": 0,
+      "passed": 20000
+    },
+    "parser_rejection": {
+      "checks": 2500,
+      "failures": 0,
+      "passed": 2500
+    },
+    "quantum_riscv_roundtrip": {
+      "checks": 3000,
+      "failures": 0,
+      "passed": 3000
+    },
+    "riscv_rejection": {
+      "checks": 2500,
+      "failures": 0,
+      "passed": 2500
+    }
+  },
+  "corpus_sha256": "ecd3452fe15fe326dacb798cb03de0ce5ecf411f18cd25f9c8fd765502f3722a",
+  "failed_checks": 0,
+  "failures": [],
+  "generated_at": "2026-08-23T22:31:20.303499Z",
+  "passed": true,
+  "passed_checks": 40000,
+  "schema_version": "loomq-offline-stress-v1",
+  "seed": 20260824,
+  "total_checks": 40000
+}

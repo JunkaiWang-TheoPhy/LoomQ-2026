@@ -4,6 +4,7 @@ import threading
 import unittest
 import urllib.error
 import urllib.request
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest import mock
 
 from loomq.web import create_server
@@ -17,6 +18,31 @@ h q[0];
 cx q[0],q[1];
 measure q -> c;
 """
+
+
+class CompatibleAgentAPIHandler(BaseHTTPRequestHandler):
+    calls = []
+
+    def log_message(self, *_args):
+        return
+
+    def do_POST(self):
+        length = int(self.headers.get("Content-Length", "0"))
+        request_payload = json.loads(self.rfile.read(length))
+        type(self).calls.append(request_payload)
+        prompt = request_payload["messages"][-1]["content"]
+        if "后端" in prompt:
+            content = "推荐规范后端 spinq_taurus_simulator：24 比特、免费、零排队的本地模拟器。"
+        else:
+            content = "```qasm\n" + BELL + "```"
+        body = json.dumps(
+            {"choices": [{"message": {"role": "assistant", "content": content}}]}
+        ).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
 
 class WebLabTests(unittest.TestCase):
@@ -142,6 +168,40 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 400)
         self.assertIn("20000", payload["error"]["message"])
         agent_chat.assert_not_called()
+
+    def test_web_agent_end_to_end_covers_generation_repair_and_backend_tasks(self):
+        provider = ThreadingHTTPServer(("127.0.0.1", 0), CompatibleAgentAPIHandler)
+        provider_thread = threading.Thread(target=provider.serve_forever, daemon=True)
+        CompatibleAgentAPIHandler.calls = []
+        provider_thread.start()
+        environment = {
+            "LOOMQ_LLM_BASE_URL": f"http://127.0.0.1:{provider.server_port}",
+            "LOOMQ_LLM_API_KEY": "local-protocol-fixture",
+            "LOOMQ_LLM_MODEL": "local-model",
+            "LOOMQ_LLM_TIMEOUT_SECONDS": "2",
+        }
+        prompts = (
+            "生成 Bell 态并测量全部量子比特",
+            "修复这段 Bell 电路：cx q[0],q[2];",
+            "推荐一个免费、零排队、至少 20 比特的模拟器后端",
+        )
+        try:
+            with mock.patch.dict(os.environ, environment, clear=True):
+                replies = []
+                for prompt in prompts:
+                    status, _headers, body = self.request("/api/agent", {"prompt": prompt})
+                    self.assertEqual(status, 200)
+                    replies.append(json.loads(body)["reply"])
+        finally:
+            provider.shutdown()
+            provider.server_close()
+            provider_thread.join(timeout=2)
+
+        self.assertEqual(len(CompatibleAgentAPIHandler.calls), 3)
+        self.assertTrue(all(call["model"] == "local-model" for call in CompatibleAgentAPIHandler.calls))
+        self.assertIn("OPENQASM 2.0", replies[0])
+        self.assertIn("OPENQASM 2.0", replies[1])
+        self.assertIn("spinq_taurus_simulator", replies[2])
 
     def test_malformed_json_and_unsupported_method_are_structured_errors(self):
         malformed = urllib.request.Request(

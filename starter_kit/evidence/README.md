@@ -14,6 +14,18 @@
 - [x] 自定义量子 RISC-V Bonus
 - [x] 新手引导与视觉叙事 Bonus
 
+### 评分快速索引
+
+| 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
+|---|---:|---|
+| L1 真机 | 10/10 分上限 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
+| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、`starter_kit/WEB_QA.md`、桌面/移动端截图、10 项 Web 测试 |
+| 工程与产品复核 | 5/5 分上限 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
+| 自定义量子 RISC-V | 8/8 分上限 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
+| 新手引导与视觉叙事 | 4/4 分上限 | Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
+
+“申报上限”表示材料按满项要求提交，最终得分仍由组委会复核；本表不把公开自测表述成官方成绩。
+
 ## L1 真机
 
 每个有效真机平台计 5 分，最多两个平台。模拟器不计真机分。每个平台复制并填写一次下面的信息：
@@ -70,9 +82,9 @@ evidence/files/spinq-screenshot.png
 启动界面或 CLI 的命令：`python3 -m starter_kit.loomq.web`（CLI 备用入口：`python3 -m starter_kit.loomq_cli --help`）
 测试入口或页面地址：http://127.0.0.1:8765/
 用于交互体验评测的 3 个用户任务：
-1. 在 Web 首页选择“Bell 纠缠”，点击“运行电路”，观察 q[0]/q[1] 门时间线、`00`/`11` 概率、位序解释和 SpinQ 原生指令。
-2. 切换“均匀叠加”和 Braket，比较 8 个等概率基态，并展开 OpenQASM 3.0 目标指令。
-3. 配置 `LOOMQ_LLM_*` 后在页面输入“生成三比特 W 态并测量”，观察 Agent 回答经过门集、语法和目标分布验证；未配置时页面给出具体环境变量提示且不显示凭据。
+1. **Learn + Build**：选择“第一次理解量子电路”，运行 Bell 后观察 H/CX 时间线、`00`/`11` 概率图和文本表、位序解释与 SpinQ 原生指令；再切换“均匀叠加”和 Braket，比较 8 个等概率基态与 OpenQASM 3.0。
+2. **Repair**：点击“修复一段错误 QASM”，页面预填含越界 `cx q[0],q[2]` 的 Bell 修复任务；配置 `LOOMQ_LLM_*` 后提交，检查返回完整 OpenQASM 2.0，并确认语法、白名单门与 Bell 分布通过确定性校验，错误回答会携带诊断重试一次。
+3. **Backend Match**：点击“选择合适的后端”，把任务改为“推荐一个免费、零排队、至少 20 比特的模拟器后端”；回答必须包含能力表中的兼容规范 ID。未配置模型时，页面以 `role=alert` 说明环境变量，同时保留上方三后端本地转译与模拟能力。
 截图或演示视频：桌面 `starter_kit/evidence/files/web-lab-desktop-current.jpg`，移动端 `starter_kit/evidence/files/web-lab-mobile-current.jpg`；完整验收矩阵见 `starter_kit/WEB_QA.md`。所有流程均由最终 commit 中的代码直接运行。
 ```
 
@@ -84,13 +96,23 @@ evidence/files/spinq-screenshot.png
 
 本仓库只在真实 `LOOMQ_LLM_*` 服务实际完成后才会提交模型结果 JSONL/summary。没有真实凭据或只运行本地 fake server 时，不把协议测试写成真实 DeepSeek 成绩，也不声称替代组委会私有评测。
 
+归档内 `tests.test_web.WebLabTests.test_web_agent_end_to_end_covers_generation_repair_and_backend_tasks` 使用本地 OpenAI-compatible HTTP fixture 验证 Web API、模型协议、三类任务路由和确定性结果校验的完整网络链路；fixture 只证明工程链路，不记作真实模型成绩。
+
+### 独立数值 Oracle
+
+PyQuafu 0.4.5 的固定种子验证覆盖 40 个唯一电路、全部 12 门和三个 target，共 120/120 项通过；最大状态向量振幅误差为 `1.1802326323952682e-15`。协议、counts 浮点余数 tie 边界和复现命令见 `starter_kit/PYQUAFU_CROSS_VALIDATION.md`，摘要见 `starter_kit/evidence/files/pyquafu-cross-validation-summary.json`。它是软件交叉验证，不申报为第四个真机平台。
+
+### 40,000 项离线活动
+
+`python3 -m starter_kit.scripts.offline_stress_campaign --validate` 校验固定摘要和语料哈希。实际活动为 3,000 项概率归一化、9,000 项三目标 IR/Schema、3,000 项量子 RISC-V 语义往返、20,000 项 L3 四输入差分执行，以及 QASM/机器码各 2,500 项拒绝检查；结果为 40,000/40,000。摘要位于 `starter_kit/evidence/files/offline-stress-summary.json`。每一项都有具体判据，失败会记录活动、case 和异常；该活动是公开工程证据，不替代官方隐藏评分。
+
 ## 工程与产品化
 
 已有内容可以直接引用主 README 或其他项目文档，不必复制到本目录。
 
 ```text
 干净环境中的构建和启动命令：`python3 starter_kit/verify_submission.py`；Web：`python3 -m starter_kit.loomq.web`；完整命令见 starter_kit/README.md 的“干净环境验证”
-架构说明：starter_kit/ARCHITECTURE.md
+架构说明：starter_kit/ARCHITECTURE.md；60 秒评委索引：starter_kit/JUDGE_GUIDE.md；物理结论边界：starter_kit/SCIENTIFIC_CLAIMS_AUDIT.md
 目标用户和使用场景：会描述问题但没有学习 QASM、也不了解厂商 SDK 差异的普通开发者和跨界创作者；用于第一次生成、修复、转译并理解量子电路。
 完整使用流程：starter_kit/README.md 的“零基础首次运行”和“使用自然语言 Agent”
 ```

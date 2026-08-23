@@ -38,6 +38,8 @@ class SubmissionVerifierTests(unittest.TestCase):
                 "archive-tests",
                 "l2-corpus",
                 "hardware-evidence",
+                "pyquafu-evidence",
+                "offline-stress-evidence",
                 "l1",
                 "l3",
                 "quantum-riscv",

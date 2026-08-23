@@ -38,6 +38,14 @@ def default_phases() -> list[tuple[str, list[str]]]:
             [sys.executable, "-m", "scripts.validate_hardware_evidence"],
         ),
         (
+            "pyquafu-evidence",
+            [sys.executable, "-m", "scripts.quafu_cross_validate", "--validate"],
+        ),
+        (
+            "offline-stress-evidence",
+            [sys.executable, "-m", "scripts.offline_stress_campaign", "--validate"],
+        ),
+        (
             "l1",
             [
                 sys.executable,
