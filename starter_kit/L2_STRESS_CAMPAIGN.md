@@ -29,7 +29,7 @@ python3 -m starter_kit.scripts.l2_stress_campaign --dry-run
 export LOOMQ_LLM_BASE_URL=https://api.deepseek.com
 export LOOMQ_LLM_API_KEY='<仅在当前 shell 中设置>'
 export LOOMQ_LLM_MODEL=deepseek-v4-flash
-export LOOMQ_LLM_TIMEOUT_SECONDS=120
+export LOOMQ_LLM_TIMEOUT_SECONDS=55
 
 python3 -m starter_kit.scripts.l2_stress_campaign \
   --output-dir starter_kit/evidence/files/l2-stress

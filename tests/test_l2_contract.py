@@ -64,6 +64,29 @@ class PublicL2ContractTests(unittest.TestCase):
                 client.chat_completion([{"role": "user", "content": "hello"}])
         self.assertNotIn("do-not-echo", str(caught.exception))
 
+    def test_transport_timeout_reserves_budget_for_a_second_attempt(self):
+        client = load_client()
+        environment = {
+            "LOOMQ_LLM_BASE_URL": "https://example.invalid",
+            "LOOMQ_LLM_API_KEY": "local-key",
+            "LOOMQ_LLM_MODEL": "deepseek-v4-flash",
+            "LOOMQ_LLM_TIMEOUT_SECONDS": "120",
+        }
+        with mock.patch.dict(os.environ, environment, clear=True):
+            self.assertEqual(client._configuration()[3], 55.0)
+
+        environment["LOOMQ_LLM_TIMEOUT_SECONDS"] = "12.5"
+        with mock.patch.dict(os.environ, environment, clear=True):
+            self.assertEqual(client._configuration()[3], 12.5)
+
+        for value in ("nan", "inf", "-inf"):
+            environment["LOOMQ_LLM_TIMEOUT_SECONDS"] = value
+            with self.subTest(timeout=value), mock.patch.dict(
+                os.environ, environment, clear=True
+            ):
+                with self.assertRaisesRegex(RuntimeError, "finite"):
+                    client._configuration()
+
     def test_client_works_with_an_openai_compatible_endpoint(self):
         server = ThreadingHTTPServer(("127.0.0.1", 0), CompatibleAPIHandler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)

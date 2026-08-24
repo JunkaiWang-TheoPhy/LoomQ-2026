@@ -76,7 +76,7 @@ python3 -m starter_kit.loomq_cli transpile \
 export LOOMQ_LLM_BASE_URL=https://api.deepseek.com
 export LOOMQ_LLM_API_KEY='<在当前 shell 安全设置>'
 export LOOMQ_LLM_MODEL=deepseek-v4-flash
-export LOOMQ_LLM_TIMEOUT_SECONDS=120
+export LOOMQ_LLM_TIMEOUT_SECONDS=55
 
 python3 -m starter_kit.loomq_cli chat \
   生成一个三比特 GHZ 态并测量所有量子比特
@@ -255,11 +255,13 @@ python3 starter_kit/prepare_submission.py --team-id <GITHUB_USERNAME>
 export LOOMQ_LLM_BASE_URL=https://api.deepseek.com
 export LOOMQ_LLM_API_KEY=<YOUR_OWN_KEY>
 export LOOMQ_LLM_MODEL=deepseek-v4-flash
-export LOOMQ_LLM_TIMEOUT_SECONDS=120
+export LOOMQ_LLM_TIMEOUT_SECONDS=55
 python3 evaluator.py --level l2
 ```
 
 缺少配置时应立即失败，错误信息不得包含任何 Key。正式评测时，组委会将统一注入 DeepSeek 模型服务及调用预算；评测环境不保证能够访问其他外部网络服务。若参加 L2，请把 `submission.yaml` 中的 `levels.l2` 与 `network.required_for_l2` 同时改为 `true`；`allowed_hosts` 不用于申请正式评测中的任意公网访问。
+
+正式限制是每个 case 总计 120 秒，而 Agent 最多调用模型两次。传输层因此把每次请求配置限制为 `min(LOOMQ_LLM_TIMEOUT_SECONDS, 55)` 秒，使两次请求的配置上限合计 110 秒，并为本地确定性验证留出名义余量；`NaN` 或无穷 timeout 会在发请求前被拒绝。
 
 ## 版本政策
 

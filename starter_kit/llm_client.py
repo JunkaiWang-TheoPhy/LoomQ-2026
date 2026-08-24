@@ -9,6 +9,7 @@ language.
 from __future__ import annotations
 
 import json
+import math
 import os
 import urllib.error
 import urllib.parse
@@ -17,6 +18,7 @@ from typing import Any
 
 
 REQUIRED_ENV = ("LOOMQ_LLM_BASE_URL", "LOOMQ_LLM_API_KEY", "LOOMQ_LLM_MODEL")
+MAX_ATTEMPT_TIMEOUT_SECONDS = 55.0
 
 
 def _configuration() -> tuple[str, str, str, float, int]:
@@ -28,8 +30,11 @@ def _configuration() -> tuple[str, str, str, float, int]:
         max_output = int(os.environ.get("LOOMQ_LLM_MAX_OUTPUT_TOKENS", "4096"))
     except ValueError as exc:
         raise RuntimeError("invalid LoomQ L2 numeric environment variable") from exc
+    if not math.isfinite(timeout):
+        raise RuntimeError("LoomQ L2 timeout must be finite")
     if timeout <= 0 or max_output <= 0:
         raise RuntimeError("LoomQ L2 timeout and output-token limit must be positive")
+    timeout = min(timeout, MAX_ATTEMPT_TIMEOUT_SECONDS)
     return (
         os.environ["LOOMQ_LLM_BASE_URL"].rstrip("/"),
         os.environ["LOOMQ_LLM_API_KEY"],

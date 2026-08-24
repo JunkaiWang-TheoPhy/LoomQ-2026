@@ -6,6 +6,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest import mock
 
 import adapter
+import llm_client
 from loomq.agent import _qasm_from_reply
 
 
@@ -63,6 +64,39 @@ class ArchivedL2QualificationTests(unittest.TestCase):
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=2)
+
+    def test_two_model_attempts_fit_inside_the_formal_case_budget(self):
+        with mock.patch.dict(
+            os.environ,
+            {
+                **self.environment,
+                "LOOMQ_LLM_TIMEOUT_SECONDS": "120",
+            },
+            clear=True,
+        ):
+            self.assertEqual(llm_client._configuration()[3], 55.0)
+
+        with mock.patch.dict(
+            os.environ,
+            {
+                **self.environment,
+                "LOOMQ_LLM_TIMEOUT_SECONDS": "12.5",
+            },
+            clear=True,
+        ):
+            self.assertEqual(llm_client._configuration()[3], 12.5)
+
+        for value in ("nan", "inf", "-inf"):
+            with self.subTest(timeout=value), mock.patch.dict(
+                os.environ,
+                {
+                    **self.environment,
+                    "LOOMQ_LLM_TIMEOUT_SECONDS": value,
+                },
+                clear=True,
+            ):
+                with self.assertRaisesRegex(RuntimeError, "finite"):
+                    llm_client._configuration()
 
     def test_twelve_private_shape_cases_make_model_calls_and_pass_objective_checks(self):
         qasm_cases = [

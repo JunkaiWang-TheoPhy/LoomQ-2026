@@ -39,7 +39,7 @@ Web / CLI
 - `loomq/simulator.py`：实现 12 种门的状态向量语义和经典测量映射；20 比特内使用稠密状态向量，21–30 比特使用最多 1,000,000 个非零基态的有界稀疏表示，逐门概率/振幅/相位轨迹最多 8 比特。
 - `loomq/runtime.py`：把精确概率按最大余数法转换为整数 shots，并产生统一结果 Schema。
 - `loomq/assertions.py`：对 `support`、`parity`、`uniformity` 断言提供三种证据模式：本地精确 `exact-local`、有限 shots Wilson/总变差区间、以及 provider 概率；只报告一致/偏差/不确定，不归因具体噪声机制。
-- `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次；两次无效回答后才用同一目标合成器或能力表约束求解器安全回退；多轮历史严格交替并限制为 8 条消息。
+- `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次；两次无效回答后才用同一目标合成器或能力表约束求解器安全回退；单次传输配置最多 55 秒，使两次请求的配置上限合计 110 秒；多轮历史严格交替并限制为 8 条消息。
 - `loomq/prompt_contract.py`：在模型调用前把自然语言请求规范化为任务类型、目标态和后端约束；原 prompt、语义字段与合同分别摘要，并可从原 prompt 确定性重建。摘要只检测内容变化，不承担身份认证。
 - `loomq/witness.py`：为源门与测量分配稳定 `gN/mN` witness，把 ProofTrace lineage/rewrite、counterfactual first divergence、assertion measurement dependencies 与 Hybrid branch provenance 对齐；规范 JSON SHA-256 后再从嵌入输入全量重算，篡改或 Hybrid 量子部分不一致时失败关闭。
 - `scripts/l2_stress_campaign.py`：通过公开 `adapter.agent_chat()` 执行固定的 500 例真实模型语料，支持断点续跑、脱敏记录和逐层 SHA-256 完整性复核。
