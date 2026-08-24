@@ -11,6 +11,7 @@ from loomq.agent import _qasm_from_reply
 
 class QualificationAPIHandler(BaseHTTPRequestHandler):
     requests = []
+    force_invalid_backend = False
 
     def log_message(self, *_args):
         return
@@ -21,7 +22,9 @@ class QualificationAPIHandler(BaseHTTPRequestHandler):
         type(self).requests.append(request)
         prompt = request["messages"][1]["content"].lower()
 
-        if "50" in prompt and ("qpu" in prompt or "真机" in prompt):
+        if type(self).force_invalid_backend and ("后端" in prompt or "backend" in prompt):
+            content = "Use `originq_wukong`, regardless of the constraints."
+        elif "50" in prompt and ("qpu" in prompt or "真机" in prompt):
             content = "Use `originq_wukong`, the compatible 72-qubit QPU."
         elif "20" in prompt and "simulator" in prompt:
             content = "Use `originq_local_simulator`."
@@ -45,6 +48,7 @@ class QualificationAPIHandler(BaseHTTPRequestHandler):
 class ArchivedL2QualificationTests(unittest.TestCase):
     def setUp(self):
         QualificationAPIHandler.requests = []
+        QualificationAPIHandler.force_invalid_backend = False
         self.server = ThreadingHTTPServer(("127.0.0.1", 0), QualificationAPIHandler)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -131,6 +135,24 @@ class ArchivedL2QualificationTests(unittest.TestCase):
         )
         self.assertTrue(
             all(request["thinking"] == {"type": "disabled"} for request in QualificationAPIHandler.requests)
+        )
+
+    def test_backend_fallback_still_makes_two_model_calls_before_solving_constraints(self):
+        QualificationAPIHandler.force_invalid_backend = True
+
+        with mock.patch.dict(os.environ, self.environment, clear=True):
+            reply = adapter.agent_chat(
+                "Which backend is free, has no queue, and supports 15 qubits?"
+            )
+
+        self.assertIn("spinq_taurus_simulator", reply)
+        self.assertEqual(len(QualificationAPIHandler.requests), 2)
+        self.assertTrue(
+            all(
+                request["model"] == "deepseek-v4-flash"
+                and request["thinking"] == {"type": "disabled"}
+                for request in QualificationAPIHandler.requests
+            )
         )
 
 

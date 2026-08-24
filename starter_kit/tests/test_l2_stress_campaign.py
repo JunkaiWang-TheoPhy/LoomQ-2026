@@ -9,8 +9,20 @@ from pathlib import Path
 
 try:
     from starter_kit.scripts import l2_stress_campaign as campaign
+    from starter_kit.loomq.agent import (
+        _deterministic_backend_reply,
+        _validate_backend_reply,
+        _validate_reply,
+        chat,
+    )
 except ImportError:
     from scripts import l2_stress_campaign as campaign
+    from loomq.agent import (
+        _deterministic_backend_reply,
+        _validate_backend_reply,
+        _validate_reply,
+        chat,
+    )
 
 
 VALID_GHZ = """```qasm
@@ -77,6 +89,31 @@ class L2StressCorpusTests(unittest.TestCase):
                 "stability": 30,
             },
         )
+
+    def test_all_120_backend_prompts_have_a_grounded_deterministic_fallback(self):
+        cases = [case for case in campaign.build_corpus() if case.category == "backend"]
+
+        self.assertEqual(len(cases), 120)
+        for case in cases:
+            with self.subTest(case_id=case.case_id):
+                reply = _deterministic_backend_reply(case.prompt)
+                self.assertIsNotNone(reply)
+                _validate_backend_reply(case.prompt, reply)
+
+    def test_all_500_cases_survive_two_invalid_model_replies(self):
+        calls = 0
+
+        def invalid_model(_messages):
+            nonlocal calls
+            calls += 1
+            return {"choices": [{"message": {"content": "No valid answer."}}]}
+
+        for case in campaign.build_corpus():
+            with self.subTest(case_id=case.case_id):
+                reply = chat(case.prompt, invalid_model)
+                _validate_reply(case.prompt, reply)
+
+        self.assertEqual(calls, 1000)
 
     def test_campaign_writes_verifiable_summary_without_raw_model_secrets(self):
         case = campaign.CampaignCase(

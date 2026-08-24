@@ -1,6 +1,14 @@
 import unittest
 
-from loomq.agent import _deterministic_state_reply, _qasm_from_reply, _state_goal, _validate_state_goal
+from loomq.agent import (
+    _deterministic_backend_reply,
+    _deterministic_state_reply,
+    _expects_qasm,
+    _qasm_from_reply,
+    _state_goal,
+    _validate_backend_reply,
+    _validate_state_goal,
+)
 from loomq.qasm import QASMError
 
 
@@ -15,6 +23,29 @@ measure q -> c;
 
 
 class AgentSemanticTests(unittest.TestCase):
+    def test_circuit_selection_verbs_do_not_override_state_generation_cues(self):
+        self.assertTrue(_expects_qasm("选择一个 Bell 态电路并测量"))
+        self.assertTrue(_expects_qasm("Select a Bell circuit and measure it"))
+        self.assertFalse(_expects_qasm("选择一个至少 28 比特的模拟器"))
+        self.assertFalse(_expects_qasm("Which simulator should I use for 28 qubits?"))
+
+    def test_backend_fallback_solves_constraints_from_the_capability_table(self):
+        cases = [
+            ("推荐一个免费、零排队、至少 15 比特的后端", "spinq_taurus_simulator"),
+            ("Which 50-qubit QPU backend is compatible?", "originq_wukong"),
+            ("选择一个至少 28 比特的模拟器", "originq_local_simulator"),
+        ]
+
+        for prompt, expected_id in cases:
+            with self.subTest(prompt=prompt):
+                reply = _deterministic_backend_reply(prompt)
+                self.assertIsNotNone(reply)
+                self.assertIn(expected_id, reply)
+                _validate_backend_reply(prompt, reply)
+
+    def test_backend_fallback_refuses_unsatisfiable_constraints(self):
+        self.assertIsNone(_deterministic_backend_reply("推荐 80 比特真机后端"))
+
     def test_w_state_positive_case_is_accepted(self):
         prompt = "生成四比特 W 态并测量"
         reply = _deterministic_state_reply(prompt)

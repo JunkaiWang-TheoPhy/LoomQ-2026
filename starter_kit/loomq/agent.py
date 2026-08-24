@@ -100,8 +100,19 @@ def _expects_qasm(prompt: str) -> bool:
     )
     if any(term in lowered for term in generation_intent):
         return True
+    backend_objects = (
+        "后端",
+        "平台",
+        "simulator",
+        "qpu",
+        "真机",
+        "量子硬件",
+        "backend",
+        "platform",
+    )
     selection_intent = (
         "选哪个",
+        "选择",
         "选择哪个",
         "推荐",
         "应该选",
@@ -110,11 +121,15 @@ def _expects_qasm(prompt: str) -> bool:
         "平台",
         "which backend",
         "which platform",
+        "which qpu",
+        "which simulator",
+        "should i use",
         "choose",
         "select",
         "recommend",
     )
-    if any(term in lowered for term in selection_intent):
+    has_selection_intent = any(term in lowered for term in selection_intent)
+    if has_selection_intent and any(term in lowered for term in backend_objects):
         return False
     qasm_terms = (
         "qasm",
@@ -127,7 +142,13 @@ def _expects_qasm(prompt: str) -> bool:
     )
     if any(term in lowered for term in qasm_terms):
         return True
-    backend_terms = ("排队", "费用", "成本", "backend")
+    if has_selection_intent:
+        return False
+    backend_terms = (
+        "排队",
+        "费用",
+        "成本",
+    ) + backend_objects
     return not any(term in lowered for term in backend_terms)
 
 
@@ -252,13 +273,10 @@ def _backend_constraints(prompt: str) -> tuple[int | None, bool, bool, bool, boo
     return qubits, no_queue, free, qpu, simulator
 
 
-def _validate_backend_reply(prompt: str, reply: str) -> None:
+def _compatible_backends(prompt: str) -> List[Dict[str, Any]]:
     qubits, no_queue, free, qpu, simulator = _backend_constraints(prompt)
-    compatible: List[str] = []
-    all_ids: List[str] = []
+    compatible: List[Dict[str, Any]] = []
     for backend in _capability_payload()["backends"]:
-        backend_id = backend["id"]
-        all_ids.append(backend_id)
         if qubits is not None and backend["max_qubits"] < qubits:
             continue
         if no_queue and backend["queue"] != "none":
@@ -269,7 +287,15 @@ def _validate_backend_reply(prompt: str, reply: str) -> None:
             continue
         if simulator and backend["kind"] != "simulator":
             continue
-        compatible.append(backend_id)
+        compatible.append(backend)
+    return compatible
+
+
+def _validate_backend_reply(prompt: str, reply: str) -> None:
+    qubits, no_queue, free, qpu, simulator = _backend_constraints(prompt)
+    backends = _capability_payload()["backends"]
+    all_ids = [backend["id"] for backend in backends]
+    compatible = [backend["id"] for backend in _compatible_backends(prompt)]
     mentioned = [
         backend_id
         for backend_id in all_ids
@@ -292,6 +318,19 @@ def _validate_backend_reply(prompt: str, reply: str) -> None:
             f"backend recommendation violates constraints ({detail}); compatible ids: "
             + (", ".join(compatible) if compatible else "none")
         )
+
+
+def _deterministic_backend_reply(prompt: str) -> str | None:
+    """Choose a compatible canonical ID after model replies fail validation."""
+    compatible = _compatible_backends(prompt)
+    if not compatible:
+        return None
+    selected = compatible[0]
+    return (
+        f"Selected `{selected['id']}` from the official capability table; "
+        f"kind={selected['kind']}, max_qubits={selected['max_qubits']}, "
+        f"queue={selected['queue']}, cost={selected['cost']}."
+    )
 
 
 def _validate_reply(prompt: str, reply: str) -> None:
@@ -383,7 +422,11 @@ def chat(
     try:
         _validate_reply(prompt, repaired)
     except (QASMError, ValueError) as exc:
-        fallback = _deterministic_state_reply(prompt) if _expects_qasm(prompt) else None
+        fallback = (
+            _deterministic_state_reply(prompt)
+            if _expects_qasm(prompt)
+            else _deterministic_backend_reply(prompt)
+        )
         if fallback is not None:
             _validate_reply(prompt, fallback)
             return fallback

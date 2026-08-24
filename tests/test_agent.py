@@ -142,18 +142,21 @@ class AgentTests(unittest.TestCase):
                 result = adapter.run(_qasm_from_reply(reply), "spinq", shots)
                 self.assertEqual(result["counts"], expected_counts)
 
-    def test_backend_retry_does_not_use_a_state_circuit_fallback(self):
+    def test_backend_retry_uses_a_grounded_constraint_fallback(self):
         SequenceAPIHandler.responses = [
             "Recommend `originq_wukong`.",
             "Recommend `originq_wukong`.",
         ]
 
         with mock.patch.dict(os.environ, self.environment, clear=True):
-            with self.assertRaisesRegex(RuntimeError, "after retry"):
-                adapter.agent_chat(
-                    "Which backend should I choose for a free 15-qubit W circuit "
-                    "with no queue?"
-                )
+            reply = adapter.agent_chat(
+                "Which backend should I choose for a free 15-qubit W circuit "
+                "with no queue?"
+            )
+
+        self.assertIn("spinq_taurus_simulator", reply)
+        self.assertEqual(len(SequenceAPIHandler.requests), 2)
+        self.assertIn("official capability table", reply)
 
     def test_backend_request_is_grounded_in_official_capability_ids(self):
         SequenceAPIHandler.responses = [

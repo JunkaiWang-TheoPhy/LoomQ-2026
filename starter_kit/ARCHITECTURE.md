@@ -39,7 +39,7 @@ Web / CLI
 - `loomq/simulator.py`：实现 12 种门的状态向量语义和经典测量映射；20 比特内使用稠密状态向量，21–30 比特使用最多 1,000,000 个非零基态的有界稀疏表示，逐门概率/振幅/相位轨迹最多 8 比特。
 - `loomq/runtime.py`：把精确概率按最大余数法转换为整数 shots，并产生统一结果 Schema。
 - `loomq/assertions.py`：对 `support`、`parity`、`uniformity` 断言提供三种证据模式：本地精确 `exact-local`、有限 shots Wilson/总变差区间、以及 provider 概率；只报告一致/偏差/不确定，不归因具体噪声机制。
-- `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次；多轮历史严格交替并限制为 8 条消息。
+- `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次；两次无效回答后才用同一目标合成器或能力表约束求解器安全回退；多轮历史严格交替并限制为 8 条消息。
 - `scripts/l2_stress_campaign.py`：通过公开 `adapter.agent_chat()` 执行固定的 500 例真实模型语料，支持断点续跑、脱敏记录和逐层 SHA-256 完整性复核。
 - `scripts/offline_stress_campaign.py`：执行固定的 40,000 项无凭据断言，分别统计 L1 模拟、三目标契约、L3 差分、量子 RISC-V 往返及拒绝路径，并锁定语料哈希。
 - `scripts/prooftrace_benchmark.py`：逐条删除五个算法在三目标 native IR 中的 225 条指令，验证全部篡改被拒绝；另执行 15 项 portability 与 132 项安全重写检查。
@@ -66,7 +66,7 @@ Web / CLI
 - 模型生成的 QASM 先由确定性解析器与状态向量目标检查，后端 ID 再与官方 JSON 能力表复核。
 - L2 压力 campaign 的 500 条 prompt 在归档测试中检查唯一性和分类配额；证据验证器会重新生成语料并核对 prompt、记录及 JSONL 摘要。
 - Bonus 的 Bell 证明真实经历 `Circuit → 机器字 → 小端字节 → 解码 → 扩展模拟器 → counts`。
-- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录在 Node present 时执行 `node --check web/app.js`，否则显式 `SKIP`；并显式运行 Web/API/assert/compare/hybrid 焦点套件，再在 `python3 -m unittest discover -s tests -v` 观察到的 152 项归档测试基础上复核 Web→多轮模型协议→确定性校验、反事实首门分歧、12 例 L2 同形资格链、ProofTrace 225 项变异基准、算法展品、三 native IR 回读、量子 RISC-V 固定机器字与随机线路、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、L2 语料、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
+- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录在 Node present 时执行 `node --check web/app.js`，否则显式 `SKIP`；并显式运行 Web/API/assert/compare/hybrid 焦点套件，再在 `python3 -m unittest discover -s tests -v` 观察到的 158 项归档测试基础上复核 Web→多轮模型协议→确定性校验、反事实首门分歧、12 例 L2 同形 HTTP 资格链、500 例注入式 completion 两次无效回复后的确定性恢复（1000 次回调）、ProofTrace 225 项变异基准、算法展品、三 native IR 回读、量子 RISC-V 固定机器字与随机线路、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
 - 可选的 PyQuafu 0.4.5 独立 oracle 使用固定 40 电路覆盖全部 12 门，对三个 target 完成 120 项状态向量与 counts 交叉检查；第三方包隔离在核心环境之外。
 - 离线活动的每个计数对应具体断言：概率归一化、目标 IR/Schema、机器码语义往返、四输入差分执行或恶意输入拒绝；不是仅循环不检查结果的数量指标。
 - 真机证据验证器从 provider MessagePack、counts JSON 与 QASM 重算统计结果，并用 SHA-256 manifest 锁定原始材料、派生分析和桌面/移动端截图。
