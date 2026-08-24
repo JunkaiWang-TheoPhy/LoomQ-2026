@@ -219,6 +219,7 @@ Use a Lore commit that records the optional nature of `trace_hybrid` and the unc
 - Modify: `starter_kit/JUDGE_GUIDE.md`
 - Modify: `starter_kit/ARCHITECTURE.md`
 - Modify: `starter_kit/SCIENTIFIC_CLAIMS_AUDIT.md`
+- Modify: `starter_kit/COMPETITIVE_COVERAGE.md`
 - Modify: `starter_kit/evidence/README.md`
 - Modify: `starter_kit/verify_submission.py`
 
@@ -240,7 +241,7 @@ Enforce existing request-size limits. Render pass/fail/inconclusive distinctly, 
 
 - [ ] **Step 4: Document evidence and limitations**
 
-Document exact vs finite-shot vs provider-probability evidence, the 8-qubit first-divergence bound, bit ordering, optional `trace_hybrid`, and non-attribution of hardware deviations. Update archived test counts only after discovery provides the exact number.
+Document exact vs finite-shot vs provider-probability evidence, the 8-qubit first-divergence bound, bit ordering, optional `trace_hybrid`, and non-attribution of hardware deviations. Update archived test counts only after discovery provides the exact number. Expand competitive coverage to at least six audited teams: Huxingyu #85 (`d6cc922`) is the highest-priority public competitor, alongside Duanice #89 (`e306067`), UokyI #82, orange-city #77, and the previously audited entries. Record ProofTrace's verified rewrite-check count as 132 and the evidence quick-index engineering/product score as 10/10. Claim only leadership in publicly auditable capability coverage; explicitly state that the private 12-case DeepSeek evaluation and unpublished entrants remain unknown.
 
 - [ ] **Step 5: Add focused suites to one-command verification and run all gates**
 
