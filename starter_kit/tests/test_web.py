@@ -410,6 +410,31 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(error_payload["error"]["code"], "invalid_request")
         self.assertIn("2**num_clbits <= max_outcomes", error_payload["error"]["message"])
 
+    def test_prompt_contract_endpoint_exposes_rebuild_verified_semantics(self):
+        prompt = "Which free 20-qubit simulator on OriginQ needs no account?"
+
+        try:
+            status, _headers, body = self.request(
+                "/api/prompt-contract",
+                {"prompt": prompt},
+            )
+        except urllib.error.HTTPError as exc:
+            status, body = exc.code, exc.read()
+            exc.close()
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["contract"]["task_kind"], "backend")
+        self.assertEqual(
+            payload["contract"]["backend_constraints"]["platforms"],
+            ["originq"],
+        )
+        self.assertFalse(
+            payload["contract"]["backend_constraints"]["requires_account"]
+        )
+        self.assertTrue(payload["verification"]["valid"])
+        self.assertFalse(payload["contract"]["integrity"]["is_signature"])
+
     def test_compare_endpoint_finds_the_first_causal_divergence(self):
         candidate = BELL.replace("cx q[0],q[1];", "x q[1];")
 
