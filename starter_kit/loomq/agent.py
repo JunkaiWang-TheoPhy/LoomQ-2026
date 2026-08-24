@@ -72,8 +72,9 @@ def _system_prompt() -> str:
 1. 若用户要求生成或修复量子电路，返回完整可执行的 OpenQASM 2.0。必须包含
    OPENQASM 2.0、qelib1.inc、qreg、creg 和测量；门只能使用
    h, x, s, sdg, t, tdg, rz, ry, cx, cu1, swap, ccx。保留用户声明的目标态。
-2. 若用户要求选择后端，只能依据下方官方能力表。回答中必须原样包含至少一个
-   规范后端标识（id 字段），并同时满足比特数、硬件种类、排队和费用约束。
+2. 若用户要求选择后端，只能依据下方官方能力表。回答中必须原样包含恰好一个
+   规范后端标识（id 字段），不要写出被排除后端的 id；所选后端必须同时满足
+   比特数、硬件种类、排队和费用约束。
 3. 不编造运行结果、job ID、平台能力或账号状态。不要输出 API Key。
 4. 对零基础用户使用简洁中文解释，但把可机读 QASM 放在独立代码块中。
 
@@ -217,7 +218,7 @@ def _validate_backend_reply(prompt: str, reply: str) -> None:
         for backend_id in all_ids
         if re.search(r"\b" + re.escape(backend_id) + r"\b", reply)
     ]
-    if not mentioned or not set(mentioned) & set(compatible):
+    if len(mentioned) != 1 or mentioned[0] not in compatible:
         requirements = []
         if qubits is not None:
             requirements.append(f">={qubits} qubits")
@@ -237,7 +238,8 @@ def _validate_backend_reply(prompt: str, reply: str) -> None:
             requirements.append("execution=local")
         detail = ", ".join(requirements) or "official backend id"
         raise ValueError(
-            f"backend recommendation violates constraints ({detail}); compatible ids: "
+            "backend recommendation must contain exactly one compatible canonical id "
+            f"and no other canonical ids ({detail}); compatible ids: "
             + (", ".join(compatible) if compatible else "none")
         )
 

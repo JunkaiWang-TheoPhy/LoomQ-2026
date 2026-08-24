@@ -85,6 +85,21 @@ class AgentSemanticTests(unittest.TestCase):
             _deterministic_backend_reply("推荐 34 量子位、无需排队且零费用的平台")
         )
 
+    def test_backend_validation_rejects_extra_canonical_ids(self):
+        prompt = "推荐一个免费、零排队、至少 15 比特的后端"
+
+        with self.assertRaisesRegex(ValueError, "exactly one compatible canonical id"):
+            _validate_backend_reply(
+                prompt,
+                "Use spinq_taurus_simulator; avoid originq_wukong because it queues.",
+            )
+
+        with self.assertRaisesRegex(ValueError, "exactly one compatible canonical id"):
+            _validate_backend_reply(
+                prompt,
+                "Either spinq_taurus_simulator or originq_local_simulator works.",
+            )
+
     def test_w_state_positive_case_is_accepted(self):
         prompt = "生成四比特 W 态并测量"
         reply = _deterministic_state_reply(prompt)
