@@ -9,15 +9,15 @@ cd starter_kit
 python3 -m unittest tests.test_web tests.test_inquiry_frontend -v
 ```
 
-`tests.test_web` 与 `tests.test_inquiry_frontend` 覆盖：首页 Quantum World 探究护照与错误结论纠正、四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
+`tests.test_web` 与 `tests.test_inquiry_frontend` 覆盖：首页三幕故事进度、Quantum World 探究护照与错误结论纠正、本地主视觉资源、四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
 
 ## 真实浏览器验收
 
 | 场景 | 结果 | 证据 |
 |---|---|---|
-| Quantum World 桌面 | 1440×900；A/B 实验并排显示，完整 Bell 为 `00/11`，禁用 CX 后为 `00/01`；错误结论显示 unsupported 并启用护照下载 | 2026-08-24 Google Chrome 真实 API 点击，visual-verdict `94/100` |
-| Quantum World 手机 | 390×844；探究步骤、预测、A/B 卡片、证据读法与审计依次单列；`scrollWidth=innerWidth=390` | 2026-08-24 Google Chrome 真实 API 点击，visual-verdict `94/100` |
-| 桌面评委入口 | 1440×900；页面 `scrollWidth=innerWidth=1440`。两张真机卡、六步按钮和完整状态条出现在任务卡之前 | 2026-08-24 Chrome 验收，visual-verdict `93/100` |
+| Quantum World 桌面 | 1440×1000；原创主视觉、序章文案、双入口与三幕卡完整可见；A/B 后进度为 `complete/complete/current`，错误结论审计后为三幕 complete | 2026-08-24 Google Chrome 真实 API 点击，visual-verdict `93/100` |
+| Quantum World 手机 | 390×844；主视觉、序章、CTA、三幕卡与实验依次单列；三幕状态随同一次护照推进；`scrollWidth=innerWidth=390` | 2026-08-24 Google Chrome 真实 API 点击，visual-verdict `93/100` |
+| 桌面评委入口 | 1440×1000；页面 `scrollWidth=innerWidth=1440`。证据附录位于首次探究之后、任务卡之前，双入口可直接跳转 | 2026-08-24 Chrome 验收，visual-verdict `93/100` |
 | 移动端评委入口 | 390×844；页面 `scrollWidth=innerWidth=390`。真机卡单列，六步状态条横向滚动，不造成页面级横向溢出 | 2026-08-24 Chrome 验收，visual-verdict `93/100` |
 | 六步初始状态 | 两个 viewport 重新加载后均为 `未运行 × 6`，没有复用前一会话结果 | 真实浏览器 DOM 读取 |
 | 一键本地路径 | 桌面与移动端均完成 `6/6`：三后端回读、第 2 门分歧、3 项 exact-local pass、Witness 重建、Hybrid 语义重算、backend Prompt Contract | 最终代码的真实 Chrome 点击；本机分别约 131 ms 与 137 ms，不作为性能保证 |
