@@ -628,7 +628,7 @@ function renderInquiryAudit(passport) {
   const audit = $("#inquiry-audit");
   audit.className = `inquiry-audit ${view.auditStatus}`;
   audit.replaceChildren(
-    element("strong", "", view.auditStatus === "supported" ? "证据支持这条结论" : "证据不支持这条结论"),
+    element("strong", "", globalThis.LoomQInquiry.auditHeading(view.auditStatus)),
     element("p", "", view.auditClaim),
     element("p", "inquiry-audit-reason", view.auditReason),
     element("small", "", `证据边界：${view.caveat}`),

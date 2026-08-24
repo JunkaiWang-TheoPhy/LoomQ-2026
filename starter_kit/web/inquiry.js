@@ -28,6 +28,12 @@
     };
   }
 
+  function auditHeading(status) {
+    if (status === "supported") return "证据支持这条结论";
+    if (status === "unsupported") return "证据不支持这条结论";
+    return "本次证据不足以判断";
+  }
+
   function withConclusion(passport, conclusion) {
     const audit = passport.conclusion_audits?.[conclusion];
     if (!audit) throw new Error("当前实验护照不包含这条结论的审计结果");
@@ -62,5 +68,5 @@
     };
   }
 
-  return { bars, requestPayload, withConclusion, viewModel };
+  return { auditHeading, bars, requestPayload, withConclusion, viewModel };
 });

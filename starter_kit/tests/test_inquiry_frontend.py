@@ -36,6 +36,7 @@ const inquiry = require(process.argv[1]);
 const passport = JSON.parse(process.argv[2]);
 process.stdout.write(JSON.stringify({
   request: inquiry.requestPayload("cx-opens-branches", "cx-opens-branches", 128),
+  headings: ["supported", "unsupported", "inconclusive"].map(inquiry.auditHeading),
   view: inquiry.viewModel(passport),
 }));
 """
@@ -62,6 +63,14 @@ process.stdout.write(JSON.stringify({
                 "conclusion": "cx-opens-branches",
                 "shots": 128,
             },
+        )
+        self.assertEqual(
+            result["headings"],
+            [
+                "证据支持这条结论",
+                "证据不支持这条结论",
+                "本次证据不足以判断",
+            ],
         )
         view = result["view"]
         self.assertEqual(
