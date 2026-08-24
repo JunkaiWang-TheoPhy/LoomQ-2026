@@ -397,7 +397,7 @@
 }
 
 .story-hero .eyebrow { color: var(--acid); }
-.story-hero blockquote {
+.story-hero .story-kicker {
   margin: 18px 0 22px;
   color: #dce8df;
   font: 600 16px/1.5 var(--sans);
@@ -635,7 +635,7 @@
   }
   .story-hero::after { display: none; }
   .story-hero-copy { order: 1; padding: 26px 20px 24px; }
-  .story-hero blockquote { font-size: 14px; }
+  .story-hero .story-kicker { font-size: 14px; }
   .story-hero h1 { font-size: 42px; line-height: .98; }
   .story-actions { display: grid; grid-template-columns: 1fr; }
   .story-primary,
