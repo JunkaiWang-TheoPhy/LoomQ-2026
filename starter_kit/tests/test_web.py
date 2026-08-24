@@ -219,17 +219,39 @@ class WebLabTests(unittest.TestCase):
         _status, _headers, body = self.request("/")
 
         page = body.decode()
-        self.assertIn('class="story-hero"', page)
-        self.assertIn('src="/assets/quantum-world-journey.png"', page)
-        self.assertIn('id="story-chapters"', page)
-        self.assertIn('id="story-progress-copy"', page)
-        self.assertIn('href="#inquiry-world"', page)
+        self.assertIn('class="atlas-hero"', page)
+        self.assertIn('src="/assets/quantum-atlas-map.png"', page)
+        self.assertIn('id="atlas-map"', page)
+        self.assertIn('id="atlas-progress-copy"', page)
+        self.assertIn('data-atlas-location="observatory"', page)
+        self.assertIn('data-atlas-location="field"', page)
+        self.assertIn('data-atlas-location="archive"', page)
+        self.assertIn('id="atlas-briefing"', page)
+        self.assertIn('id="begin-case"', page)
+        self.assertIn('id="inquiry-world" class="inquiry-world" aria-labelledby="inquiry-title" tabindex="-1" hidden', page)
+        self.assertIn("状态", page)
+        self.assertIn("多种可能", page)
+        self.assertIn("重复观察", page)
+        self.assertIn("只改一个条件", page)
         self.assertIn('href="#evidence-map"', page)
-        self.assertLess(page.index('class="story-hero"'), page.index('id="inquiry-world"'))
+        self.assertLess(page.index('id="atlas-briefing"'), page.index('id="inquiry-world"'))
         self.assertLess(page.index('id="inquiry-world"'), page.index('id="evidence-map"'))
+
+        briefing = page.split('id="atlas-briefing"', 1)[1].split(
+            'id="inquiry-world"', 1
+        )[0]
+        self.assertNotIn(">H<", briefing)
+        self.assertNotIn(">CX<", briefing)
 
     def test_quantum_world_artwork_is_served_as_a_local_png(self):
         status, headers, body = self.request("/assets/quantum-world-journey.png")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "image/png")
+        self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
+    def test_quantum_atlas_artwork_is_served_as_a_local_png(self):
+        status, headers, body = self.request("/assets/quantum-atlas-map.png")
 
         self.assertEqual(status, 200)
         self.assertEqual(headers["Content-Type"], "image/png")

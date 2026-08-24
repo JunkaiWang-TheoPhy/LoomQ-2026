@@ -148,6 +148,7 @@ let lastHybridPathUrl = null;
 let lastWitnessUrl = null;
 let lastInquiryUrl = null;
 let currentInquiryPassport = null;
+let atlasBriefingComplete = false;
 
 function tell(message) {
   notice.textContent = message;
@@ -605,17 +606,28 @@ function resetInquiryAudit(message = "选择一条结论，让系统指出证据
   }
 }
 
-function renderStoryProgress(hasExperiment, auditStatus) {
-  const progress = globalThis.LoomQInquiry.journeyProgress(hasExperiment, auditStatus);
-  progress.chapters.forEach((chapter) => {
-    const item = document.querySelector(`[data-story-chapter="${chapter.id}"]`);
-    if (!item) return;
-    item.classList.remove("current", "complete", "upcoming");
-    item.classList.add(chapter.state);
-    if (chapter.state === "current") item.setAttribute("aria-current", "step");
-    else item.removeAttribute("aria-current");
+function renderAtlasProgress(hasExperiment, auditStatus) {
+  const progress = globalThis.LoomQInquiry.atlasProgress(
+    atlasBriefingComplete,
+    hasExperiment,
+    auditStatus,
+  );
+  progress.locations.forEach((location) => {
+    const button = document.querySelector(`[data-atlas-location="${location.id}"]`);
+    if (!button) return;
+    button.classList.remove("current", "complete", "locked");
+    button.classList.add(location.state);
+    button.disabled = location.state === "locked";
+    if (location.state === "current") button.setAttribute("aria-current", "step");
+    else button.removeAttribute("aria-current");
+    const stateLabel = button.querySelector("span");
+    if (stateLabel) {
+      stateLabel.textContent = location.state === "complete"
+        ? "已完成"
+        : location.state === "current" ? "当前地点" : "待解锁";
+    }
   });
-  $("#story-progress-copy").textContent = progress.message;
+  $("#atlas-progress-copy").textContent = progress.message;
 }
 
 function renderInquiryExperiment(passport) {
@@ -972,6 +984,36 @@ $("#run").addEventListener("click", async () => {
   }
 });
 
+$("#begin-case").addEventListener("click", () => {
+  if (atlasBriefingComplete) return;
+  atlasBriefingComplete = true;
+  const beginButton = $("#begin-case");
+  beginButton.disabled = true;
+  beginButton.textContent = "简报已完成";
+  const inquiry = $("#inquiry-world");
+  inquiry.hidden = false;
+  renderAtlasProgress(false, null);
+  inquiry.scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    block: "start",
+  });
+  inquiry.focus({ preventScroll: true });
+  tell("分岔原野已解锁：先预测，再运行对照实验");
+});
+
+document.querySelectorAll("[data-atlas-location]").forEach((button) => {
+  button.addEventListener("click", () => {
+    if (button.disabled) return;
+    const target = document.querySelector(button.dataset.target);
+    if (!target) return;
+    target.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+    target.focus?.({ preventScroll: true });
+  });
+});
+
 $("#run-inquiry").addEventListener("click", async () => {
   const button = $("#run-inquiry");
   const status = $("#inquiry-status");
@@ -982,10 +1024,10 @@ $("#run-inquiry").addEventListener("click", async () => {
     const passport = await requestInquiry();
     currentInquiryPassport = passport;
     renderInquiryExperiment(passport);
-    renderStoryProgress(true, null);
+    renderAtlasProgress(true, null);
     resetInquiryAudit("实验已完成。现在选择结论，并让证据检查它。");
     status.textContent = "A/B 实验完成：只改变了 CX，下一步请形成结论。";
-    tell("Quantum World：对照实验完成");
+    tell("Quantum Atlas：对照实验完成");
   } catch (error) {
     status.textContent = `实验失败：${error.message}`;
     tell(error.message);
@@ -1008,7 +1050,7 @@ $("#audit-inquiry").addEventListener("click", async () => {
       $("#inquiry-conclusion").value,
     );
     renderInquiryAudit(passport);
-    renderStoryProgress(true, passport.conclusion_audit.status);
+    renderAtlasProgress(true, passport.conclusion_audit.status);
     $("#inquiry-audit").setAttribute("tabindex", "-1");
     $("#inquiry-audit").focus();
     tell("结论审计完成；实验护照可以下载");
@@ -1026,12 +1068,12 @@ $("#inquiry-prediction").addEventListener("change", () => {
   $("#inquiry-results").hidden = true;
   $("#inquiry-status").textContent = "预测已记录；运行实验后再看答案。";
   resetInquiryAudit();
-  renderStoryProgress(false, null);
+  renderAtlasProgress(false, null);
 });
 
 $("#inquiry-conclusion").addEventListener("change", () => {
   resetInquiryAudit("结论已变化；请重新用当前实验审计。");
-  renderStoryProgress(Boolean(currentInquiryPassport), null);
+  renderAtlasProgress(Boolean(currentInquiryPassport), null);
 });
 
 $("#run-assert").addEventListener("click", async () => {

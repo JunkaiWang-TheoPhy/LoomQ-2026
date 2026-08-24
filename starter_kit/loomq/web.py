@@ -40,6 +40,10 @@ _STATIC = {
         "assets/quantum-world-journey.png",
         "image/png",
     ),
+    "/assets/quantum-atlas-map.png": (
+        "assets/quantum-atlas-map.png",
+        "image/png",
+    ),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/enhancements.css": ("enhancements.css", "text/css; charset=utf-8"),
 }

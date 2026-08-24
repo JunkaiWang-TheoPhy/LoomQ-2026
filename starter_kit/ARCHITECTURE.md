@@ -50,7 +50,7 @@ Web / CLI
 - `loomq/quantum_riscv.py`：把全部白名单量子门编码为真实 32 位 `custom-0` 机器字，并完成字节序列化和严格解码。
 - `riscv_emulator.py`：保持官方 L3 文本汇编路径，同时增加量子机器码加载、解码和执行入口。
 - `loomq_cli.py`：面向零基础用户提供转译、执行、文本柱状图、逐门状态轨迹、自然语言 Agent 和一键生成运行。
-- `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图、反事实首门分歧实验、ProofTrace 面板、P1 断言报告、P2 Hybrid 分支回放、Prompt Contract 检查、六步评委路径、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。
+- `loomq/web.py` 与 `web/`：标准库 HTTP API、Quantum Atlas 零基础调查地图、由真实动作驱动的三地点状态、Bell 对照实验、响应式实验台、电路预览、概率图、反事实首门分歧实验、ProofTrace 面板、P1 断言报告、P2 Hybrid 分支回放、Prompt Contract 检查、六步评委路径、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。地图插画不进入任何科学判定。
 - `circuits/`：除 Bell/GHZ 外归档 Deutsch–Jozsa、Grover-3 与 QFT-4；相同源码跨三 target 转译和运行。
 
 ## 为什么基础评分路径不依赖平台 SDK

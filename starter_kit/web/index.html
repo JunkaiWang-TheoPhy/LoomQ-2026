@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/enhancements.css">
 </head>
 <body>
-  <a class="skip-link" href="#inquiry-world">跳到探究任务</a>
+  <a class="skip-link" href="#atlas-briefing">跳到新手简报</a>
   <header class="masthead">
     <a class="brand" href="#top" aria-label="LoomQ 首页">
       <span class="brand-mark" aria-hidden="true">LQ</span>
@@ -20,33 +20,57 @@
   </header>
 
   <main id="top">
-    <section class="story-hero" aria-labelledby="hero-title">
-      <img src="/assets/quantum-world-journey.png" alt="一位初学者从观测站走向由量子电路线构成的分岔世界，手中拿着实验护照">
-      <div class="story-hero-copy">
-        <p class="eyebrow">Quantum World · 序章</p>
-        <p class="story-kicker">实验日志 001 · 删掉 CX 之后，会发生什么？</p>
-        <h1 id="hero-title">先做一次实验，<br><em>再解释结果。</em></h1>
-        <p class="intro">你是这次实验的观测者。先猜 H 和 CX 会让两个量子比特怎样变化，再只改变一扇门，用两组本地运行结果修正自己的判断。</p>
-        <nav class="story-actions" aria-label="Quantum World 快速入口">
-          <a class="story-primary" href="#inquiry-world">进入第一章</a>
-          <a class="story-secondary" href="#evidence-map">我想先看证据</a>
-        </nav>
-        <p class="story-boundary">主视觉是旅程隐喻；结论只来自下方可重放实验，不把插画当作量子态证明。</p>
+    <section class="atlas-hero" aria-labelledby="hero-title">
+      <div class="atlas-intro">
+        <p class="eyebrow">Quantum Atlas · 无形世界调查局</p>
+        <p class="atlas-casefile">新人案件 001 · 一次观察，为什么不能代表全部？</p>
+        <h1 id="hero-title">先看世界如何分岔，<br><em>再知道门的名字。</em></h1>
+        <p class="intro">你不需要量子计算背景。调查局会先教你怎样提问、怎样做公平比较，再带你认识电路里的操作。</p>
       </div>
-      <ol id="story-chapters" class="story-chapters" aria-label="三幕探究旅程">
-        <li data-story-chapter="predict" class="current"><span>第一幕</span><strong>在分岔以前</strong><small>先留下预测</small></li>
-        <li data-story-chapter="experiment" class="upcoming"><span>第二幕</span><strong>只拨动一扇门</strong><small>运行 A/B 实验</small></li>
-        <li data-story-chapter="conclude" class="upcoming"><span>第三幕</span><strong>带证据归来</strong><small>审计结论并领取护照</small></li>
-      </ol>
-      <p id="story-progress-copy" class="story-progress-copy" role="status" aria-live="polite">第一幕：先留下你的预测。</p>
+
+      <div id="atlas-map" class="atlas-map" aria-label="调查地图：从观测站出发，经过分岔原野，最后抵达证据塔">
+        <img src="/assets/quantum-atlas-map.png" alt="纸质地图上，观测站、分岔原野与证据塔由一条道路连接；一名新人在观测站旁阅读笔记">
+        <button class="atlas-location current observatory" type="button" data-atlas-location="observatory" data-target="#atlas-briefing" aria-current="step">
+          <span>01 · 当前地点</span><strong>观测站</strong><small>学会怎样观察</small>
+        </button>
+        <button class="atlas-location locked field" type="button" data-atlas-location="field" data-target="#inquiry-world" disabled>
+          <span>02 · 待解锁</span><strong>分岔原野</strong><small>做一次公平比较</small>
+        </button>
+        <button class="atlas-location locked archive" type="button" data-atlas-location="archive" data-target="#inquiry-audit" disabled>
+          <span>03 · 待解锁</span><strong>证据塔</strong><small>检查结论说过头没有</small>
+        </button>
+      </div>
+      <div class="atlas-statusbar">
+        <p id="atlas-progress-copy" role="status" aria-live="polite">观测站：先学会四条调查规则，再出发。</p>
+        <a href="#evidence-map">熟悉量子计算？直接查看证据附录</a>
+      </div>
+      <p class="atlas-boundary">这是一张教学地图，不是量子态的物理图像。页面中的结论只来自可重放实验与审计记录。</p>
     </section>
 
-    <section id="inquiry-world" class="inquiry-world" aria-labelledby="inquiry-title" tabindex="-1">
+    <section id="atlas-briefing" class="atlas-briefing" aria-labelledby="briefing-title" tabindex="-1">
+      <header>
+        <p class="eyebrow">观测站 · 3 分钟新人简报</p>
+        <h2 id="briefing-title">看不见的对象，也能留下可检查的证据</h2>
+        <p>量子系统不能像桌上的球那样直接看清。先记住四条调查规则；它们也是后面每一步的理由。</p>
+      </header>
+      <ol class="briefing-cards">
+        <li><span>01</span><strong>状态</strong><p>它不是“藏着的唯一答案”，而是系统此刻怎样被准备。我们先记录准备方式。</p></li>
+        <li><span>02</span><strong>多种可能</strong><p>观察以前，先允许不止一种结果。不要过早把世界压成一个答案。</p></li>
+        <li><span>03</span><strong>重复观察</strong><p>一次观察只留下一条记录；把同一准备重复很多次，才看得见结果分布。</p></li>
+        <li><span>04</span><strong>只改一个条件</strong><p>前后实验保持其他条件相同，变化才有明确来源。这叫对照实验。</p></li>
+      </ol>
+      <div class="briefing-handoff">
+        <div><strong>你的调查规则</strong><p>先预测 → 重复观察 → 公平比较 → 让证据限制结论。</p></div>
+        <button id="begin-case" class="primary" type="button">我知道怎样调查了</button>
+      </div>
+    </section>
+
+    <section id="inquiry-world" class="inquiry-world" aria-labelledby="inquiry-title" tabindex="-1" hidden>
       <div class="inquiry-heading">
         <div>
-          <p class="eyebrow">Quantum World · 第一个探究任务</p>
-          <h2 id="inquiry-title">H 和 CX 分别做了什么？</h2>
-          <p>不需要先学 QASM。先预测，再运行对照实验；系统只改变 CX，最后请你根据两组结果选择结论。</p>
+          <p class="eyebrow">分岔原野 · 第一个对照实验</p>
+          <h2 id="inquiry-title">现在再问：H 和 CX 分别做了什么？</h2>
+          <p>H 作用在第一个量子比特，CX 随后连接第二个。你不需要先学 QASM：先预测，再运行对照实验；系统只移除 CX，观察两组分布如何变化。</p>
         </div>
         <ol class="inquiry-route" aria-label="探究步骤">
           <li><span>1</span>预测</li>
