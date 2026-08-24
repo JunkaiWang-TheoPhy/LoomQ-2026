@@ -5,6 +5,16 @@ import verify_submission
 
 
 class VerifySubmissionTests(unittest.TestCase):
+    def test_legacy_tuple_phase_is_still_supported(self):
+        report = verify_submission.run_phases(
+            [("legacy-phase", ["python3", "-c", "print('ok')"])]
+        )
+
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["phases"][0]["name"], "legacy-phase")
+        self.assertFalse(report["phases"][0]["skipped"])
+        self.assertEqual(report["phases"][0]["stdout"], "ok")
+
     def test_frontend_syntax_phase_is_marked_skip_when_node_is_unavailable(self):
         with mock.patch("verify_submission.shutil.which", return_value=None):
             phases = verify_submission.default_phases()
@@ -46,6 +56,13 @@ class VerifySubmissionTests(unittest.TestCase):
         self.assertFalse(report["phases"][0]["skipped"])
         self.assertEqual(report["phases"][0]["returncode"], 1)
         self.assertIn("missing binary", report["phases"][0]["stderr"])
+
+    def test_malformed_phase_spec_is_rejected_clearly(self):
+        with self.assertRaisesRegex(TypeError, "phase"):
+            verify_submission.run_phases([("broken",)])
+
+        with self.assertRaisesRegex(TypeError, "phase"):
+            verify_submission.run_phases([{"name": "broken"}])
 
 
 if __name__ == "__main__":

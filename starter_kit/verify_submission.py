@@ -30,6 +30,39 @@ def _phase(
     }
 
 
+def _normalize_phase_spec(phase: object) -> dict[str, Any]:
+    if isinstance(phase, dict):
+        if "name" not in phase or "command" not in phase:
+            raise TypeError(
+                "phase mappings must contain 'name' and 'command'"
+            )
+        name = phase["name"]
+        command = phase["command"]
+        optional = bool(phase.get("optional", False))
+        skip_reason = str(phase.get("skip_reason", ""))
+        if not isinstance(name, str) or not name:
+            raise TypeError("phase name must be a non-empty string")
+        if command is not None and not isinstance(command, Sequence):
+            raise TypeError("phase command must be a sequence or None")
+        if isinstance(command, (str, bytes, bytearray)):
+            raise TypeError("phase command must be a sequence of argv tokens, not a string")
+        return _phase(name, command, optional=optional, skip_reason=skip_reason)
+    if isinstance(phase, tuple):
+        if len(phase) != 2:
+            raise TypeError("phase tuples must be (name, command) pairs")
+        name, command = phase
+        if not isinstance(name, str) or not name:
+            raise TypeError("phase name must be a non-empty string")
+        if command is not None and not isinstance(command, Sequence):
+            raise TypeError("phase command must be a sequence or None")
+        if isinstance(command, (str, bytes, bytearray)):
+            raise TypeError("phase command must be a sequence of argv tokens, not a string")
+        return _phase(name, command)
+    raise TypeError(
+        "phase must be either a mapping with 'name'/'command' or a (name, command) pair"
+    )
+
+
 def default_phases() -> list[dict[str, Any]]:
     node_path = shutil.which("node")
     return [
@@ -100,9 +133,10 @@ def default_phases() -> list[dict[str, Any]]:
     ]
 
 
-def run_phases(phases: Sequence[dict[str, Any]]) -> dict:
+def run_phases(phases: Sequence[object]) -> dict:
     results = []
-    for phase in phases:
+    for raw_phase in phases:
+        phase = _normalize_phase_spec(raw_phase)
         name = str(phase["name"])
         command = phase["command"]
         if command is None:
