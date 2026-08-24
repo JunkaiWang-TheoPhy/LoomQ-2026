@@ -21,7 +21,7 @@ python3 -m unittest tests.test_web tests.test_inquiry_frontend -v
 | 移动端评委入口 | 390×844；页面 `scrollWidth=innerWidth=390`。真机卡单列，六步状态条横向滚动，不造成页面级横向溢出 | 2026-08-24 Chrome 验收，visual-verdict `93/100` |
 | 六步初始状态 | 两个 viewport 重新加载后均为 `未运行 × 6`，没有复用前一会话结果 | 真实浏览器 DOM 读取 |
 | 一键本地路径 | 桌面与移动端均完成 `6/6`：三后端回读、第 2 门分歧、3 项 exact-local pass、Witness 重建、Hybrid 语义重算、backend Prompt Contract | 最终代码的真实 Chrome 点击；本机分别约 131 ms 与 137 ms，不作为性能保证 |
-| 键盘首屏顺序 | 两个 viewport 依次到达 skip link、brand、三个快速入口、两张真机卡、六步按钮和六个状态链接；链接目标均为现有页面区域或固定证据文件 | 2026-08-24 Chrome 18 次连续 `Tab` 复核 |
+| 键盘顺序 | 两个 viewport 依次到达 skip link、brand、Quantum World 双入口、预测/实验/结论控件，再进入证据附录的快速入口、真机卡、六步按钮和状态链接；链接目标均为现有页面区域或固定证据文件 | 2026-08-24 Chrome 连续 `Tab` 复核 |
 | Bell 运行 | 1024 shots 输出 `00=512, 11=512`；概率图、文本表、位序说明与原生指令同步更新 | 浏览器 DOM 与 `tests.test_web` |
 | ProofTrace | 点击 Run 后 `proof-status=已验证`；下载链接变为 `blob:` 且文件名为 `loomq-prooftrace-*.json` | 本次 Playwright/Chromium 交互与 `tests.test_prooftrace`、`tests.test_web` |
 | P1 断言报告 | 默认断言返回 `exact-local`，显示 `3` 条通过结果与“本地精确断言不归因具体噪声机制。” | 本次 Playwright/Chromium 交互与 `tests.test_web`、`tests.test_assertions` |
