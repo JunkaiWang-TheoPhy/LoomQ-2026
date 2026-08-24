@@ -152,6 +152,15 @@ class HybridPathCertificateTests(unittest.TestCase):
 
 
 class HybridPathVerificationTests(unittest.TestCase):
+    def test_verifier_fails_closed_when_stored_bound_cannot_recompute(self):
+        certificate = certify_hybrid_paths(DETERMINISTIC_BRANCH)
+        certificate["limits"]["max_outcomes"] = 1
+
+        result = verify_hybrid_path_certificate(DETERMINISTIC_BRANCH, certificate)
+
+        self.assertFalse(result["valid"])
+        self.assertIn("recomputation failed", result["reason"])
+
     def test_certificates_are_deterministic_and_verification_recomputes_semantics(self):
         certificate = certify_hybrid_paths(SHARED_PATH_DIFFERENT_REGISTERS)
         repeated = certify_hybrid_paths(SHARED_PATH_DIFFERENT_REGISTERS)

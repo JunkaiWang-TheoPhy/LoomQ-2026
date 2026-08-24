@@ -280,7 +280,15 @@ def verify_hybrid_path_certificate(
 
     supplied_body = {key: value for key, value in certificate.items() if key != "integrity"}
     certificate_sha256 = _sha256_json(supplied_body)
-    recomputed = certify_hybrid_paths(source, max_outcomes=stored_bound)
+    try:
+        recomputed = certify_hybrid_paths(source, max_outcomes=stored_bound)
+    except Exception as exc:  # Verification must fail closed for malformed claims.
+        return {
+            "valid": False,
+            "reason": f"recomputation failed: {exc}",
+            "certificate_sha256": certificate_sha256,
+            "recomputed_sha256": "",
+        }
     recomputed_body = {key: value for key, value in recomputed.items() if key != "integrity"}
     recomputed_sha256 = _sha256_json(recomputed_body)
 
