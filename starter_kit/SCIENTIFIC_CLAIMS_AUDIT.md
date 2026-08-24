@@ -13,7 +13,7 @@
 | 算法画廊 | 无噪声精确模拟：Deutsch–Jozsa `11=1`；两轮 Grover `P(111)=0.9453125`；QFT-4 测量均匀且振幅相位非平凡 | 这些归档电路在声明的理想模型和位序下具有对应分布/相位 | 量子加速、真实硬件优势，或任意 oracle/输入的普遍性能 |
 | Native IR 回读 | 三套独立语法 parser 重建与源完全相同的 `Circuit` | emitter 输出在所支持规范子集中没有丢门、换门、参数或测量映射 | 厂商云服务当前在线或接受所有扩展语法 |
 | P2 Hybrid 回放 | `trace_hybrid()` 返回 `branch_path`、`machine_jump_taken`、`source_condition_true`、measurement provenance、寄存器增量和机器字 | 源码条件真假、机器跳转真假、bit 顺序 `c[0], c[1], …` 和寄存器变化可复核；Web 只是展示这些确定性证据 | 量子硬件噪声导致某条经典分支被选中，或未编码到 replay 输入的测量位在机器寄存器中被真实执行 |
-| P2 Hybrid 路径证书 | `hybrid_path_certificate()` 对 exact measurement distribution 做有界投影，列出可达路径概率、终态寄存器族与零概率不可达投影 | 软件语义上的路径概率、不可达 outcome 与终态寄存器差异可复核；这是本地证书，不是真机物理证据 | 把该证书外推为硬件路径选择机制、噪声来源或真机分支证明 |
+| P2 Hybrid 路径证书 | `certify_hybrid_paths()` 在记录的 `max_outcomes` 上限内穷举全部 `2**num_clbits` outcome，重放源码分支并列出路径总概率、不可达 outcome、死路径与终态寄存器差异；`verify_hybrid_path_certificate()` 必须从源码本地重算 | 软件语义上的路径概率、不可达 outcome、死路径与终态寄存器差异可复核；这是本地证书，不是真机物理证据 | 把该证书外推为硬件路径选择机制、噪声来源或真机分支证明 |
 | OriginQ Bell 真机 | job `9D182FA1EF76FF3807697CDF69DE7483`，Z 基 958/1000 位于 `00/11`，Wilson 95% 区间 `[0.9437,0.9688]` | 强 Z 基相关，与目标 Bell 电路的计算基支持集一致 | 单靠 Z 基数据证明纠缠、Bell 不等式或设备无关认证 |
 | SpinQ Bell 真机 | job `G-260824-0001`，provider MessagePack 投影概率，理想支持集概率 `0.66866048` | 全局主峰 `00` 是理想支持态；如实报告噪声和偏差 | 把投影概率伪造成 shots、置信区间或高保真双峰 |
 | L1 target 输出 | 同一 IR 的三种 emitter、公开 evaluator、PyQuafu 状态向量交叉验证 | 软件语义、位序和目标文本满足公开契约 | 对三家云端实时可用性或排队时间作保证 |

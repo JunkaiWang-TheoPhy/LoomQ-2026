@@ -118,8 +118,11 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             if path == "/api/hybrid-trace":
                 self._hybrid_trace(payload)
                 return
+            if path == "/api/hybrid-paths":
+                self._hybrid_paths(payload)
+                return
             if path == "/api/hybrid-path-certificate":
-                self._hybrid_path_certificate(payload)
+                self._hybrid_paths(payload)
                 return
             if path == "/api/agent":
                 self._agent(payload)
@@ -228,11 +231,24 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             raise ValueError("measurement_bits 必须提供")
         self._send_json(HTTPStatus.OK, adapter.trace_hybrid(source, measurement_bits))
 
-    def _hybrid_path_certificate(self, payload: Dict[str, Any]) -> None:
+    def _hybrid_paths(self, payload: Dict[str, Any]) -> None:
         source = payload.get("source")
         if not isinstance(source, str) or not source.strip():
             raise ValueError("source 必须是非空字符串")
-        self._send_json(HTTPStatus.OK, adapter.hybrid_path_certificate(source))
+        max_outcomes = payload.get("max_outcomes", 256)
+        if isinstance(max_outcomes, bool) or not isinstance(max_outcomes, int):
+            raise ValueError("max_outcomes 必须是 1–256 的整数")
+        if max_outcomes <= 0 or max_outcomes > 256:
+            raise ValueError("max_outcomes 必须是 1–256 的整数")
+        certificate = adapter.certify_hybrid_paths(source, max_outcomes=max_outcomes)
+        verification = adapter.verify_hybrid_path_certificate(source, certificate)
+        self._send_json(
+            HTTPStatus.OK,
+            {
+                "certificate": certificate,
+                "verification": verification,
+            },
+        )
 
     def _compare(self, payload: Dict[str, Any]) -> None:
         reference_qasm = payload.get("reference_qasm")

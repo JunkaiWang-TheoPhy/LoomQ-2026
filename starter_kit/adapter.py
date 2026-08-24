@@ -11,8 +11,9 @@ try:
     from . import llm_client
     from .loomq.agent import chat
     from .loomq.hybrid import compile_hybrid as compile_hybrid_program
-    from .loomq.hybrid_path_certificate import (
-        build_hybrid_path_certificate as hybrid_path_certificate_program,
+    from .loomq.hybrid_paths import (
+        certify_hybrid_paths as certify_hybrid_paths_program,
+        verify_hybrid_path_certificate as verify_hybrid_path_certificate_program,
     )
     from .loomq.prooftrace import compile_target, compile_with_proof
     from .loomq.hybrid_trace import trace_hybrid as trace_hybrid_program
@@ -22,8 +23,9 @@ except ImportError:  # Direct execution from starter_kit/.
     import llm_client
     from loomq.agent import chat
     from loomq.hybrid import compile_hybrid as compile_hybrid_program
-    from loomq.hybrid_path_certificate import (
-        build_hybrid_path_certificate as hybrid_path_certificate_program,
+    from loomq.hybrid_paths import (
+        certify_hybrid_paths as certify_hybrid_paths_program,
+        verify_hybrid_path_certificate as verify_hybrid_path_certificate_program,
     )
     from loomq.prooftrace import compile_target, compile_with_proof
     from loomq.hybrid_trace import trace_hybrid as trace_hybrid_program
@@ -70,6 +72,18 @@ def trace_hybrid(hybrid_qasm_str: str, measurement_bits: object) -> Dict[str, An
     return trace_hybrid_program(hybrid_qasm_str, measurement_bits)
 
 
-def hybrid_path_certificate(hybrid_qasm_str: str) -> Dict[str, Any]:
-    """Return an exact projected measurement/path certificate for Hybrid-QASM."""
-    return hybrid_path_certificate_program(hybrid_qasm_str)
+def certify_hybrid_paths(hybrid_qasm_str: str, max_outcomes: int = 256) -> Dict[str, Any]:
+    """Return an exact exhaustive certificate for bounded Hybrid-QASM classical outcomes."""
+    return certify_hybrid_paths_program(hybrid_qasm_str, max_outcomes=max_outcomes)
+
+
+def verify_hybrid_path_certificate(
+    hybrid_qasm_str: str, certificate: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Recompute a Hybrid-QASM certificate from source instead of trusting stored hashes."""
+    return verify_hybrid_path_certificate_program(hybrid_qasm_str, certificate)
+
+
+def hybrid_path_certificate(hybrid_qasm_str: str, max_outcomes: int = 256) -> Dict[str, Any]:
+    """Compatibility alias for callers still using the older entry point name."""
+    return certify_hybrid_paths(hybrid_qasm_str, max_outcomes=max_outcomes)
