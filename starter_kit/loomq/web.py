@@ -17,12 +17,14 @@ try:
     from .assertions import diagnose_mutation, diagnose_observed_execution, evaluate_assertions
     from .simulator import trace_statevector
     from .qasm import parse_qasm
+    from .witness import build_causal_audit, verify_causal_audit
 except ImportError:  # Direct execution from starter_kit/.
     import adapter
     from loomq.agent import normalize_history
     from loomq.assertions import diagnose_mutation, diagnose_observed_execution, evaluate_assertions
     from loomq.simulator import trace_statevector
     from loomq.qasm import parse_qasm
+    from loomq.witness import build_causal_audit, verify_causal_audit
 
 
 _WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
@@ -109,6 +111,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 return
             if path == "/api/compare":
                 self._compare(payload)
+                return
+            if path == "/api/causal-audit":
+                self._causal_audit(payload)
                 return
             if path == "/api/hybrid-trace":
                 self._hybrid_trace(payload)
@@ -253,6 +258,36 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             "它不诊断真实硬件噪声来源。"
         )
         self._send_json(HTTPStatus.OK, report)
+
+    def _causal_audit(self, payload: Dict[str, Any]) -> None:
+        reference_qasm = payload.get("reference_qasm")
+        candidate_qasm = payload.get("candidate_qasm")
+        assertions = payload.get("assertions")
+        hybrid_source = payload.get("hybrid_source")
+        measurement_bits = payload.get("measurement_bits")
+        target = payload.get("target", "spinq")
+        if not isinstance(reference_qasm, str) or not reference_qasm.strip():
+            raise ValueError("reference_qasm 必须是非空字符串")
+        if not isinstance(candidate_qasm, str) or not candidate_qasm.strip():
+            raise ValueError("candidate_qasm 必须是非空字符串")
+        if not isinstance(assertions, list) or not assertions:
+            raise ValueError("assertions 必须是非空列表")
+        if not isinstance(hybrid_source, str) or not hybrid_source.strip():
+            raise ValueError("hybrid_source 必须是非空字符串")
+        if measurement_bits is None:
+            raise ValueError("measurement_bits 必须提供")
+        if target not in adapter.SUPPORTED_TARGETS:
+            raise ValueError("target 必须是 spinq、originq 或 braket")
+        audit = build_causal_audit(
+            reference_qasm,
+            candidate_qasm,
+            assertions,
+            hybrid_source,
+            measurement_bits,
+            target,
+        )
+        audit["verification"] = verify_causal_audit(audit)
+        self._send_json(HTTPStatus.OK, audit)
 
     def _agent(self, payload: Dict[str, Any]) -> None:
         prompt = payload.get("prompt")

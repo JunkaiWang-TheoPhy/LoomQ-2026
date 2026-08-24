@@ -8,6 +8,7 @@ from loomq.agent import (
     _state_goal,
     _validate_backend_reply,
     _validate_state_goal,
+    chat,
 )
 from loomq.qasm import QASMError
 
@@ -23,6 +24,36 @@ measure q -> c;
 
 
 class AgentSemanticTests(unittest.TestCase):
+    def test_state_goal_normalizes_private_shape_synonyms_and_qubit_units(self):
+        cases = [
+            ("Create a 5-qubit cat state and measure it", ("GHZ", 5)),
+            ("Prepare an EPR pair and measure both qbits", ("Bell", 2)),
+            ("生成 5 个量子位的最大纠缠态并全测量", ("GHZ", 5)),
+        ]
+
+        for prompt, expected in cases:
+            with self.subTest(prompt=prompt):
+                self.assertEqual(_state_goal(prompt), expected)
+
+    def test_private_shape_synonyms_recover_after_two_invalid_completions(self):
+        calls = 0
+
+        def invalid_model(_messages):
+            nonlocal calls
+            calls += 1
+            return {"choices": [{"message": {"content": "invalid"}}]}
+
+        for prompt in (
+            "Create a 5-qubit cat state and measure it",
+            "Prepare an EPR pair and measure both qbits",
+            "生成 5 个量子位的最大纠缠态并全测量",
+        ):
+            with self.subTest(prompt=prompt):
+                reply = chat(prompt, invalid_model)
+                _validate_state_goal(prompt, _qasm_from_reply(reply))
+
+        self.assertEqual(calls, 6)
+
     def test_circuit_selection_verbs_do_not_override_state_generation_cues(self):
         self.assertTrue(_expects_qasm("选择一个 Bell 态电路并测量"))
         self.assertTrue(_expects_qasm("Select a Bell circuit and measure it"))
@@ -45,6 +76,14 @@ class AgentSemanticTests(unittest.TestCase):
 
     def test_backend_fallback_refuses_unsatisfiable_constraints(self):
         self.assertIsNone(_deterministic_backend_reply("推荐 80 比特真机后端"))
+        self.assertIsNone(
+            _deterministic_backend_reply(
+                "Which 50-qbit QPU is available without waiting?"
+            )
+        )
+        self.assertIsNone(
+            _deterministic_backend_reply("推荐 34 量子位、无需排队且零费用的平台")
+        )
 
     def test_w_state_positive_case_is_accepted(self):
         prompt = "生成四比特 W 态并测量"

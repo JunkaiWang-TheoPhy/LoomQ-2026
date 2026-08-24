@@ -137,6 +137,9 @@ def _expects_qasm(prompt: str) -> bool:
         "量子态",
         "bell",
         "ghz",
+        "epr",
+        "cat state",
+        "maximally entangled",
         "测量",
         "纠缠",
     )
@@ -161,8 +164,9 @@ def _qasm_from_reply(reply: str) -> str:
 
 def _qubit_count(prompt: str) -> int | None:
     match = re.search(
-        r"(\d+)\s*-?\s*(?:个?\s*)?(?:量子)?(?:比特|qubits?)"
-        r"|(?:qubits?)\s*[:=]?\s*(\d+)",
+        r"(\d+)\s*-?\s*(?:个?\s*)?"
+        r"(?:(?:量子)?(?:比特|位)|qubits?|qbits?|quantum\s+bits?)"
+        r"|(?:qubits?|qbits?|quantum\s+bits?)\s*[:=]?\s*(\d+)",
         prompt.lower(),
     )
     return int(match.group(1) or match.group(2)) if match else None
@@ -184,7 +188,9 @@ def _requested_qubits(prompt: str, default: int | None = None) -> int | None:
         "九": 9,
     }
     for character, value in chinese_digits.items():
-        if re.search(character + r"\s*(?:个?\s*)?(?:量子)?比特", prompt.lower()):
+        if re.search(
+            character + r"\s*(?:个?\s*)?(?:量子)?(?:比特|位)", prompt.lower()
+        ):
             return value
     return default
 
@@ -202,9 +208,17 @@ def _state_goal(prompt: str) -> tuple[str, int] | None:
         return ("uniform superposition", qubits) if qubits is not None else None
     if "w 态" in lowered or "w态" in lowered or re.search(r"\bw(?: state)?\b", lowered):
         return "W", _requested_qubits(prompt, 3) or 3
-    if "bell" in lowered or "贝尔" in lowered:
+    if any(term in lowered for term in ("bell", "贝尔", "epr", "纠缠对")):
         return "Bell", 2
-    if "ghz" not in lowered and "猫态" not in lowered and "最大纠缠" not in lowered:
+    maximally_entangled = any(
+        term in lowered for term in ("最大纠缠", "maximally entangled")
+    )
+    if maximally_entangled and _requested_qubits(prompt) == 2:
+        return "Bell", 2
+    if not any(
+        term in lowered
+        for term in ("ghz", "猫态", "cat state", "最大纠缠", "maximally entangled")
+    ):
         return None
     return "GHZ", _requested_qubits(prompt, 3) or 3
 
@@ -265,9 +279,34 @@ def _backend_constraints(prompt: str) -> tuple[int | None, bool, bool, bool, boo
     qubits = _qubit_count(prompt)
     no_queue = any(
         term in normalized
-        for term in ("零排队", "无排队", "不排队", "zero queue", "no queue")
+        for term in (
+            "零排队",
+            "无排队",
+            "不排队",
+            "免排队",
+            "无需排队",
+            "没有排队",
+            "zero queue",
+            "no queue",
+            "without queue",
+            "without waiting",
+            "no waiting",
+        )
     )
-    free = any(term in lowered for term in ("免费", "零成本", "free", "no cost"))
+    free = any(
+        term in lowered
+        for term in (
+            "免费",
+            "零成本",
+            "零费用",
+            "无费用",
+            "不收费",
+            "free",
+            "no cost",
+            "without charge",
+            "at no charge",
+        )
+    )
     qpu = any(term in lowered for term in ("真机", "量子硬件", "qpu"))
     simulator = any(term in lowered for term in ("模拟器", "simulator"))
     return qubits, no_queue, free, qpu, simulator

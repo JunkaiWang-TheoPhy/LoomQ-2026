@@ -29,9 +29,10 @@
 | 反事实因果学习 | talk2joan #100 的六关游戏化新手任务与概念解释路由 | Counterfactual Circuit Lab 允许用户改写候选 QASM，逐门精确定位首个状态分歧，展示参考/候选门、振幅差与 TV 距离；结构不同则拒绝伪因果结论 | 新增差异化能力；以可验证因果反馈区别于积分与纯文本解释 |
 | P1 断言证据面板 | 新增公开审计重点：Huxingyu、Duanice、UokyI、orange-city 均需人工点开验证 | `/api/assert` 与 Web 断言面板区分 exact-local、finite-shots、provider-probabilities；显式展示 pass/fail/inconclusive 和不归因具体噪声机制 | 新增差异化能力 |
 | P2 Hybrid 分支回放 | 新增公开审计重点：Huxingyu、Duanice、UokyI、orange-city 均需人工点开验证 | `/api/hybrid-trace` 与 Web 回放面板显示 branch path、machine jump vs source condition、measurement provenance、寄存器增量与机器字 | 新增差异化能力 |
+| 跨模块 Witness Chain | 十二份固定提交未展示共享源操作坐标的统一审计工件 | 稳定 `gN/mN` ID 对齐 ProofTrace、反事实、断言与 Hybrid provenance；内容地址 JSON 可下载并从输入全量重算，结构不匹配时失败关闭 | 新增系统性创新；把四项点能力收束为一条可审证据链 |
 | 多轮 Agent 会话 | 0Dionysus0 的 session 交互 | 严格 `user/assistant` 交替、最多四轮、40k 字符总限额、清空上下文 | 覆盖并加边界 |
 | 生成、修复、后端推荐 | talk2joan、danjituya、Pennie514 等公开 Web Agent | Web 四条引导路径；能力表 grounding；QASM 语法、门集、目标态确定性复核与一次诊断重试；最坏路径中模型连续返回 1000 次无效内容，500/500 固定语料仍由同一判据安全恢复 | 覆盖并关闭模型偶发失误路径 |
-| 新手 Web 与可视化 | mayloveless React、EndlessTR 引导页、Wayne Web QA、talk2joan #100 游戏化任务、danjituya/Pennie514 零依赖 Web | 零依赖响应式 Web；概率柱图+表格；反事实因果实验、ProofTrace 证书、P1 断言、P2 Hybrid 回放、逐门故事；桌面/390px 浏览器验收；无障碍语义 | 功能覆盖并形成不同教学路径；不复制框架栈或游戏机制 |
+| 新手 Web 与可视化 | mayloveless React、EndlessTR 引导页、Wayne Web QA、talk2joan #100 游戏化任务、danjituya/Pennie514 零依赖 Web | 零依赖响应式 Web；概率柱图+表格；一键 Witness Chain、反事实因果实验、ProofTrace 证书、P1 断言、P2 Hybrid 回放、逐门故事；桌面/390px 浏览器验收；无障碍语义 | 功能覆盖并形成不同教学路径；不复制框架栈或游戏机制 |
 | 对抗性资源边界 | mayloveless L3 resource audit、Wayne adversarial tests | QASM 1MB/256 bit/100k op；稠密状态向量 20 qubit；有界稀疏执行匹配 SpinQ 24 / OriginQ 30 / Braket 25；trace 8 qubit；L3 1MB/20k token/4096 statement/64 nesting | 覆盖并形成拒绝合同 |
 | L2 大规模 campaign | Wayne 真实模型压力材料、talk2joan 14 题申报 | 500 条唯一语料、可执行真实调用的 runner、断点恢复、逐记录哈希、脱敏摘要校验；12 例同形资格链 20 次主链请求 + 错误后端双调用回退；40,000 项无凭据断言 | 工具、协议资格与后端最坏路径覆盖；真实模型结果仍需凭据 |
 | L1 随机/隐藏式压力 | mayloveless hidden-like、Wayne fuzz | 40,000 项固定离线活动 + PyQuafu 随机三比特 corpus + 全门全 target 回读 | 覆盖并加强 |

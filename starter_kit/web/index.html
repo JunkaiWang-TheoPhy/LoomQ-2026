@@ -173,6 +173,23 @@
       </div>
     </section>
 
+    <section id="witness-panel" class="witness-panel" aria-labelledby="witness-title" tabindex="-1">
+      <div class="witness-heading">
+        <div>
+          <p class="eyebrow">WITNESS CHAIN · CAUSAL AUDIT</p>
+          <h2 id="witness-title">一条稳定证据坐标，串起源门、测量与经典分支</h2>
+        </div>
+        <p>同一次审计把 ProofTrace 谱系、反事实首门分歧、断言读取位和 Hybrid 分支来源对齐到 g1 / m1 等稳定 witness ID。</p>
+      </div>
+      <div class="witness-actions">
+        <button id="run-witness" class="secondary" type="button">生成统一审计链</button>
+        <a id="download-witness" class="proof-download" href="#" aria-disabled="true">下载 Witness Chain JSON</a>
+        <span id="witness-status" class="backend">等待审计</span>
+      </div>
+      <p id="witness-integrity" class="audit-note">内容地址 SHA-256 会在本地重算；它用于发现归档篡改，不是身份签名。</p>
+      <ol id="witness-chain" class="witness-chain" aria-live="polite"></ol>
+    </section>
+
     <section class="evidence-lab" aria-labelledby="evidence-title">
       <div class="evidence-header">
         <div>

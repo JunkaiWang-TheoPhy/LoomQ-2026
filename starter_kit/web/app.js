@@ -142,6 +142,7 @@ const qasm = $("#qasm");
 const notice = $("#notice");
 const agentHistory = [];
 let lastProofUrl = null;
+let lastWitnessUrl = null;
 
 function tell(message) {
   notice.textContent = message;
@@ -341,6 +342,34 @@ function renderHybridReport(report) {
   });
   $("#hybrid-assembly").textContent = report.assembly;
   $("#hybrid-registers").textContent = JSON.stringify(report.final_registers, null, 2);
+}
+
+function renderWitnessAudit(audit) {
+  const verification = audit.verification;
+  $("#witness-status").textContent = verification.valid ? "本地重算通过" : "验证失败";
+  const digest = audit.integrity.audit_sha256;
+  $("#witness-integrity").textContent =
+    `SHA-256 ${digest} · 内容地址用于发现归档篡改，不是身份签名。`;
+  const chain = $("#witness-chain");
+  chain.replaceChildren();
+  audit.witness_chain.forEach((stage) => {
+    const item = element("li", "");
+    const witnesses = stage.witness_ids.length ? stage.witness_ids.join(" → ") : "无可归因 witness";
+    item.append(
+      element("strong", "", stage.stage),
+      element("code", "", witnesses),
+      element("p", "audit-note", stage.detail || stage.scope || "确定性跨模块映射"),
+    );
+    chain.append(item);
+  });
+  if (lastWitnessUrl) URL.revokeObjectURL(lastWitnessUrl);
+  const blob = new Blob([JSON.stringify(audit, null, 2)], { type: "application/json" });
+  lastWitnessUrl = URL.createObjectURL(blob);
+  const downloadWitness = $("#download-witness");
+  downloadWitness.href = lastWitnessUrl;
+  downloadWitness.download = `loomq-witness-chain-${digest.slice(0, 12)}.json`;
+  downloadWitness.setAttribute("aria-disabled", "false");
+  $("#witness-panel").focus();
 }
 
 function formatOperation(operation) {
@@ -591,6 +620,29 @@ $("#run-compare").addEventListener("click", async () => {
   } finally {
     button.disabled = false;
     button.textContent = "比较因果差异";
+  }
+});
+
+$("#run-witness").addEventListener("click", async () => {
+  const button = $("#run-witness");
+  button.disabled = true;
+  button.textContent = "对齐证据中…";
+  try {
+    const data = await api("/api/causal-audit", {
+      reference_qasm: qasm.value,
+      candidate_qasm: $("#candidate-qasm").value,
+      assertions: parseJsonInput($("#assertions-input").value, "assertions"),
+      hybrid_source: $("#hybrid-source").value,
+      measurement_bits: parseJsonInput($("#hybrid-bits").value, "measurement_bits"),
+      target: $("#target").value,
+    });
+    renderWitnessAudit(data);
+    tell("统一 Witness Chain 已通过本地重算");
+  } catch (error) {
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "生成统一审计链";
   }
 });
 

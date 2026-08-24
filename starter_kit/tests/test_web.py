@@ -133,6 +133,9 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="assert-panel"', page)
         self.assertIn('id="hybrid-panel"', page)
         self.assertIn('id="counterfactual-panel"', page)
+        self.assertIn('id="witness-panel"', page)
+        self.assertIn('id="run-witness"', page)
+        self.assertIn('id="download-witness"', page)
         self.assertIn('id="candidate-qasm"', page)
         self.assertIn('id="run-compare"', page)
         self.assertIn("不归因具体噪声机制", page)
@@ -156,6 +159,9 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('api("/api/assert"', script)
         self.assertIn('api("/api/hybrid-trace"', script)
         self.assertIn('api("/api/compare"', script)
+        self.assertIn('api("/api/causal-audit"', script)
+        self.assertIn("witness_chain", script)
+        self.assertIn("downloadWitness.href", script)
         self.assertIn("first_divergent_gate", script)
         self.assertIn("final_distribution_distance", script)
         self.assertIn("confidence_interval", script)
@@ -316,6 +322,45 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(payload["scope"], "structural-mismatch")
         self.assertIsNone(payload["first_divergent_gate"])
         self.assertIn("测量映射", payload["explanation"])
+
+    def test_causal_audit_endpoint_unifies_cross_module_witnesses(self):
+        candidate = BELL.replace("cx q[0],q[1];", "x q[1];")
+
+        status, _headers, body = self.request(
+            "/api/causal-audit",
+            {
+                "reference_qasm": BELL,
+                "candidate_qasm": candidate,
+                "assertions": [
+                    {
+                        "kind": "support",
+                        "states": ["00", "11"],
+                        "minimum_probability": 0.9,
+                    }
+                ],
+                "hybrid_source": HYBRID,
+                "measurement_bits": [1, 0],
+                "target": "spinq",
+            },
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["schema_version"], "loomq-witness-chain-v1")
+        stages = {stage["stage"]: stage for stage in payload["witness_chain"]}
+        self.assertEqual(
+            stages["counterfactual"]["counterfactual"]["reference_witness_id"],
+            "g2",
+        )
+        self.assertEqual(
+            stages["assertions"]["assertions"][0]["measurement_witness_ids"],
+            ["m1", "m2"],
+        )
+        self.assertEqual(
+            stages["hybrid"]["hybrid"]["branch_events"][0]["measurement_witness_ids"],
+            ["m2"],
+        )
+        self.assertTrue(payload["verification"]["valid"])
 
     def test_large_valid_circuit_keeps_running_when_visual_trace_is_bounded(self):
         source = """OPENQASM 2.0; include "qelib1.inc";

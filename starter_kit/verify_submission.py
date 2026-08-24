@@ -82,6 +82,7 @@ def default_phases() -> list[dict[str, Any]]:
                 "tests.test_web",
                 "tests.test_assertions",
                 "tests.test_hybrid_trace",
+                "tests.test_witness",
                 "-v",
             ],
         ),

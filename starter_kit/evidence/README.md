@@ -19,7 +19,7 @@
 | 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
 |---|---:|---|
 | L1 真机 | 10/10 分上限 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
-| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、反事实首门分歧实验、ProofTrace 可下载证书、P1 断言报告、P2 Hybrid 回放、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、21 项 Web 测试 |
+| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、可下载并重算的 Witness Chain、反事实首门分歧、ProofTrace 证书、P1 断言、P2 Hybrid 回放、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、22 项 Web 测试 |
 | 工程与产品复核 | 10/10 分上限 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
 | 自定义量子 RISC-V | 8/8 分上限 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
 | 新手引导与视觉叙事 | 4/4 分上限 | Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
@@ -87,6 +87,8 @@ evidence/files/spinq-screenshot.png
 3. **Backend Match + Judge Evidence**：点击“选择合适的后端”，把任务改为“推荐一个免费、零排队、至少 20 比特的模拟器后端”；回答必须包含能力表中的兼容规范 ID。随后在同一页打开 P1 断言面板，检查 exact-local / finite-shot / provider-probabilities 三种证据标签与“不归因具体噪声机制”提示，再在 P2 Hybrid 面板核对 `branch_path`、`machine_jump_taken`、`source_condition_true` 与寄存器增量。
 截图或演示视频：首屏桌面 `starter_kit/evidence/files/web-lab-desktop-current.jpg`，移动端 `starter_kit/evidence/files/web-lab-mobile-current.jpg`；反事实结果桌面 `starter_kit/evidence/files/counterfactual-desktop.jpg`，移动端 `starter_kit/evidence/files/counterfactual-mobile.jpg`；完整验收矩阵见 `starter_kit/WEB_QA.md`。所有流程均由最终 commit 中的代码直接运行。
 ```
+
+默认 Bell 例还提供一键审计动作：点击“生成统一审计链”，`loomq-witness-chain-v1` 会把反事实 `g2`、断言 `m1/m2`、Hybrid 分支 `m2` 与 ProofTrace source lineage 对齐。下载 JSON 后可按 `starter_kit/WITNESS_CHAIN.md` 使用 `verify_causal_audit()` 重算；摘要用于发现篡改，不冒充作者签名或真机物理证明。
 
 工作人员会在组委会统一模型环境中运行最终代码，测试新手是否看得懂、出错后能否得到有效帮助、结果是否清楚，以及多轮回答是否一致。选手自己的对话截图只用于说明产品流程，不直接证明得分。
 
