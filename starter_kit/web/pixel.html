@@ -17,9 +17,17 @@
       <a class="pixel-logo" href="/">QA <span>像素调查局</span></a>
       <div id="pixel-scene-name" class="pixel-scene-name"><small>LOCATION</small><strong>雾镜镇</strong></div>
       <div class="pixel-objective"><small>MISSION 01</small><strong id="pixel-objective">找齐三枚调查碎片</strong></div>
+      <div id="pixel-phase-meter" class="pixel-phase-meter"><small>PHASE</small><strong id="pixel-phase-value">PREPARED</strong></div>
       <div class="pixel-counter"><span id="pixel-shards">0 / 3</span><small>碎片</small></div>
+      <button id="pixel-music-toggle" type="button" aria-pressed="false" aria-label="打开量子环境音乐">♫</button>
       <button id="pixel-reset" type="button" aria-label="重置像素案件">↻</button>
     </header>
+    <section id="pixel-guide" class="pixel-guide" aria-label="新手引导" hidden>
+      <div class="guide-kicker"><span>FIELD GUIDE</span><strong>第一次调查</strong></div>
+      <p id="pixel-guide-step">用方向键 / WASD 移动到林默身边</p>
+      <div class="guide-progress"><i></i><i></i><i></i></div>
+      <small>你可以随时按 E 调查附近的对象</small>
+    </section>
     <section id="pixel-quickbar" class="pixel-quickbar" aria-label="调查碎片快捷栏">
       <span class="quickbar-title">调查手册</span>
       <div class="quickbar-slot" data-slot="state"><i></i><small>状态</small></div>
@@ -39,6 +47,11 @@
       <small>QUANTUM ATLAS · SIDE QUEST</small>
       <h1>像素调查局</h1>
       <p>把三枚散落的调查碎片交给小满，<br>让量子井重新亮起来。</p>
+      <div class="pixel-start-guide" aria-label="三步新手引导">
+        <div><b>01</b><strong>移动</strong><small>找到林默</small></div>
+        <div><b>02</b><strong>观察</strong><small>靠近碎片按 E</small></div>
+        <div><b>03</b><strong>过桥</strong><small>让两条路径相遇</small></div>
+      </div>
       <button id="pixel-start-button" type="button">开始调查 <span>ENTER</span></button>
       <em>方向键 / WASD 移动 · E 调查</em>
     </section>

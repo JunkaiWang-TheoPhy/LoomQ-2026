@@ -8,6 +8,11 @@
   const WIDTH = 24;
   const HEIGHT = 16;
   const SHARDS = ["state", "repeat", "control"];
+  const GUIDE_STEPS = [
+    { id: "move", action: "用方向键 / WASD 移动到林默身边" },
+    { id: "observe", action: "靠近发光碎片，按 E 进行一次观察" },
+    { id: "bridge", action: "沿木桥穿过分岔河谷，去找小满" },
+  ];
   const MAP = [
     "########################",
     "#..............#.......#",
@@ -35,9 +40,9 @@
     { id: "gate", kind: "gate", x: 20, y: 7 },
   ];
   const SCENES = {
-    village: { name: "雾镜镇", range: [0, 8], accent: "#f6dd78" },
-    river: { name: "分岔河谷", range: [9, 15], accent: "#78c7d4" },
-    archive: { name: "证据塔庭院", range: [16, 23], accent: "#f06a7b" },
+    village: { name: "雾镜镇", range: [0, 8], accent: "#f6dd78", phase: "prepared" },
+    river: { name: "分岔河谷", range: [9, 15], accent: "#78c7d4", phase: "entangled" },
+    archive: { name: "证据塔庭院", range: [16, 23], accent: "#f06a7b", phase: "audited" },
   };
 
   function createPixelGame() {
@@ -89,5 +94,5 @@
     return { event: target.kind, id: target.id };
   }
 
-  return { HEIGHT, MAP, SCENES, SHARDS, TARGETS, WIDTH, createPixelGame, interact, isWall, isWater, move, sceneAt };
+  return { GUIDE_STEPS, HEIGHT, MAP, SCENES, SHARDS, TARGETS, WIDTH, createPixelGame, interact, isWall, isWater, move, sceneAt };
 });

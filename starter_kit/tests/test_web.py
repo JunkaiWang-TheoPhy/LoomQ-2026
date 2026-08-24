@@ -309,6 +309,11 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('class="pixel-stage"', page)
         self.assertIn('data-slot="state"', page)
         self.assertIn('id="pixel-scene-name"', page)
+        self.assertIn('id="pixel-guide"', page)
+        self.assertIn('id="pixel-guide-step"', page)
+        self.assertIn('id="pixel-music-toggle"', page)
+        self.assertIn('id="pixel-phase-meter"', page)
+        self.assertIn('class="pixel-start-guide"', page)
 
     def test_pixel_quantum_game_assets_are_served_locally(self):
         for path, content_type in (
@@ -328,6 +333,16 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(headers["Content-Type"], "image/png")
         self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
+    def test_pixel_stage_has_a_visual_map_fallback_and_cropped_mobile_view(self):
+        status, headers, body = self.request("/pixel.css")
+
+        css = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("pixel-map.png", css)
+        self.assertIn("height:min(100vh, 66.6667vw)", css)
+        self.assertIn("object-fit:cover", css)
+        self.assertIn("max-aspect-ratio:3 / 2", css)
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")

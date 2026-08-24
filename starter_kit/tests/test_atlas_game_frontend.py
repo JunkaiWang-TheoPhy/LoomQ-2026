@@ -79,6 +79,30 @@ process.stdout.write(JSON.stringify({scenes, waterBlocked, bridgeOpen}));
         self.assertEqual(result["bridgeOpen"]["player"]["x"], 10)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_pixel_guide_has_three_actions_and_quantum_phase_metadata(self):
+        script = """
+const pixel = require(process.argv[1]);
+process.stdout.write(JSON.stringify({steps: pixel.GUIDE_STEPS, scenes: pixel.SCENES}));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "pixel_adventure_engine.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertEqual([step["id"] for step in result["steps"]], ["move", "observe", "bridge"])
+        self.assertTrue(all(step["action"] for step in result["steps"]))
+        self.assertEqual(result["scenes"]["river"]["phase"], "entangled")
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_adventure_world_moves_collides_and_unlocks_interactions(self):
         """A missing collision or quest gate would let players walk through the case."""
         script = """

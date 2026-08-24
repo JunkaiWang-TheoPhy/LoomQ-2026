@@ -19,6 +19,10 @@ let touch = { x: 0, y: 0 };
 let toastTimer = 0;
 let lastFrame = performance.now();
 let currentScene = worldEngine.sceneAt(game.player);
+let audioContext = null;
+let musicTimer = null;
+let musicOn = false;
+let musicStep = 0;
 
 function announce(text) { $("#pixel-sr").textContent = text; }
 
@@ -41,6 +45,76 @@ function updateHud() {
     slot.classList.toggle("collected", mission.shards.includes(slot.dataset.slot));
   });
   $("#pixel-scene-name strong").textContent = worldEngine.SCENES[currentScene].name;
+  $("#pixel-phase-value").textContent = worldEngine.SCENES[currentScene].phase.toUpperCase();
+  updateGuide();
+}
+
+function guideIndex() {
+  if (mission.shards.length >= 3 || currentScene !== "village") return 2;
+  if (mission.shards.length > 0) return 1;
+  return 0;
+}
+
+function updateGuide() {
+  const guide = $("#pixel-guide");
+  if (!started || mission.complete) {
+    guide.hidden = true;
+    return;
+  }
+  const index = guideIndex();
+  guide.hidden = false;
+  $("#pixel-guide-step").textContent = worldEngine.GUIDE_STEPS[index].action;
+  guide.querySelectorAll(".guide-progress i").forEach((bar, barIndex) => {
+    bar.classList.toggle("active", barIndex <= index);
+  });
+}
+
+function noteFrequency(note) {
+  return 110 * (2 ** (note / 12));
+}
+
+function playMusicNote(note, duration = .18, volume = .018) {
+  if (!audioContext || !musicOn) return;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.type = "triangle";
+  oscillator.frequency.value = noteFrequency(note);
+  gain.gain.setValueAtTime(volume, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + duration);
+  oscillator.connect(gain).connect(audioContext.destination);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + duration);
+}
+
+function startMusic() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    toast("当前浏览器不支持环境音乐，但调查仍可继续");
+    return;
+  }
+  if (!audioContext) audioContext = new AudioContextClass();
+  audioContext.resume();
+  musicOn = true;
+  $("#pixel-music-toggle").textContent = "♫ ON";
+  $("#pixel-music-toggle").setAttribute("aria-pressed", "true");
+  $("#pixel-music-toggle").setAttribute("aria-label", "关闭量子环境音乐");
+  if (musicTimer) return;
+  const motifs = [0, 7, 12, 7, 3, 10, 15, 10];
+  musicTimer = window.setInterval(() => {
+    const root = currentScene === "river" ? -7 : currentScene === "archive" ? 3 : 0;
+    playMusicNote(root + motifs[musicStep % motifs.length], .22, .014);
+    if (musicStep % 4 === 0) playMusicNote(root - 12, .35, .008);
+    musicStep += 1;
+  }, 310);
+}
+
+function stopMusic() {
+  musicOn = false;
+  if (musicTimer) window.clearInterval(musicTimer);
+  musicTimer = null;
+  $("#pixel-music-toggle").textContent = "♫ OFF";
+  $("#pixel-music-toggle").setAttribute("aria-pressed", "false");
+  $("#pixel-music-toggle").setAttribute("aria-label", "打开量子环境音乐");
 }
 
 function openDialogue({ speaker, kicker = "调查记录", text, choices = [], locked = false, afterClose = null }) {
@@ -109,6 +183,7 @@ function drawMap(time) {
       }
     }
   }
+  drawQuantumField(time);
   drawGate();
   drawQuantumWell(18, 12, time);
   // Labels.
@@ -121,6 +196,31 @@ function drawMap(time) {
   // NPCs and signposts.
   drawPerson(3, 13, COLORS.pink, "林默", time);
   drawPerson(12, 7, COLORS.sky, "小满", time);
+}
+
+function drawQuantumField(time) {
+  const centerX = 12 * TILE + 8;
+  const centerY = 7 * TILE + 8;
+  const shimmer = 0.12 + (Math.sin(time / 350) + 1) * 0.04;
+  ctx.save();
+  ctx.globalAlpha = shimmer;
+  ctx.strokeStyle = currentScene === "river" ? COLORS.sky : COLORS.yellow;
+  ctx.lineWidth = 1;
+  for (let ring = 0; ring < 3; ring += 1) {
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, 18 + ring * 8, 7 + ring * 4, Math.sin(time / 1400) * .25, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  worldEngine.TARGETS.filter((target) => target.kind === "shard" && !mission.shards.includes(target.id)).forEach((target, index) => {
+    const startX = target.x * TILE + 8;
+    const startY = target.y * TILE + 8;
+    const travel = (time / 900 + index * .2) % 1;
+    const dotX = startX + (centerX - startX) * travel;
+    const dotY = startY + (centerY - startY) * travel;
+    ctx.fillStyle = index === 0 ? COLORS.sky : index === 1 ? COLORS.yellow : COLORS.pink;
+    ctx.fillRect(Math.round(dotX), Math.round(dotY), 2, 2);
+  });
+  ctx.restore();
 }
 
 function label(text, x, y, color) {
@@ -355,6 +455,7 @@ function reset() {
   $("#pixel-complete").hidden = true;
   updateHud();
   toast("像素案件已重置");
+  stopMusic();
   canvas.focus();
 }
 
@@ -372,9 +473,13 @@ document.addEventListener("keydown", (event) => {
 document.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
 window.addEventListener("blur", () => keys.clear());
 
-$("#pixel-start-button").addEventListener("click", () => { started = true; $("#pixel-start").hidden = true; canvas.focus(); toast("从林默开始，向地图中央走"); });
+$("#pixel-start-button").addEventListener("click", () => { started = true; $("#pixel-start").hidden = true; updateGuide(); startMusic(); canvas.focus(); toast("从林默开始，向地图中央走"); });
 $("#pixel-close").addEventListener("click", closeDialogue);
 $("#pixel-reset").addEventListener("click", reset);
+$("#pixel-music-toggle").addEventListener("click", () => {
+  if (musicOn) stopMusic();
+  else startMusic();
+});
 $("#pixel-continue").addEventListener("click", () => { $("#pixel-complete").hidden = true; canvas.focus(); });
 $("#pixel-touch-action").addEventListener("click", interact);
 
