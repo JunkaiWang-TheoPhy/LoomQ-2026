@@ -113,6 +113,7 @@ class WebLabTests(unittest.TestCase):
         _status, _headers, body = self.request("/")
 
         page = body.decode()
+        self.assertIn('href="#hybrid-panel"', page)
         self.assertIn('href="#workspace"', page)
         self.assertIn('data-task="learn"', page)
         self.assertIn('data-task="repair"', page)
@@ -132,6 +133,10 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="clear-conversation"', page)
         self.assertIn('id="assert-panel"', page)
         self.assertIn('id="hybrid-panel"', page)
+        self.assertIn('id="hybrid-path-panel"', page)
+        self.assertIn('id="run-hybrid-path"', page)
+        self.assertIn('列出所有可能分支', page)
+        self.assertIn('id="download-hybrid-path"', page)
         self.assertIn('id="counterfactual-panel"', page)
         self.assertIn('id="witness-panel"', page)
         self.assertIn('id="run-witness"', page)
@@ -139,6 +144,40 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="candidate-qasm"', page)
         self.assertIn('id="run-compare"', page)
         self.assertIn("不归因具体噪声机制", page)
+
+    def test_home_places_evidence_navigator_before_feature_inventory(self):
+        _status, _headers, body = self.request("/")
+
+        page = body.decode()
+        self.assertIn('id="evidence-map"', page)
+        self.assertIn(">1 分钟看证据</a>", page)
+        self.assertIn('href="#evidence-map"', page)
+        self.assertIn(">3 分钟跑示例</a>", page)
+        self.assertIn('href="#workspace"', page)
+        self.assertIn(">查看原始材料</a>", page)
+        self.assertIn(
+            'href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/tree/main/starter_kit/evidence"',
+            page,
+        )
+
+        self.assertLess(page.index('id="evidence-map"'), page.index('id="task-title"'))
+        self.assertLess(page.index("编译有没有改坏电路?"), page.index("测量后程序会走哪条路?"))
+        self.assertLess(page.index("测量后程序会走哪条路?"), page.index("不会 QASM 能不能用?"))
+        self.assertLess(page.index("编译有没有改坏电路?"), page.index('id="task-title"'))
+
+    def test_home_answers_three_judge_questions_with_click_and_expect_language(self):
+        _status, _headers, body = self.request("/")
+
+        page = body.decode()
+        self.assertIn("编译有没有改坏电路?", page)
+        self.assertIn("测量后程序会走哪条路?", page)
+        self.assertIn("不会 QASM 能不能用?", page)
+        self.assertIn("点击 <a href=\"#proof-panel\">ProofTrace", page)
+        self.assertIn("会看到三种目标平台", page)
+        self.assertIn("点击 <a href=\"#hybrid-panel\">列出所有可能分支", page)
+        self.assertIn("会看到每条路径的概率", page)
+        self.assertIn("点击修复一段错误 QASM", page)
+        self.assertIn("会看到 Agent 先给出可运行答案", page)
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
@@ -158,16 +197,20 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("agentHistory.splice(0)", script)
         self.assertIn('api("/api/assert"', script)
         self.assertIn('api("/api/hybrid-trace"', script)
+        self.assertIn('api("/api/hybrid-paths"', script)
         self.assertIn('api("/api/compare"', script)
         self.assertIn('api("/api/causal-audit"', script)
         self.assertIn("witness_chain", script)
         self.assertIn("downloadWitness.href", script)
+        self.assertIn("downloadHybridPath.href", script)
         self.assertIn("first_divergent_gate", script)
         self.assertIn("final_distribution_distance", script)
         self.assertIn("confidence_interval", script)
         self.assertIn("machine_jump_taken", script)
         self.assertIn("source_condition_true", script)
         self.assertIn("attribution_caveat", script)
+        self.assertIn("这条路径会发生", script)
+        self.assertIn("在当前量子态下不会发生", script)
 
     def test_styles_include_mobile_overflow_guards_for_evidence_panels(self):
         status, headers, body = self.request("/styles.css")
@@ -183,6 +226,19 @@ class WebLabTests(unittest.TestCase):
         self.assertIn(".evidence-card{padding:18px", stylesheet)
         self.assertIn("overflow-wrap:anywhere", stylesheet)
         self.assertIn("word-break:break-word", stylesheet)
+
+    def test_enhancement_styles_keep_hybrid_path_evidence_shrink_safe(self):
+        status, headers, body = self.request("/enhancements.css")
+
+        stylesheet = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("css", headers["Content-Type"])
+        self.assertIn(".path-summary-grid", stylesheet)
+        self.assertIn(".path-outcomes", stylesheet)
+        self.assertIn(".path-download", stylesheet)
+        self.assertIn("min-width:0", stylesheet)
+        self.assertIn("overflow-wrap:anywhere", stylesheet)
+        self.assertIn("@media (max-width: 620px)", stylesheet)
 
     def test_run_endpoint_returns_counts_native_ir_and_probability(self):
         status, _headers, body = self.request(
@@ -288,6 +344,71 @@ class WebLabTests(unittest.TestCase):
         self.assertTrue(branch["machine_jump_taken"])
         self.assertFalse(branch["source_condition_true"])
         self.assertEqual(branch["influencing_measurements"], ["c[1]"])
+
+    def test_hybrid_path_endpoint_reports_certificate_and_recomputed_verification(self):
+        status, _headers, body = self.request(
+            "/api/hybrid-paths",
+            {"source": HYBRID, "max_outcomes": 4},
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        certificate = payload["certificate"]
+        verification = payload["verification"]
+        self.assertEqual(certificate["schema_version"], "loomq-hybrid-path-certificate-v1")
+        self.assertEqual(certificate["limits"]["max_outcomes"], 4)
+        self.assertEqual(
+            [item["path_id"] for item in certificate["path_groups"]],
+            ["if1:F", "if1:T"],
+        )
+        self.assertEqual(
+            [item["total_probability"] for item in certificate["path_groups"]],
+            [0.5, 0.5],
+        )
+        self.assertEqual(certificate["unreachable_outcomes"], ["01", "10"])
+        self.assertTrue(verification["valid"])
+        self.assertEqual(verification["certificate_sha256"], certificate["integrity"]["body_sha256"])
+        self.assertEqual(verification["recomputed_sha256"], certificate["integrity"]["body_sha256"])
+
+        alias_status, _alias_headers, alias_body = self.request(
+            "/api/hybrid-path-certificate",
+            {"source": HYBRID, "max_outcomes": 4},
+        )
+        self.assertEqual(alias_status, 200)
+        self.assertEqual(json.loads(alias_body), payload)
+
+    def test_hybrid_path_endpoint_rejects_invalid_and_insufficient_bounds(self):
+        invalid_payloads = (
+            {"source": HYBRID, "max_outcomes": True},
+            {"source": HYBRID, "max_outcomes": 0},
+            {"source": HYBRID, "max_outcomes": 257},
+        )
+        for payload in invalid_payloads:
+            with self.subTest(payload=payload):
+                request = urllib.request.Request(
+                    self.base + "/api/hybrid-paths",
+                    data=json.dumps(payload).encode(),
+                    headers={"Content-Type": "application/json"},
+                )
+                with self.assertRaises(urllib.error.HTTPError) as caught:
+                    urllib.request.urlopen(request, timeout=3)
+                error_payload = json.loads(caught.exception.read())
+                caught.exception.close()
+                self.assertEqual(caught.exception.code, 400)
+                self.assertEqual(error_payload["error"]["code"], "invalid_request")
+
+        request = urllib.request.Request(
+            self.base + "/api/hybrid-paths",
+            data=json.dumps({"source": HYBRID, "max_outcomes": 2}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            urllib.request.urlopen(request, timeout=3)
+        error_payload = json.loads(caught.exception.read())
+        caught.exception.close()
+        self.assertEqual(caught.exception.code, 400)
+        self.assertEqual(error_payload["error"]["code"], "invalid_request")
+        self.assertIn("2**num_clbits <= max_outcomes", error_payload["error"]["message"])
 
     def test_compare_endpoint_finds_the_first_causal_divergence(self):
         candidate = BELL.replace("cx q[0],q[1];", "x q[1];")

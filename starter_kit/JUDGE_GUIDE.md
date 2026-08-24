@@ -1,6 +1,31 @@
 # LoomQ 评委快速复核
 
-本 fork 的目标是让没有 QASM 和厂商 SDK 背景的用户完成“理解、生成或修复电路 → 选择后端 → 三目标转译 → 运行并解释结果”。核心路径只使用 Python 标准库。
+这套材料解决的是一个很具体的问题：如果评委不会 QASM，也不想先读一堆实现细节，怎样在 90 秒内判断这份电路有没有被改坏、测量后的经典路径是不是说得清、自然语言入口在出错时会不会安全回退。
+
+先点这 3 个按钮：
+
+1. `1 分钟看证据`
+2. `列出所有可能分支`
+3. `修复一段错误 QASM`
+
+先看这 3 个结果：
+
+1. `ProofTrace：这次转译改了什么`
+   会看到同一份电路如何落到 3 个目标平台，以及每一步可下载的证书入口。
+2. `列出所有可能分支`
+   会看到每条路径的概率、可达/不可达 outcome 和死路径。
+3. `修复一段错误 QASM`
+   会看到 Agent 先给出答案，再由本地规则检查语法、白名单门和目标分布。
+
+有一个边界需要先说清：这些证据说明的是本地可重算的软件结论，不把差异归因到某种真实硬件噪声，也不把 SHA-256 当成身份签名。
+
+## 90 秒走法
+
+1. 打开页面后先点 `1 分钟看证据`，确认首屏问题清单已经出现。
+2. 在默认 Bell 例子上点击 `运行电路`，展开 `ProofTrace：这次转译改了什么`。
+3. 看 `已应用的可证明重写`、`三后端独立回读`，再点下载 JSON。
+4. 回到证据区点击 `列出所有可能分支`，确认会出现路径概率、不可达 outcome 和死路径。
+5. 点击 `修复一段错误 QASM`，看输入框是否自动填入修复任务，再检查失败时不会跳过本地校验。
 
 `112` 是赛题各项相加的理论上限，不是本项目已获得的分数。私有 case、人工体验和真机可追溯性仍由组委会判定。
 
@@ -10,7 +35,7 @@
 |---|---|---|
 | 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 168 项归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/compare/hybrid/witness 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
 | ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
-| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 22 项 Web 集成测试覆盖 `/api/causal-audit` Witness Chain、`/api/compare` 首门分歧与结构拒绝、`/api/assert`、`/api/hybrid-trace`、ProofTrace、favicon 与移动端防溢出样式 |
+| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 27 项 Web 集成测试覆盖首屏证据导航、`/api/causal-audit` Witness Chain、`/api/compare` 首门分歧与结构拒绝、`/api/assert`、`/api/hybrid-trace`、ProofTrace、favicon 与移动端防溢出样式 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |
 | L1 三目标 | `python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket` | 统一 Circuit IR、12 门 × 3 target 归档测试 |
 | L1 语义回读 | `cd starter_kit && python3 -m unittest tests.test_native_ir_verifier -v` | SpinQ QASM 2、OriginIR、Braket QASM 3 独立 parser；篡改门负例 |
@@ -33,6 +58,6 @@
 2. 点击 Learn，运行 Bell，读取逐门概率/相位与 ProofTrace 三目标证书；随后进入 Counterfactual Circuit Lab 单独查看 `CX` 对 `X` 与 TV 距离 `0.5`。
 3. 点击 Repair 验证错误 QASM 的确定性恢复，再用 Backend Match 询问“免费、零排队、至少 20 比特的模拟器”，核对规范 capability ID。
 
-与十二个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只声称公开可审能力覆盖领先；私有 12 例 DeepSeek 评测和未公开提交仍然未知。
+与十二个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只记录公开可审事实；私有 12 例 DeepSeek 评测和未公开提交仍然未知。
 
 Web 不接收或保存模型 Key；启动进程只从 `LOOMQ_LLM_*` 读取。未配置模型时，L1 本地实验仍可完整使用。

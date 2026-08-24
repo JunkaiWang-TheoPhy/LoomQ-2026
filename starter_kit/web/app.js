@@ -142,6 +142,7 @@ const qasm = $("#qasm");
 const notice = $("#notice");
 const agentHistory = [];
 let lastProofUrl = null;
+let lastHybridPathUrl = null;
 let lastWitnessUrl = null;
 
 function tell(message) {
@@ -344,6 +345,139 @@ function renderHybridReport(report) {
   $("#hybrid-registers").textContent = JSON.stringify(report.final_registers, null, 2);
 }
 
+function renderHybridPathCertificate(certificate) {
+  const report = certificate;
+  const outcomeIndex = new Map(
+    report.certificate.outcomes.map((item) => [item.outcome, item]),
+  );
+  const totalProbability = report.certificate.outcomes.reduce(
+    (sum, item) => sum + item.probability,
+    0,
+  );
+  const distinctFinalResults = new Set(
+    report.certificate.outcomes
+      .filter((item) => item.reachable)
+      .map((item) => item.final_register_sha256),
+  ).size;
+  $("#hybrid-path").textContent = report.verification.valid ? "本地重算通过" : "验证失败";
+  $("#hybrid-path-summary").textContent =
+    `已按 2**num_clbits <= max_outcomes 的上限 ${report.certificate.limits.max_outcomes} 穷举 ${report.certificate.outcomes.length} 个 outcome；总概率 ${formatPercent(totalProbability)}。`;
+  const overview = $("#hybrid-path-overview");
+  overview.replaceChildren();
+  [
+    ["可达路径", String(report.certificate.path_groups.filter((item) => item.total_probability > 0).length)],
+    ["死路径", String(report.certificate.dead_path_ids.length)],
+    ["不可达 outcome", String(report.certificate.unreachable_outcomes.length)],
+    ["不同终态", String(distinctFinalResults)],
+  ].forEach(([label, value]) => {
+    const card = element("div", "path-summary-card");
+    card.append(element("strong", "", value), element("span", "", label));
+    overview.append(card);
+  });
+  const probabilities = $("#hybrid-path-probabilities");
+  probabilities.replaceChildren();
+  report.certificate.path_groups.forEach((item) => {
+    const pathOutcomes = report.certificate.outcomes.filter(
+      (outcome) => outcome.path_id === item.path_id,
+    );
+    const row = element("li", "audit-item path-verdict");
+    const reachable = item.reachable_outcomes.length > 0;
+    const verdict = reachable ? "这条路径会发生" : "在当前量子态下不会发生";
+    row.append(
+      element("strong", "", `${item.path_id || "root"} · ${verdict}`),
+      element(
+        "span",
+        "audit-meta",
+        `路径概率 ${formatPercent(item.total_probability)} · outcomes ${item.outcomes.join("、") || "无"} · 不同终态 ${item.final_register_sha256s.length}`,
+      ),
+    );
+    const bar = document.createElement("progress");
+    bar.className = "path-bar";
+    bar.max = 1;
+    bar.value = item.total_probability;
+    bar.setAttribute("aria-label", `${item.path_id || "root"} 的路径概率`);
+    row.append(bar);
+    row.append(
+      element(
+        "p",
+        "audit-note-inline path-outcomes",
+        `结果位串：${item.outcomes.join("、") || "无"}；可达：${item.reachable_outcomes.join("、") || "无"}`,
+      ),
+    );
+    row.append(
+      element(
+        "small",
+        "audit-note-inline",
+        pathOutcomes
+          .filter((outcome) => outcome.reachable)
+          .map(
+            (outcome) =>
+              `${outcome.outcome} → ${Object.entries(outcome.final_registers)
+                .map(([register, value]) => `${register}=${value}`)
+                .join(", ") || "无源级寄存器变化"}`,
+          )
+          .join(" ｜ ") || "没有可达终态寄存器差异",
+      ),
+    );
+    const details = document.createElement("details");
+    details.append(
+      element("summary", "", "查看源码条件、branch events 与哈希"),
+      element(
+        "p",
+        "audit-note-inline",
+        pathOutcomes
+          .flatMap((outcome) => outcome.branch_events)
+          .map(
+            (branch) =>
+              `${branch.branch_id}：source_condition_true=${branch.source_condition_true} · machine_jump_taken=${branch.machine_jump_taken}`,
+          )
+          .join(" ｜ ") || "无条件分支",
+      ),
+      element(
+        "small",
+        "audit-note-inline",
+        pathOutcomes
+          .map(
+            (outcome) =>
+              `${outcome.outcome} → ${outcome.final_register_sha256.slice(0, 12)}…`,
+          )
+          .join(" ｜ "),
+      ),
+    );
+    row.append(details);
+    probabilities.append(row);
+  });
+  if (!report.certificate.path_groups.length) {
+    probabilities.append(element("li", "audit-item", "没有可达路径。"));
+  }
+
+  const unreachable = $("#hybrid-path-unreachable");
+  unreachable.replaceChildren();
+  report.certificate.unreachable_outcomes.forEach((item) => {
+    const outcome = outcomeIndex.get(item);
+    unreachable.append(
+      element(
+        "li",
+        "audit-item",
+        `${item} · ${outcome?.path_id || "root"} · 在当前量子态下不会发生`,
+      ),
+    );
+  });
+  if (!report.certificate.unreachable_outcomes.length) {
+    unreachable.append(element("li", "audit-item", "没有不可达 outcome。"));
+  }
+  if (lastHybridPathUrl) URL.revokeObjectURL(lastHybridPathUrl);
+  const hybridPathBlob = new Blob([JSON.stringify(report, null, 2)], {
+    type: "application/json",
+  });
+  lastHybridPathUrl = URL.createObjectURL(hybridPathBlob);
+  const downloadHybridPath = $("#download-hybrid-path");
+  downloadHybridPath.href = lastHybridPathUrl;
+  downloadHybridPath.download = `loomq-hybrid-paths-${report.verification.certificate_sha256.slice(0, 12)}.json`;
+  downloadHybridPath.setAttribute("aria-disabled", "false");
+  $("#hybrid-path-panel").open = true;
+}
+
 function renderWitnessAudit(audit) {
   const verification = audit.verification;
   $("#witness-status").textContent = verification.valid ? "本地重算通过" : "验证失败";
@@ -526,7 +660,7 @@ function renderResults(data) {
 $("#run").addEventListener("click", async () => {
   const button = $("#run");
   button.disabled = true;
-  button.textContent = "正在编织…";
+  button.textContent = "正在运行并整理证据…";
   try {
     const data = await api("/api/run", {
       qasm: qasm.value,
@@ -534,7 +668,7 @@ $("#run").addEventListener("click", async () => {
       shots: Number($("#shots").value),
     });
     renderResults(data);
-    tell("运行完成：结果已通过统一 Schema 输出");
+    tell("运行完成：先看 ProofTrace，再看路径和结果表");
   } catch (error) {
     tell(error.message);
   } finally {
@@ -589,6 +723,25 @@ $("#run-hybrid").addEventListener("click", async () => {
   } finally {
     button.disabled = false;
     button.textContent = "回放 Hybrid 分支";
+  }
+});
+
+$("#run-hybrid-path").addEventListener("click", async () => {
+  const button = $("#run-hybrid-path");
+  button.disabled = true;
+  button.textContent = "列举中…";
+  try {
+    const data = await api("/api/hybrid-paths", {
+      source: $("#hybrid-source").value,
+      max_outcomes: Number($("#hybrid-max-outcomes").value),
+    });
+    renderHybridPathCertificate(data);
+    tell("Hybrid 路径证书已更新");
+  } catch (error) {
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "列出所有可能分支";
   }
 });
 

@@ -111,6 +111,10 @@ def default_phases() -> list[dict[str, Any]]:
             [sys.executable, "-m", "scripts.quafu_cross_validate", "--validate"],
         ),
         _phase(
+            "hybrid-path-certificate",
+            [sys.executable, "-m", "scripts.hybrid_path_benchmark", "--json"],
+        ),
+        _phase(
             "prooftrace-benchmark",
             [sys.executable, "-m", "scripts.prooftrace_benchmark", "--json"],
         ),
