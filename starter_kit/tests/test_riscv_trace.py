@@ -1,6 +1,9 @@
 import copy
+import math
 import unittest
 
+from loomq.qasm import Circuit, Gate, Measurement
+from loomq.quantum_riscv import encode_circuit
 from riscv_emulator import TinyRISCVEmulator
 
 
@@ -35,6 +38,12 @@ j LOOP
 
 
 class RiscvTraceTests(unittest.TestCase):
+    def test_untaken_branch_with_missing_label_preserves_legacy_execute_behavior(self):
+        emulator = TinyRISCVEmulator()
+        emulator.load_program("li x1, 1\nli x2, 1\nbne x1, x2, MISSING\nli x3, 7\n")
+
+        self.assertEqual(emulator.execute(), {"x1": 1, "x2": 1, "x3": 7})
+
     def test_branch_trace_records_decision_register_delta_and_pc(self):
         emulator = TinyRISCVEmulator()
         emulator.load_program(NOT_TAKEN_BRANCH_PROGRAM)
@@ -103,6 +112,28 @@ class RiscvTraceTests(unittest.TestCase):
         self.assertEqual(second["events"][0]["pc"], 0)
         self.assertEqual(second["steps"], 1)
         self.assertEqual(second["final_registers"], {"x5": 12})
+
+    def test_load_program_clears_stale_quantum_program(self):
+        emulator = TinyRISCVEmulator()
+        program = encode_circuit(
+            Circuit(
+                2,
+                2,
+                [
+                    Gate("h", (0,)),
+                    Gate("rz", (1,), math.pi / 3),
+                    Measurement(0, 0),
+                    Measurement(1, 1),
+                ],
+            )
+        )
+
+        emulator.load_quantum_program(program)
+        emulator.load_program("li x5, 12\n")
+
+        self.assertIsNone(emulator.quantum_program)
+        with self.assertRaisesRegex(RuntimeError, "未载入量子 RISC-V 机器码程序"):
+            emulator.execute_quantum(16)
 
     def test_undefined_branch_label_raises_in_trace_mode(self):
         emulator = TinyRISCVEmulator()

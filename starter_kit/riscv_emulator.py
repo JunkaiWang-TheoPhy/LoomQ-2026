@@ -48,6 +48,7 @@ class TinyRISCVEmulator:
         self.labels = {}
         self.pc = 0
         self.registers = [0] * 32
+        self.quantum_program = None
         self._program_digest = self._compute_program_digest([], {})
         
         lines = asm_code.split("\n")
@@ -148,11 +149,12 @@ class TinyRISCVEmulator:
                 register_changes = self._write_register(rd, self.get_register(rs1) + imm)
             elif op in {"beq", "bne"}:
                 rs1, rs2, label = args[0], args[1], args[2]
-                target_pc = self._resolve_label(label)
                 left = self.get_register(rs1)
                 right = self.get_register(rs2)
                 taken = left == right if op == "beq" else left != right
+                target_pc = self.labels.get(label)
                 if taken:
+                    target_pc = self._resolve_label(label)
                     next_pc = target_pc
                 branch = {
                     "kind": "conditional",
