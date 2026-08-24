@@ -132,6 +132,9 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="clear-conversation"', page)
         self.assertIn('id="assert-panel"', page)
         self.assertIn('id="hybrid-panel"', page)
+        self.assertIn('id="counterfactual-panel"', page)
+        self.assertIn('id="candidate-qasm"', page)
+        self.assertIn('id="run-compare"', page)
         self.assertIn("不归因具体噪声机制", page)
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
@@ -152,6 +155,9 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("agentHistory.splice(0)", script)
         self.assertIn('api("/api/assert"', script)
         self.assertIn('api("/api/hybrid-trace"', script)
+        self.assertIn('api("/api/compare"', script)
+        self.assertIn("first_divergent_gate", script)
+        self.assertIn("final_distribution_distance", script)
         self.assertIn("confidence_interval", script)
         self.assertIn("machine_jump_taken", script)
         self.assertIn("source_condition_true", script)
@@ -276,6 +282,40 @@ class WebLabTests(unittest.TestCase):
         self.assertTrue(branch["machine_jump_taken"])
         self.assertFalse(branch["source_condition_true"])
         self.assertEqual(branch["influencing_measurements"], ["c[1]"])
+
+    def test_compare_endpoint_finds_the_first_causal_divergence(self):
+        candidate = BELL.replace("cx q[0],q[1];", "x q[1];")
+
+        status, _headers, body = self.request(
+            "/api/compare",
+            {"reference_qasm": BELL, "candidate_qasm": candidate},
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["scope"], "exact-up-to-global-phase-at-zero-input")
+        self.assertFalse(payload["equivalent_output_distribution"])
+        self.assertEqual(payload["first_divergent_gate"], 1)
+        self.assertEqual(payload["reference_operation"]["gate"], "cx")
+        self.assertEqual(payload["candidate_operation"]["gate"], "x")
+        self.assertGreater(payload["max_amplitude_delta"], 0)
+        self.assertGreater(payload["final_distribution_distance"], 0)
+        self.assertIn("explanation", payload)
+        self.assertIn("第 2 扇门", payload["explanation"])
+
+    def test_compare_endpoint_reports_structural_mismatch_without_false_causality(self):
+        candidate = BELL.replace("measure q -> c;", "measure q[0] -> c[0];")
+
+        status, _headers, body = self.request(
+            "/api/compare",
+            {"reference_qasm": BELL, "candidate_qasm": candidate},
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["scope"], "structural-mismatch")
+        self.assertIsNone(payload["first_divergent_gate"])
+        self.assertIn("测量映射", payload["explanation"])
 
     def test_large_valid_circuit_keeps_running_when_visual_trace_is_bounded(self):
         source = """OPENQASM 2.0; include "qelib1.inc";

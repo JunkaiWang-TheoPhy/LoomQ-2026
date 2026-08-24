@@ -135,6 +135,8 @@ classical {
   if (c[1] == 1) { r3 = r1 + 2; } else { r3 = r1 - 8; }
 }`;
 
+const bellCounterexample = examples.bell.replace("cx q[0],q[1];", "x q[1];");
+
 const $ = (selector) => document.querySelector(selector);
 const qasm = $("#qasm");
 const notice = $("#notice");
@@ -196,6 +198,7 @@ qasm.addEventListener("input", renderCircuit);
 selectExample("bell");
 $("#assertions-input").value = defaultAssertions;
 $("#hybrid-source").value = hybridExample;
+$("#candidate-qasm").value = bellCounterexample;
 
 document.querySelectorAll(".task-card").forEach((button) => {
   button.addEventListener("click", () => {
@@ -338,6 +341,37 @@ function renderHybridReport(report) {
   });
   $("#hybrid-assembly").textContent = report.assembly;
   $("#hybrid-registers").textContent = JSON.stringify(report.final_registers, null, 2);
+}
+
+function formatOperation(operation) {
+  if (!operation) return "无对应门";
+  const qubits = operation.qubits.map((index) => `q[${index}]`).join(", ");
+  const parameter = operation.parameter === null ? "" : `(${operation.parameter})`;
+  return `${operation.gate.toUpperCase()}${parameter} ${qubits}`;
+}
+
+function renderComparison(report) {
+  const structural = report.scope === "structural-mismatch";
+  const divergent = report.first_divergent_gate !== null;
+  $("#compare-status").textContent = structural
+    ? "结构不可比"
+    : divergent ? "发现因果分歧" : "未发现分歧";
+  $("#compare-summary").textContent = structural
+    ? "先让寄存器和测量映射保持一致。"
+    : divergent
+      ? `第 ${report.first_divergent_gate + 1} 扇门改变了后续量子态。`
+      : "两个电路在本次精确比较范围内一致。";
+  $("#compare-explanation").textContent = report.explanation;
+  $("#compare-gate").textContent = divergent ? String(report.first_divergent_gate + 1) : "—";
+  $("#compare-amplitude").textContent = structural
+    ? "—" : Number(report.max_amplitude_delta).toFixed(6);
+  $("#compare-distance").textContent = structural
+    ? "—" : Number(report.final_distribution_distance).toFixed(6);
+  $("#compare-operations").textContent = structural
+    ? `结构差异：${report.reason}`
+    : `参考：${formatOperation(report.reference_operation)} · 候选：${formatOperation(report.candidate_operation)}`;
+  $("#compare-scope").textContent = report.scope_note;
+  $("#compare-result").focus();
 }
 
 function renderResults(data) {
@@ -526,6 +560,37 @@ $("#run-hybrid").addEventListener("click", async () => {
   } finally {
     button.disabled = false;
     button.textContent = "回放 Hybrid 分支";
+  }
+});
+
+$("#copy-reference").addEventListener("click", () => {
+  $("#candidate-qasm").value = qasm.value;
+  $("#candidate-qasm").focus();
+  tell("已复制当前电路；现在修改一扇门再比较");
+});
+
+$("#load-counterexample").addEventListener("click", () => {
+  selectExample("bell");
+  $("#candidate-qasm").value = bellCounterexample;
+  tell("已加载 Bell 反例：CX 被替换为 X");
+});
+
+$("#run-compare").addEventListener("click", async () => {
+  const button = $("#run-compare");
+  button.disabled = true;
+  button.textContent = "逐门比较中…";
+  try {
+    const data = await api("/api/compare", {
+      reference_qasm: qasm.value,
+      candidate_qasm: $("#candidate-qasm").value,
+    });
+    renderComparison(data);
+    tell("反事实比较已完成");
+  } catch (error) {
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "比较因果差异";
   }
 });
 

@@ -58,6 +58,34 @@
 
 .lesson:focus { outline: 3px solid var(--acid); outline-offset: 2px; }
 
+.counterfactual {
+  margin: 58px 0 20px;
+  padding: 34px;
+  color: white;
+  background: #17211d;
+  border: 1px solid var(--ink);
+  box-shadow: 10px 10px 0 var(--orange);
+}
+
+.counterfactual .eyebrow { color: var(--acid); }
+.counterfactual-heading { display: grid; grid-template-columns: 1.2fr .8fr; gap: 42px; align-items: end; }
+.counterfactual-heading h2 { margin: 8px 0 0; font-size: clamp(25px, 3vw, 42px); line-height: 1.08; }
+.counterfactual-heading > p { margin: 0; color: #c9d4ce; font-size: 13px; }
+.counterfactual-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 28px; margin-top: 28px; }
+.counterfactual textarea { height: 220px; color: #dbe8e1; background: #0d1713; border-color: #53635b; }
+.counterfactual .code-label span, .counterfactual .hint { color: #aebdb5; }
+.counterfactual-controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.counterfactual-controls .secondary { margin-left: auto; }
+.ghost-button { min-height: 44px; padding: 0 14px; color: white; background: transparent; border: 1px solid #718078; cursor: pointer; }
+.compare-result { padding: 24px; color: var(--ink); background: var(--card); border-left: 5px solid var(--acid); }
+.compare-result:focus { outline: 3px solid var(--acid); outline-offset: 3px; }
+.compare-result > strong { display: block; margin: 16px 0 8px; font-size: 20px; }
+.compare-result > p { font-size: 12px; }
+.compare-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin: 22px 0; background: var(--line); }
+.compare-metrics div { padding: 12px; background: white; }
+.compare-metrics dt { color: #66716b; font-size: 10px; }
+.compare-metrics dd { margin: 4px 0 0; font: 700 15px var(--mono); overflow-wrap: anywhere; }
+
 #result-table {
   width: 100%;
   border-collapse: collapse;
@@ -168,9 +196,19 @@
   .task-card:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
 }
 
+@media (max-width: 900px) {
+  .counterfactual-heading, .counterfactual-grid { grid-template-columns: 1fr; }
+  .counterfactual-heading { gap: 16px; }
+}
+
 @media (max-width: 620px) {
   .task-grid { grid-template-columns: 1fr; }
   .task-card { border-right: 0; border-bottom: 1px solid var(--line); }
   .task-card:last-child { border-bottom: 0; }
   .task-switcher > div:first-child { display: block; }
+  .counterfactual { margin-top: 42px; padding: 20px; box-shadow: 6px 6px 0 var(--orange); }
+  .counterfactual-controls { display: grid; grid-template-columns: 1fr; }
+  .counterfactual-controls .secondary { width: 100%; margin-left: 0; }
+  .compare-result { padding: 18px; }
+  .compare-metrics { grid-template-columns: 1fr; }
 }

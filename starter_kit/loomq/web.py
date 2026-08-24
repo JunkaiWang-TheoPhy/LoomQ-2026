@@ -14,13 +14,13 @@ from urllib.parse import urlparse
 try:
     from .. import adapter
     from .agent import normalize_history
-    from .assertions import diagnose_observed_execution, evaluate_assertions
+    from .assertions import diagnose_mutation, diagnose_observed_execution, evaluate_assertions
     from .simulator import trace_statevector
     from .qasm import parse_qasm
 except ImportError:  # Direct execution from starter_kit/.
     import adapter
     from loomq.agent import normalize_history
-    from loomq.assertions import diagnose_observed_execution, evaluate_assertions
+    from loomq.assertions import diagnose_mutation, diagnose_observed_execution, evaluate_assertions
     from loomq.simulator import trace_statevector
     from loomq.qasm import parse_qasm
 
@@ -106,6 +106,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 return
             if path == "/api/assert":
                 self._assert(payload)
+                return
+            if path == "/api/compare":
+                self._compare(payload)
                 return
             if path == "/api/hybrid-trace":
                 self._hybrid_trace(payload)
@@ -216,6 +219,40 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         if measurement_bits is None:
             raise ValueError("measurement_bits 必须提供")
         self._send_json(HTTPStatus.OK, adapter.trace_hybrid(source, measurement_bits))
+
+    def _compare(self, payload: Dict[str, Any]) -> None:
+        reference_qasm = payload.get("reference_qasm")
+        candidate_qasm = payload.get("candidate_qasm")
+        if not isinstance(reference_qasm, str) or not reference_qasm.strip():
+            raise ValueError("reference_qasm 必须是非空字符串")
+        if not isinstance(candidate_qasm, str) or not candidate_qasm.strip():
+            raise ValueError("candidate_qasm 必须是非空字符串")
+        report = diagnose_mutation(reference_qasm, candidate_qasm)
+        if report["scope"] == "structural-mismatch":
+            reason = report.get("reason", "结构不同")
+            labels = {
+                "register declarations differ": "寄存器声明不同",
+                "measurement mappings differ": "测量映射不同",
+            }
+            report["explanation"] = (
+                f"两个电路的{labels.get(reason, reason)}，因此不能把差异归因到某一扇量子门。"
+            )
+        elif report["first_divergent_gate"] is None:
+            report["explanation"] = (
+                "在 |0…0⟩ 输入和全局相位等价范围内，没有发现中间量子态分歧。"
+            )
+        else:
+            gate_number = report["first_divergent_gate"] + 1
+            distance = report["final_distribution_distance"]
+            report["explanation"] = (
+                f"第 {gate_number} 扇门后首次出现精确态分歧；"
+                f"最终测量分布的总变差距离为 {distance:.6f}。"
+            )
+        report["scope_note"] = (
+            "结论只适用于最多 8 比特、|0…0⟩ 输入的本地精确状态比较，并忽略全局相位；"
+            "它不诊断真实硬件噪声来源。"
+        )
+        self._send_json(HTTPStatus.OK, report)
 
     def _agent(self, payload: Dict[str, Any]) -> None:
         prompt = payload.get("prompt")

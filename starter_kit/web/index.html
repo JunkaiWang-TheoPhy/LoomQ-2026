@@ -139,6 +139,40 @@
       </aside>
     </section>
 
+    <section id="counterfactual-panel" class="counterfactual" aria-labelledby="counterfactual-title">
+      <div class="counterfactual-heading">
+        <div>
+          <p class="eyebrow">COUNTERFACTUAL CIRCUIT LAB</p>
+          <h2 id="counterfactual-title">少一扇门，量子态从哪里开始改变？</h2>
+        </div>
+        <p>上方当前电路是参考答案。修改候选电路后，LoomQ 会逐门比较精确状态，定位第一个因果分歧，而不只比较最后一张概率图。</p>
+      </div>
+      <div class="counterfactual-grid">
+        <div>
+          <label class="code-label" for="candidate-qasm">候选电路 <span>默认把 Bell 的 CX 改成 X</span></label>
+          <textarea id="candidate-qasm" spellcheck="false" aria-describedby="candidate-help"></textarea>
+          <p id="candidate-help" class="hint">可先运行默认示例；也可以复制上方当前电路，再自行删除或替换一扇门。</p>
+          <div class="counterfactual-controls">
+            <button id="copy-reference" class="ghost-button" type="button">复制当前电路</button>
+            <button id="load-counterexample" class="ghost-button" type="button">加载 Bell 反例</button>
+            <button id="run-compare" class="secondary" type="button">比较因果差异</button>
+          </div>
+        </div>
+        <div id="compare-result" class="compare-result" tabindex="-1" aria-live="polite">
+          <span id="compare-status" class="backend">等待比较</span>
+          <strong id="compare-summary">同一张结果图，可能隐藏不同的中间量子态。</strong>
+          <p id="compare-explanation">点击“比较因果差异”，查看首个分歧门与最终分布距离。</p>
+          <dl class="compare-metrics">
+            <div><dt>首个分歧门</dt><dd id="compare-gate">—</dd></div>
+            <div><dt>最大振幅差</dt><dd id="compare-amplitude">—</dd></div>
+            <div><dt>分布 TV 距离</dt><dd id="compare-distance">—</dd></div>
+          </dl>
+          <p id="compare-operations" class="audit-note">参考门与候选门将在这里并列显示。</p>
+          <p id="compare-scope" class="audit-note">本地精确比较不诊断真实硬件噪声来源。</p>
+        </div>
+      </div>
+    </section>
+
     <section class="evidence-lab" aria-labelledby="evidence-title">
       <div class="evidence-header">
         <div>

@@ -48,7 +48,7 @@ Web / CLI
 - `loomq/quantum_riscv.py`：把全部白名单量子门编码为真实 32 位 `custom-0` 机器字，并完成字节序列化和严格解码。
 - `riscv_emulator.py`：保持官方 L3 文本汇编路径，同时增加量子机器码加载、解码和执行入口。
 - `loomq_cli.py`：面向零基础用户提供转译、执行、文本柱状图、逐门状态轨迹、自然语言 Agent 和一键生成运行。
-- `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图、ProofTrace 面板、P1 断言报告、P2 Hybrid 分支回放、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。
+- `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图、反事实首门分歧实验、ProofTrace 面板、P1 断言报告、P2 Hybrid 分支回放、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。
 - `circuits/`：除 Bell/GHZ 外归档 Deutsch–Jozsa、Grover-3 与 QFT-4；相同源码跨三 target 转译和运行。
 
 ## 为什么基础评分路径不依赖平台 SDK
@@ -66,7 +66,7 @@ Web / CLI
 - 模型生成的 QASM 先由确定性解析器与状态向量目标检查，后端 ID 再与官方 JSON 能力表复核。
 - L2 压力 campaign 的 500 条 prompt 在归档测试中检查唯一性和分类配额；证据验证器会重新生成语料并核对 prompt、记录及 JSONL 摘要。
 - Bonus 的 Bell 证明真实经历 `Circuit → 机器字 → 小端字节 → 解码 → 扩展模拟器 → counts`。
-- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录在 Node present 时执行 `node --check web/app.js`，否则显式 `SKIP`；并显式运行 Web/API/assert/hybrid 焦点套件，再在 `python3 -m unittest discover -s tests -v` 观察到的 150 项归档测试基础上复核 Web→多轮模型协议→确定性校验、12 例 L2 同形资格链、ProofTrace 225 项变异基准、算法展品、三 native IR 回读、量子 RISC-V 固定机器字与随机线路、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、L2 语料、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
+- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录在 Node present 时执行 `node --check web/app.js`，否则显式 `SKIP`；并显式运行 Web/API/assert/compare/hybrid 焦点套件，再在 `python3 -m unittest discover -s tests -v` 观察到的 152 项归档测试基础上复核 Web→多轮模型协议→确定性校验、反事实首门分歧、12 例 L2 同形资格链、ProofTrace 225 项变异基准、算法展品、三 native IR 回读、量子 RISC-V 固定机器字与随机线路、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、L2 语料、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
 - 可选的 PyQuafu 0.4.5 独立 oracle 使用固定 40 电路覆盖全部 12 门，对三个 target 完成 120 项状态向量与 counts 交叉检查；第三方包隔离在核心环境之外。
 - 离线活动的每个计数对应具体断言：概率归一化、目标 IR/Schema、机器码语义往返、四输入差分执行或恶意输入拒绝；不是仅循环不检查结果的数量指标。
 - 真机证据验证器从 provider MessagePack、counts JSON 与 QASM 重算统计结果，并用 SHA-256 manifest 锁定原始材料、派生分析和桌面/移动端截图。

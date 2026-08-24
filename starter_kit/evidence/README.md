@@ -19,7 +19,7 @@
 | 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
 |---|---:|---|
 | L1 真机 | 10/10 分上限 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
-| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、ProofTrace 可下载证书、P1 断言报告、P2 Hybrid 回放、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、19 项 Web 测试 |
+| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、反事实首门分歧实验、ProofTrace 可下载证书、P1 断言报告、P2 Hybrid 回放、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、21 项 Web 测试 |
 | 工程与产品复核 | 10/10 分上限 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
 | 自定义量子 RISC-V | 8/8 分上限 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
 | 新手引导与视觉叙事 | 4/4 分上限 | Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
@@ -82,10 +82,10 @@ evidence/files/spinq-screenshot.png
 启动界面或 CLI 的命令：`python3 -m starter_kit.loomq.web`（逐门 CLI：`python3 -m starter_kit.loomq_cli trace starter_kit/circuits/bell.qasm`）
 测试入口或页面地址：http://127.0.0.1:8765/
 用于交互体验评测的 3 个用户任务：
-1. **Learn + Build**：选择“第一次理解量子电路”，运行 Bell 后观察 H/CX 时间线、`00`/`11` 概率图和文本表、位序解释与 SpinQ 原生指令；再切换“均匀叠加”和 Braket，比较 8 个等概率基态与 OpenQASM 3.0。
+1. **Learn + Counterfactual Build**：选择“第一次理解量子电路”，运行 Bell 后观察 H/CX 时间线、`00`/`11` 概率图和文本表；进入 Counterfactual Circuit Lab 比较默认反例，确认系统定位第 2 扇门、显示 `CX` 对 `X`、最大振幅差 `0.707107` 与 TV 距离 `0.500000`，再自行删改一扇门重试。
 2. **Repair**：点击“修复一段错误 QASM”，页面预填含越界 `cx q[0],q[2]` 的 Bell 修复任务；配置 `LOOMQ_LLM_*` 后提交，检查返回完整 OpenQASM 2.0，并确认语法、白名单门与 Bell 分布通过确定性校验，错误回答会携带诊断重试一次。
 3. **Backend Match + Judge Evidence**：点击“选择合适的后端”，把任务改为“推荐一个免费、零排队、至少 20 比特的模拟器后端”；回答必须包含能力表中的兼容规范 ID。随后在同一页打开 P1 断言面板，检查 exact-local / finite-shot / provider-probabilities 三种证据标签与“不归因具体噪声机制”提示，再在 P2 Hybrid 面板核对 `branch_path`、`machine_jump_taken`、`source_condition_true` 与寄存器增量。
-截图或演示视频：桌面 `starter_kit/evidence/files/web-lab-desktop-current.jpg`，移动端 `starter_kit/evidence/files/web-lab-mobile-current.jpg`；完整验收矩阵见 `starter_kit/WEB_QA.md`。所有流程均由最终 commit 中的代码直接运行。
+截图或演示视频：首屏桌面 `starter_kit/evidence/files/web-lab-desktop-current.jpg`，移动端 `starter_kit/evidence/files/web-lab-mobile-current.jpg`；反事实结果桌面 `starter_kit/evidence/files/counterfactual-desktop.jpg`，移动端 `starter_kit/evidence/files/counterfactual-mobile.jpg`；完整验收矩阵见 `starter_kit/WEB_QA.md`。所有流程均由最终 commit 中的代码直接运行。
 ```
 
 工作人员会在组委会统一模型环境中运行最终代码，测试新手是否看得懂、出错后能否得到有效帮助、结果是否清楚，以及多轮回答是否一致。选手自己的对话截图只用于说明产品流程，不直接证明得分。
@@ -143,7 +143,7 @@ ProofTrace 在此基础上增加可审计的安全重写、源门 lineage、优�
 零基础首次运行指南：starter_kit/README.md 的“零基础首次运行”
 量子概念解释：starter_kit/README.md 的 Bell 结果解释，以及 starter_kit/QUANTUM_101.md
 结果可视化：starter_kit/web/ 的响应式电路时间线与概率图，以及 starter_kit/loomq_cli.py 的文本柱状图
-错误恢复或无障碍引导：starter_kit/loomq/agent.py 的确定性 QASM 校验、诊断重试与有界多轮历史；Web 提供 Learn、Build、Repair、Backend Match、逐门状态故事和清空会话，并使用跳转链接、语义结果表、错误 `role=alert`、键盘焦点、`aria-live`、移动端断点和减少动画偏好
+错误恢复或无障碍引导：starter_kit/loomq/agent.py 的确定性 QASM 校验、诊断重试与有界多轮历史；Web 提供 Learn、Build、Repair、Backend Match、反事实首门分歧、逐门状态故事和清空会话，并使用跳转链接、语义结果表、错误 `role=alert`、键盘焦点、`aria-live`、移动端断点和减少动画偏好
 ```
 
 以上四项各 1 分。普通项目 README 完整不代表自动获得 Bonus。

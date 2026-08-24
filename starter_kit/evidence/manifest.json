@@ -6,6 +6,16 @@
       "sha256": "b03958748b3c718c81e544adf0523101b4cb2c2ed0bb58a4d92c191a5c679aba"
     },
     {
+      "bytes": 154043,
+      "path": "files/counterfactual-desktop.jpg",
+      "sha256": "1fe92d243ee2837c8683e24d4af337b398efdaf43fe93315a0442884afd9731a"
+    },
+    {
+      "bytes": 44340,
+      "path": "files/counterfactual-mobile.jpg",
+      "sha256": "c7c312806c7137411a48ecabdd7fb60ecab76f3eb3f70926ffded178e6c00396"
+    },
+    {
       "bytes": 915,
       "path": "files/offline-stress-summary.json",
       "sha256": "5d038cfca5d1e01a3d6fbe059a6ce9a4a6da81d5b75ab7050f66af8bbd1212e6"
