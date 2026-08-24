@@ -144,6 +144,17 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="candidate-qasm"', page)
         self.assertIn('id="run-compare"', page)
         self.assertIn("不归因具体噪声机制", page)
+        self.assertIn('aria-label="90 秒评委导览"', page)
+        self.assertIn('id="run-judge-tour"', page)
+        self.assertIn('id="judge-tour-status"', page)
+        self.assertIn('href="#workspace"', page)
+        self.assertIn('href="#counterfactual-panel"', page)
+        self.assertIn('href="#assert-panel"', page)
+        self.assertIn('href="#witness-panel"', page)
+        self.assertIn('href="#hybrid-panel"', page)
+        self.assertIn('href="#prompt-contract-panel"', page)
+        self.assertIn('id="inspect-prompt-contract"', page)
+        self.assertIn('id="prompt-contract-result"', page)
 
     def test_home_places_evidence_navigator_before_feature_inventory(self):
         _status, _headers, body = self.request("/")
@@ -212,6 +223,22 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("这条路径会发生", script)
         self.assertIn("在当前量子态下不会发生", script)
 
+    def test_frontend_tour_requires_semantic_evidence_and_resets_changed_inputs(self):
+        status, headers, body = self.request("/app.js")
+
+        script = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("javascript", headers["Content-Type"])
+        self.assertIn('const TOUR_TARGETS = ["spinq", "originq", "braket"]', script)
+        self.assertIn("function requireTourEvidence", script)
+        self.assertIn("function markTourStep", script)
+        self.assertIn("function resetTourStep", script)
+        self.assertIn('api("/api/prompt-contract"', script)
+        self.assertIn("contract.integrity.is_signature === false", script)
+        self.assertIn("verification.valid === true", script)
+        self.assertIn('$("#run-judge-tour").addEventListener', script)
+        self.assertIn("addEvidenceReset", script)
+
     def test_styles_include_mobile_overflow_guards_for_evidence_panels(self):
         status, headers, body = self.request("/styles.css")
 
@@ -226,6 +253,11 @@ class WebLabTests(unittest.TestCase):
         self.assertIn(".evidence-card{padding:18px", stylesheet)
         self.assertIn("overflow-wrap:anywhere", stylesheet)
         self.assertIn("word-break:break-word", stylesheet)
+        self.assertIn(".hardware-proofline", stylesheet)
+        self.assertIn(".judge-tour", stylesheet)
+        self.assertIn(".judge-tour a.complete", stylesheet)
+        self.assertIn(".prompt-contract-panel", stylesheet)
+        self.assertIn("overflow-x:auto", stylesheet)
 
     def test_enhancement_styles_keep_hybrid_path_evidence_shrink_safe(self):
         status, headers, body = self.request("/enhancements.css")

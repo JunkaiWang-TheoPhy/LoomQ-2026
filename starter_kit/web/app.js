@@ -141,6 +141,8 @@ const $ = (selector) => document.querySelector(selector);
 const qasm = $("#qasm");
 const notice = $("#notice");
 const agentHistory = [];
+const TOUR_TARGETS = ["spinq", "originq", "braket"];
+const TOUR_STATUSES = new Set(["pass", "fail", "inconclusive"]);
 let lastProofUrl = null;
 let lastHybridPathUrl = null;
 let lastWitnessUrl = null;
@@ -157,6 +159,28 @@ function element(tag, className, value) {
   if (className) node.className = className;
   if (value !== undefined) node.textContent = value;
   return node;
+}
+
+function requireTourEvidence(condition, message) {
+  if (!condition) throw new Error(`证据语义检查失败：${message}`);
+}
+
+function markTourStep(step, detail) {
+  const status = $(`#tour-${step}-status`);
+  status.textContent = `完成 · ${detail}`;
+  status.closest("a").classList.add("complete");
+}
+
+function resetTourStep(step, reason = "输入已变化") {
+  const status = $(`#tour-${step}-status`);
+  status.textContent = reason;
+  status.closest("a").classList.remove("complete");
+}
+
+function addEvidenceReset(selector, eventName, steps) {
+  $(selector).addEventListener(eventName, () => {
+    steps.forEach((step) => resetTourStep(step));
+  });
 }
 
 function renderCircuit() {
@@ -191,12 +215,16 @@ function selectExample(name) {
     button.classList.toggle("active", button.dataset.example === name);
   });
   renderCircuit();
+  ["run", "compare", "assert", "witness"].forEach((step) => resetTourStep(step));
 }
 
 document.querySelectorAll(".chip").forEach((button) => {
   button.addEventListener("click", () => selectExample(button.dataset.example));
 });
-qasm.addEventListener("input", renderCircuit);
+qasm.addEventListener("input", () => {
+  renderCircuit();
+  ["run", "compare", "assert", "witness"].forEach((step) => resetTourStep(step));
+});
 selectExample("bell");
 $("#assertions-input").value = defaultAssertions;
 $("#hybrid-source").value = hybridExample;
@@ -657,17 +685,180 @@ function renderResults(data) {
   results.focus();
 }
 
+function validateRunEvidence(data) {
+  const proof = data.proof;
+  const portability = proof?.portability || {};
+  const targets = Object.keys(portability).sort();
+  requireTourEvidence(proof?.equivalence?.verified === true, "ProofTrace 未验证等价性");
+  requireTourEvidence(
+    targets.length === TOUR_TARGETS.length
+      && TOUR_TARGETS.every((target) => targets.includes(target)),
+    "三种声明目标不完整",
+  );
+  requireTourEvidence(
+    TOUR_TARGETS.every((target) => portability[target]?.roundtrip_verified === true),
+    "至少一种目标 IR 未通过独立回读",
+  );
+}
+
+function validateAssertionEvidence(data) {
+  requireTourEvidence(data.mode === "exact-local", "评委路径必须使用 exact-local 断言");
+  requireTourEvidence(Array.isArray(data.assertions) && data.assertions.length > 0, "断言列表为空");
+  requireTourEvidence(
+    data.assertions.every(
+      (item) => TOUR_STATUSES.has(item.status) && item.evidence_mode === "exact-local",
+    ),
+    "断言状态或 evidence_mode 不受支持",
+  );
+  requireTourEvidence(
+    data.attribution_caveat?.includes("不归因具体噪声机制"),
+    "缺少科学归因边界",
+  );
+}
+
+function validateHybridPathEvidence(data) {
+  const verification = data.verification;
+  requireTourEvidence(verification.valid === true, "路径证书未通过服务端重算");
+  requireTourEvidence(
+    data.certificate?.schema_version === "loomq-hybrid-path-certificate-v1",
+    "路径证书 schema 不匹配",
+  );
+  requireTourEvidence(
+    Array.isArray(data.certificate.outcomes) && Array.isArray(data.certificate.path_groups),
+    "路径证书缺少完备 outcome 或 path_groups",
+  );
+}
+
+function renderPromptContract(data) {
+  const contract = data.contract;
+  const constraints = contract.backend_constraints;
+  const result = $("#prompt-contract-result");
+  result.replaceChildren();
+  const summary = element("dl", "prompt-contract-summary");
+  [
+    ["任务", contract.task_kind],
+    ["目标态", contract.state_goal ? JSON.stringify(contract.state_goal) : "未指定"],
+    ["平台", constraints.platforms.join("、") || "未限定"],
+    ["后端种类", constraints.kinds.join("、") || "未限定"],
+    ["最少比特", constraints.minimum_qubits === null ? "未限定" : String(constraints.minimum_qubits)],
+    ["账号", constraints.requires_account === false ? "不需要" : constraints.requires_account === true ? "需要" : "未限定"],
+  ].forEach(([label, value]) => {
+    const row = document.createElement("div");
+    row.append(element("dt", "", label), element("dd", "", value));
+    summary.append(row);
+  });
+  result.append(
+    summary,
+    element(
+      "p",
+      "audit-note",
+      `semantic SHA-256 ${contract.integrity.semantic_sha256.slice(0, 12)}… · 服务端重建通过 · 摘要不是身份签名。`,
+    ),
+  );
+  $("#prompt-contract-status").textContent = "本地重建通过";
+}
+
+async function executeRunEvidence() {
+  const data = await api("/api/run", {
+    qasm: qasm.value,
+    target: $("#target").value,
+    shots: Number($("#shots").value),
+  });
+  validateRunEvidence(data);
+  renderResults(data);
+  markTourStep("run", "三后端回读");
+  return data;
+}
+
+async function executeCompareEvidence(requireDivergence = false) {
+  const data = await api("/api/compare", {
+    reference_qasm: qasm.value,
+    candidate_qasm: $("#candidate-qasm").value,
+  });
+  renderComparison(data);
+  if (data.first_divergent_gate !== null) {
+    markTourStep("compare", `第 ${data.first_divergent_gate + 1} 门`);
+  } else if (requireDivergence) {
+    requireTourEvidence(false, "默认反例没有首个分歧门");
+  } else {
+    resetTourStep("compare", "未发现首门分歧");
+  }
+  return data;
+}
+
+async function executeAssertionEvidence() {
+  const payload = {
+    qasm: qasm.value,
+    assertions: parseJsonInput($("#assertions-input").value, "assertions"),
+  };
+  const observedRaw = $("#observed-input").value.trim();
+  if (observedRaw) payload.observed = parseJsonInput(observedRaw, "observed");
+  const shotsRaw = $("#observed-shots").value.trim();
+  if (shotsRaw) payload.shots = Number(shotsRaw);
+  const data = await api("/api/assert", payload);
+  renderAssertionReport(data);
+  if (data.mode !== "exact-local") {
+    resetTourStep("assert", "非 exact-local");
+    return data;
+  }
+  validateAssertionEvidence(data);
+  const counts = data.assertions.reduce((summary, item) => {
+    summary[item.status] = (summary[item.status] || 0) + 1;
+    return summary;
+  }, {});
+  markTourStep("assert", Object.entries(counts).map(([key, value]) => `${value} ${key}`).join(" / "));
+  return data;
+}
+
+async function executeWitnessEvidence() {
+  const data = await api("/api/causal-audit", {
+    reference_qasm: qasm.value,
+    candidate_qasm: $("#candidate-qasm").value,
+    assertions: parseJsonInput($("#assertions-input").value, "assertions"),
+    hybrid_source: $("#hybrid-source").value,
+    measurement_bits: parseJsonInput($("#hybrid-bits").value, "measurement_bits"),
+    target: $("#target").value,
+  });
+  requireTourEvidence(data.verification?.valid === true, "Witness Chain 未通过本地重算");
+  renderWitnessAudit(data);
+  markTourStep("witness", "本地重算通过");
+  return data;
+}
+
+async function executeHybridPathEvidence() {
+  const data = await api("/api/hybrid-paths", {
+    source: $("#hybrid-source").value,
+    max_outcomes: Number($("#hybrid-max-outcomes").value),
+  });
+  validateHybridPathEvidence(data);
+  renderHybridPathCertificate(data);
+  markTourStep("hybrid", "语义重算通过");
+  return data;
+}
+
+async function executePromptContractEvidence() {
+  const data = await api("/api/prompt-contract", {
+    prompt: $("#contract-prompt").value,
+  });
+  const contract = data.contract;
+  const verification = data.verification;
+  requireTourEvidence(verification.valid === true, "Prompt Contract 未通过服务端重建");
+  requireTourEvidence(
+    contract.schema_version === "loomq-prompt-contract-v1",
+    "Prompt Contract schema 不匹配",
+  );
+  requireTourEvidence(contract.integrity.is_signature === false, "摘要被错误标记为签名");
+  renderPromptContract(data);
+  markTourStep("contract", contract.task_kind);
+  return data;
+}
+
 $("#run").addEventListener("click", async () => {
   const button = $("#run");
   button.disabled = true;
   button.textContent = "正在运行并整理证据…";
   try {
-    const data = await api("/api/run", {
-      qasm: qasm.value,
-      target: $("#target").value,
-      shots: Number($("#shots").value),
-    });
-    renderResults(data);
+    await executeRunEvidence();
     tell("运行完成：先看 ProofTrace，再看路径和结果表");
   } catch (error) {
     tell(error.message);
@@ -684,20 +875,7 @@ $("#run-assert").addEventListener("click", async () => {
   button.disabled = true;
   button.textContent = "检查中…";
   try {
-    const payload = {
-      qasm: qasm.value,
-      assertions: parseJsonInput($("#assertions-input").value, "assertions"),
-    };
-    const observedRaw = $("#observed-input").value.trim();
-    if (observedRaw) {
-      payload.observed = parseJsonInput(observedRaw, "observed");
-    }
-    const shotsRaw = $("#observed-shots").value.trim();
-    if (shotsRaw) {
-      payload.shots = Number(shotsRaw);
-    }
-    const data = await api("/api/assert", payload);
-    renderAssertionReport(data);
+    await executeAssertionEvidence();
     tell("断言报告已更新");
   } catch (error) {
     tell(error.message);
@@ -731,11 +909,7 @@ $("#run-hybrid-path").addEventListener("click", async () => {
   button.disabled = true;
   button.textContent = "列举中…";
   try {
-    const data = await api("/api/hybrid-paths", {
-      source: $("#hybrid-source").value,
-      max_outcomes: Number($("#hybrid-max-outcomes").value),
-    });
-    renderHybridPathCertificate(data);
+    await executeHybridPathEvidence();
     tell("Hybrid 路径证书已更新");
   } catch (error) {
     tell(error.message);
@@ -747,6 +921,7 @@ $("#run-hybrid-path").addEventListener("click", async () => {
 
 $("#copy-reference").addEventListener("click", () => {
   $("#candidate-qasm").value = qasm.value;
+  ["compare", "witness"].forEach((step) => resetTourStep(step));
   $("#candidate-qasm").focus();
   tell("已复制当前电路；现在修改一扇门再比较");
 });
@@ -762,11 +937,7 @@ $("#run-compare").addEventListener("click", async () => {
   button.disabled = true;
   button.textContent = "逐门比较中…";
   try {
-    const data = await api("/api/compare", {
-      reference_qasm: qasm.value,
-      candidate_qasm: $("#candidate-qasm").value,
-    });
-    renderComparison(data);
+    await executeCompareEvidence();
     tell("反事实比较已完成");
   } catch (error) {
     tell(error.message);
@@ -781,15 +952,7 @@ $("#run-witness").addEventListener("click", async () => {
   button.disabled = true;
   button.textContent = "对齐证据中…";
   try {
-    const data = await api("/api/causal-audit", {
-      reference_qasm: qasm.value,
-      candidate_qasm: $("#candidate-qasm").value,
-      assertions: parseJsonInput($("#assertions-input").value, "assertions"),
-      hybrid_source: $("#hybrid-source").value,
-      measurement_bits: parseJsonInput($("#hybrid-bits").value, "measurement_bits"),
-      target: $("#target").value,
-    });
-    renderWitnessAudit(data);
+    await executeWitnessEvidence();
     tell("统一 Witness Chain 已通过本地重算");
   } catch (error) {
     tell(error.message);
@@ -798,6 +961,76 @@ $("#run-witness").addEventListener("click", async () => {
     button.textContent = "生成统一审计链";
   }
 });
+
+$("#inspect-prompt-contract").addEventListener("click", async () => {
+  const button = $("#inspect-prompt-contract");
+  button.disabled = true;
+  button.textContent = "重建中…";
+  try {
+    await executePromptContractEvidence();
+    $("#prompt-contract-panel").focus();
+    tell("Prompt Contract 已通过服务端重建");
+  } catch (error) {
+    $("#prompt-contract-status").textContent = "检查失败";
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "检查 Prompt Contract";
+  }
+});
+
+const judgeTourSteps = [
+  ["run", "运行与 ProofTrace", executeRunEvidence],
+  ["compare", "首个因果分歧", () => executeCompareEvidence(true)],
+  ["assert", "统计断言", executeAssertionEvidence],
+  ["witness", "Witness Chain", executeWitnessEvidence],
+  ["hybrid", "Mid-circuit 路径", executeHybridPathEvidence],
+  ["contract", "Prompt Contract", executePromptContractEvidence],
+];
+
+$("#run-judge-tour").addEventListener("click", async () => {
+  const button = $("#run-judge-tour");
+  const status = $("#judge-tour-status");
+  button.disabled = true;
+  selectExample("bell");
+  $("#target").value = "spinq";
+  $("#shots").value = "1024";
+  $("#candidate-qasm").value = bellCounterexample;
+  $("#assertions-input").value = defaultAssertions;
+  $("#observed-input").value = "";
+  $("#observed-shots").value = "";
+  $("#hybrid-source").value = hybridExample;
+  $("#hybrid-bits").value = "[1, 0]";
+  $("#hybrid-max-outcomes").value = "256";
+  $("#contract-prompt").value = "Which free 20-qubit simulator on OriginQ needs no account?";
+  judgeTourSteps.forEach(([step]) => resetTourStep(step, "未运行"));
+  try {
+    for (let index = 0; index < judgeTourSteps.length; index += 1) {
+      const [_step, label, runStep] = judgeTourSteps[index];
+      status.textContent = `正在运行 ${index + 1}/6 · ${label}`;
+      await runStep();
+    }
+    status.textContent = "6/6 已由真实本地 API 完成；可沿状态条逐项复核。";
+    $("#prompt-contract-panel").focus();
+    tell("评委路径完成：6 项证据均通过各自语义门槛");
+  } catch (error) {
+    status.textContent = `已停止：${error.message}`;
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+addEvidenceReset("#target", "change", ["run", "witness"]);
+addEvidenceReset("#shots", "change", ["run"]);
+addEvidenceReset("#candidate-qasm", "input", ["compare", "witness"]);
+addEvidenceReset("#assertions-input", "input", ["assert", "witness"]);
+addEvidenceReset("#observed-input", "input", ["assert", "witness"]);
+addEvidenceReset("#observed-shots", "input", ["assert", "witness"]);
+addEvidenceReset("#hybrid-source", "input", ["hybrid", "witness"]);
+addEvidenceReset("#hybrid-max-outcomes", "input", ["hybrid"]);
+addEvidenceReset("#hybrid-bits", "input", ["witness"]);
+addEvidenceReset("#contract-prompt", "input", ["contract"]);
 
 $("#agent-form").addEventListener("submit", async (event) => {
   event.preventDefault();
