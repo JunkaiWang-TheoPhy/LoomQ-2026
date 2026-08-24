@@ -20,69 +20,25 @@
   </header>
 
   <main id="top">
-    <section class="hero" aria-labelledby="hero-title">
-      <div>
-        <p class="eyebrow">先看证据，再自己跑一遍</p>
-        <h1 id="hero-title">把量子电路，<br><em>看懂再运行。</em></h1>
-        <p class="intro">先确认编译有没有改坏电路，再看测量后的每条路径，最后再决定要不要自己改 QASM。默认 Bell 例子和所有证据都已经放在这一页，每个量子比特的变化也能直接展开。</p>
+    <section class="story-hero" aria-labelledby="hero-title">
+      <img src="/assets/quantum-world-journey.png" alt="一位初学者从观测站走向由量子电路线构成的分岔世界，手中拿着实验护照">
+      <div class="story-hero-copy">
+        <p class="eyebrow">Quantum World · 序章</p>
+        <blockquote>“看不见的世界，也可以留下可重走的路。”</blockquote>
+        <h1 id="hero-title">你不需要先懂量子，<br><em>先做一次发现。</em></h1>
+        <p class="intro">你是这次实验的观测者。先猜 H 和 CX 会让两个量子比特怎样变化，再只改变一扇门，用两组本地运行结果修正自己的判断。</p>
+        <nav class="story-actions" aria-label="Quantum World 快速入口">
+          <a class="story-primary" href="#inquiry-world">进入第一章</a>
+          <a class="story-secondary" href="#evidence-map">我想先看证据</a>
+        </nav>
+        <p class="story-boundary">主视觉是旅程隐喻；结论只来自下方可重放实验，不把插画当作量子态证明。</p>
       </div>
-      <ol class="steps" aria-label="使用步骤">
-        <li><span>01</span><strong>先点证据入口</strong><small>一分钟确认编译、路径和 Agent 回退</small></li>
-        <li><span>02</span><strong>再跑默认示例</strong><small>同一份 Bell 电路会联通 ProofTrace、路径证书和 Witness Chain</small></li>
-        <li><span>03</span><strong>最后再自己改</strong><small>量子门时间线、概率图和对比实验都在同一页</small></li>
+      <ol id="story-chapters" class="story-chapters" aria-label="三幕探究旅程">
+        <li data-story-chapter="predict" class="current"><span>第一幕</span><strong>在分岔以前</strong><small>先留下预测</small></li>
+        <li data-story-chapter="experiment" class="upcoming"><span>第二幕</span><strong>只拨动一扇门</strong><small>运行 A/B 实验</small></li>
+        <li data-story-chapter="conclude" class="upcoming"><span>第三幕</span><strong>带证据归来</strong><small>审计结论并领取护照</small></li>
       </ol>
-    </section>
-
-    <section id="evidence-map" class="evidence-map" aria-labelledby="evidence-map-title" tabindex="-1">
-      <div class="evidence-map-header">
-        <div>
-          <p class="eyebrow">90 秒评委路径</p>
-          <h2 id="evidence-map-title">先回答三个问题</h2>
-        </div>
-        <div class="judge-choices" aria-label="快速入口">
-          <a class="judge-choice" href="#evidence-map">1 分钟看证据</a>
-          <a class="judge-choice" href="#workspace">3 分钟跑示例</a>
-          <a class="judge-choice" href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/tree/main/starter_kit/evidence" target="_blank" rel="noreferrer">查看原始材料</a>
-        </div>
-      </div>
-      <div class="hardware-proofline" aria-label="已归档真机证据">
-        <a href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/blob/main/starter_kit/evidence/files/originq-result.json" target="_blank" rel="noreferrer">
-          <span>OriginQ · finite-shot counts</span>
-          <strong>悟空 180 · 9D182F…</strong>
-          <small>1000 shots · Bell 理想支持集 95.8% · 原始 JSON + manifest</small>
-        </a>
-        <a href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/blob/main/starter_kit/evidence/files/spinq-result.msgpack" target="_blank" rel="noreferrer">
-          <span>SpinQ · provider probabilities</span>
-          <strong>2 比特核磁真机 · G-260824-0001</strong>
-          <small>不伪造 shots/置信区间 · 原始 MessagePack + 无损解码</small>
-        </a>
-      </div>
-      <div class="judge-tour-launch">
-        <button id="run-judge-tour" class="primary" type="button">一键运行 6 项本地证据</button>
-        <p id="judge-tour-status" role="status" aria-live="polite">尚未运行；不需要模型密钥或平台账号。</p>
-      </div>
-      <nav id="judge-tour" class="judge-tour" aria-label="90 秒评委导览">
-        <a href="#workspace" data-tour-step="run">运行与 ProofTrace <span id="tour-run-status">未运行</span></a>
-        <a href="#counterfactual-panel" data-tour-step="compare">首个因果分歧 <span id="tour-compare-status">未运行</span></a>
-        <a href="#assert-panel" data-tour-step="assert">统计断言 <span id="tour-assert-status">未运行</span></a>
-        <a href="#witness-panel" data-tour-step="witness">Witness Chain <span id="tour-witness-status">未运行</span></a>
-        <a href="#hybrid-panel" data-tour-step="hybrid">Mid-circuit 路径 <span id="tour-hybrid-status">未运行</span></a>
-        <a href="#prompt-contract-panel" data-tour-step="contract">Prompt Contract <span id="tour-contract-status">未运行</span></a>
-      </nav>
-      <ol class="question-checklist">
-        <li class="question-item">
-          <h3>编译有没有改坏电路?</h3>
-          <p>点击 <a href="#proof-panel">ProofTrace：这次转译改了什么</a>，会看到三种目标平台都能回读同一份电路，还有可下载的证书。</p>
-        </li>
-        <li class="question-item">
-          <h3>测量后程序会走哪条路?</h3>
-          <p>点击 <a href="#hybrid-panel">列出所有可能分支</a>，会看到每条路径的概率、可达/不可达结果和死路径。</p>
-        </li>
-        <li class="question-item">
-          <h3>不会 QASM 能不能用?</h3>
-          <p>点击修复一段错误 QASM，会看到 Agent 先给出可运行答案，再由同一页的本地规则校验。</p>
-        </li>
-      </ol>
+      <p id="story-progress-copy" class="story-progress-copy" role="status" aria-live="polite">第一幕：先留下你的预测。</p>
     </section>
 
     <section id="inquiry-world" class="inquiry-world" aria-labelledby="inquiry-title" tabindex="-1">
@@ -151,6 +107,59 @@
           <a id="download-inquiry" class="proof-download" href="#" aria-disabled="true">下载可重放实验护照 JSON</a>
         </div>
       </div>
+    </section>
+
+    <section id="evidence-map" class="evidence-map" aria-labelledby="evidence-map-title" tabindex="-1">
+      <div class="evidence-map-header">
+        <div>
+          <p class="eyebrow">证据附录 · 90 秒审计路径</p>
+          <h2 id="evidence-map-title">这不是总结，是证据</h2>
+          <p>故事负责让人走进问题；这里保留真实返回、失败边界和可下载材料，证明刚才的结论可以复查。</p>
+        </div>
+        <div class="judge-choices" aria-label="快速入口">
+          <a class="judge-choice" href="#evidence-map">1 分钟看证据</a>
+          <a class="judge-choice" href="#workspace">3 分钟跑示例</a>
+          <a class="judge-choice" href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/tree/main/starter_kit/evidence" target="_blank" rel="noreferrer">查看原始材料</a>
+        </div>
+      </div>
+      <div class="hardware-proofline" aria-label="已归档真机证据">
+        <a href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/blob/main/starter_kit/evidence/files/originq-result.json" target="_blank" rel="noreferrer">
+          <span>OriginQ · finite-shot counts</span>
+          <strong>悟空 180 · 9D182F…</strong>
+          <small>1000 shots · Bell 理想支持集 95.8% · 原始 JSON + manifest</small>
+        </a>
+        <a href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/blob/main/starter_kit/evidence/files/spinq-result.msgpack" target="_blank" rel="noreferrer">
+          <span>SpinQ · provider probabilities</span>
+          <strong>2 比特核磁真机 · G-260824-0001</strong>
+          <small>不伪造 shots/置信区间 · 原始 MessagePack + 无损解码</small>
+        </a>
+      </div>
+      <div class="judge-tour-launch">
+        <button id="run-judge-tour" class="primary" type="button">一键运行 6 项本地证据</button>
+        <p id="judge-tour-status" role="status" aria-live="polite">尚未运行；不需要模型密钥或平台账号。</p>
+      </div>
+      <nav id="judge-tour" class="judge-tour" aria-label="90 秒评委导览">
+        <a href="#workspace" data-tour-step="run">运行与 ProofTrace <span id="tour-run-status">未运行</span></a>
+        <a href="#counterfactual-panel" data-tour-step="compare">首个因果分歧 <span id="tour-compare-status">未运行</span></a>
+        <a href="#assert-panel" data-tour-step="assert">统计断言 <span id="tour-assert-status">未运行</span></a>
+        <a href="#witness-panel" data-tour-step="witness">Witness Chain <span id="tour-witness-status">未运行</span></a>
+        <a href="#hybrid-panel" data-tour-step="hybrid">Mid-circuit 路径 <span id="tour-hybrid-status">未运行</span></a>
+        <a href="#prompt-contract-panel" data-tour-step="contract">Prompt Contract <span id="tour-contract-status">未运行</span></a>
+      </nav>
+      <ol class="question-checklist">
+        <li class="question-item">
+          <h3>编译有没有改坏电路?</h3>
+          <p>点击 <a href="#proof-panel">ProofTrace：这次转译改了什么</a>，会看到三种目标平台都能回读同一份电路，还有可下载的证书。</p>
+        </li>
+        <li class="question-item">
+          <h3>测量后程序会走哪条路?</h3>
+          <p>点击 <a href="#hybrid-panel">列出所有可能分支</a>，会看到每条路径的概率、可达/不可达结果和死路径。</p>
+        </li>
+        <li class="question-item">
+          <h3>不会 QASM 能不能用?</h3>
+          <p>点击修复一段错误 QASM，会看到 Agent 先给出可运行答案，再由同一页的本地规则校验。</p>
+        </li>
+      </ol>
     </section>
 
     <section class="task-switcher" aria-labelledby="task-title">

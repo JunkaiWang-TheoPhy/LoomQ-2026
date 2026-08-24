@@ -36,6 +36,10 @@ _STATIC = {
     "/favicon.ico": ("favicon.svg", "image/svg+xml"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/inquiry.js": ("inquiry.js", "text/javascript; charset=utf-8"),
+    "/assets/quantum-world-journey.png": (
+        "assets/quantum-world-journey.png",
+        "image/png",
+    ),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/enhancements.css": ("enhancements.css", "text/css; charset=utf-8"),
 }

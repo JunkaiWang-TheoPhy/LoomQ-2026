@@ -223,6 +223,26 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("先预测，再运行对照实验", page)
         self.assertLess(page.index('id="inquiry-world"'), page.index('id="workspace"'))
 
+    def test_home_frames_the_inquiry_as_an_accessible_three_act_story(self):
+        _status, _headers, body = self.request("/")
+
+        page = body.decode()
+        self.assertIn('class="story-hero"', page)
+        self.assertIn('src="/assets/quantum-world-journey.png"', page)
+        self.assertIn('id="story-chapters"', page)
+        self.assertIn('id="story-progress-copy"', page)
+        self.assertIn('href="#inquiry-world"', page)
+        self.assertIn('href="#evidence-map"', page)
+        self.assertLess(page.index('class="story-hero"'), page.index('id="inquiry-world"'))
+        self.assertLess(page.index('id="inquiry-world"'), page.index('id="evidence-map"'))
+
+    def test_quantum_world_artwork_is_served_as_a_local_png(self):
+        status, headers, body = self.request("/assets/quantum-world-journey.png")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "image/png")
+        self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
 

@@ -618,6 +618,19 @@ function resetInquiryAudit(message = "选择一条结论，让系统指出证据
   }
 }
 
+function renderStoryProgress(hasExperiment, auditStatus) {
+  const progress = globalThis.LoomQInquiry.journeyProgress(hasExperiment, auditStatus);
+  progress.chapters.forEach((chapter) => {
+    const item = document.querySelector(`[data-story-chapter="${chapter.id}"]`);
+    if (!item) return;
+    item.classList.remove("current", "complete", "upcoming");
+    item.classList.add(chapter.state);
+    if (chapter.state === "current") item.setAttribute("aria-current", "step");
+    else item.removeAttribute("aria-current");
+  });
+  $("#story-progress-copy").textContent = progress.message;
+}
+
 function renderInquiryExperiment(passport) {
   const view = globalThis.LoomQInquiry.viewModel(passport);
   renderInquiryBars("#inquiry-control-chart", view.controlBars);
@@ -1037,6 +1050,7 @@ $("#run-inquiry").addEventListener("click", async () => {
     const passport = await requestInquiry();
     currentInquiryPassport = passport;
     renderInquiryExperiment(passport);
+    renderStoryProgress(true, null);
     resetInquiryAudit("实验已完成。现在选择结论，并让证据检查它。");
     status.textContent = "A/B 实验完成：只改变了 CX，下一步请形成结论。";
     tell("Quantum World：对照实验完成");
@@ -1062,6 +1076,7 @@ $("#audit-inquiry").addEventListener("click", async () => {
       $("#inquiry-conclusion").value,
     );
     renderInquiryAudit(passport);
+    renderStoryProgress(true, passport.conclusion_audit.status);
     $("#inquiry-audit").setAttribute("tabindex", "-1");
     $("#inquiry-audit").focus();
     tell("结论审计完成；实验护照可以下载");
@@ -1079,10 +1094,12 @@ $("#inquiry-prediction").addEventListener("change", () => {
   $("#inquiry-results").hidden = true;
   $("#inquiry-status").textContent = "预测已记录；运行实验后再看答案。";
   resetInquiryAudit();
+  renderStoryProgress(false, null);
 });
 
 $("#inquiry-conclusion").addEventListener("change", () => {
   resetInquiryAudit("结论已变化；请重新用当前实验审计。");
+  renderStoryProgress(Boolean(currentInquiryPassport), null);
 });
 
 $("#run-assert").addEventListener("click", async () => {

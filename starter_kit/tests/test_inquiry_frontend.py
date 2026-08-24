@@ -10,6 +10,46 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class InquiryFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_story_progress_marks_the_learners_next_chapter(self):
+        script = """
+const inquiry = require(process.argv[1]);
+process.stdout.write(JSON.stringify([
+  inquiry.journeyProgress(false, null),
+  inquiry.journeyProgress(true, null),
+  inquiry.journeyProgress(true, "unsupported"),
+]));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "inquiry.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        before, experimented, audited = json.loads(completed.stdout)
+        self.assertEqual(
+            [chapter["state"] for chapter in before["chapters"]],
+            ["current", "upcoming", "upcoming"],
+        )
+        self.assertEqual(before["message"], "第一幕：先留下你的预测。")
+        self.assertEqual(
+            [chapter["state"] for chapter in experimented["chapters"]],
+            ["complete", "complete", "current"],
+        )
+        self.assertEqual(experimented["message"], "第三幕：根据同一次实验形成结论。")
+        self.assertEqual(
+            [chapter["state"] for chapter in audited["chapters"]],
+            ["complete", "complete", "complete"],
+        )
+        self.assertEqual(audited["message"], "旅程完成：护照记录了预测、实验与证据边界。")
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_view_model_turns_passport_evidence_into_beginner_observations(self):
         passport = {
             "prediction_review": {
