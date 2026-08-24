@@ -195,16 +195,20 @@ def validate_report(report: dict) -> bool:
     """Bind benchmark claims to the committed corpus and exact check counts."""
     return bool(
         report.get("schema_version") == "loomq-prooftrace-benchmark-v1"
+        and report.get("circuit_count") == len(CIRCUIT_NAMES)
         and report.get("corpus_sha256") == EXPECTED_CORPUS_SHA256
         and report.get("total_mutants") == EXPECTED_MUTANTS
         and report.get("detected_mutants") == EXPECTED_MUTANTS
         and report.get("false_accepts") == 0
+        and report.get("false_accept_details") == []
         and report.get("semantic_checks") == EXPECTED_MUTANTS
         and report.get("semantic_rejections") == EXPECTED_MUTANTS
         and report.get("semantic_false_accepts") == 0
+        and report.get("semantic_false_accept_details") == []
         and report.get("semantic_scope_skips") == []
         and report.get("portability_checks") == EXPECTED_PORTABILITY_CHECKS
         and report.get("rewrite_checks") == EXPECTED_REWRITE_CHECKS
+        and report.get("failures") == []
         and report.get("passed") is True
     )
 
