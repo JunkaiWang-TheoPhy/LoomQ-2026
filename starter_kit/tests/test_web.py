@@ -5,9 +5,13 @@ import unittest
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from unittest import mock
 
-from loomq.web import create_server
+try:
+    from loomq.web import create_server
+except ImportError:
+    from starter_kit.loomq.web import create_server
 
 
 BELL = """OPENQASM 2.0;
@@ -129,6 +133,10 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="result-table"', page)
         self.assertIn('id="proof-panel"', page)
         self.assertIn('id="download-proof"', page)
+        self.assertIn('id="proof-semantic-basis"', page)
+        self.assertIn('id="proof-semantic-phase"', page)
+        self.assertIn('id="proof-semantic-error"', page)
+        self.assertIn('id="proof-semantic-bound"', page)
         self.assertIn('role="alert"', page)
         self.assertIn('aria-describedby="prompt-help"', page)
         self.assertIn('<details id="state-trace"', page)
@@ -224,10 +232,19 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("state.amplitude_real", script)
         self.assertIn("state.amplitude_imag", script)
         self.assertIn("data.trace.length <= 15", script)
-        self.assertIn("data.proof.portability", script)
+        self.assertIn("proof?.portability || {}", script)
         self.assertIn("application/json", script)
         self.assertIn("downloadProof.href = lastProofUrl", script)
         self.assertIn("downloadProof.download =", script)
+        self.assertIn("proof?.whole_circuit_validation", script)
+        self.assertIn("data.proof_status", script)
+        self.assertIn("data.proof_notice", script)
+        self.assertIn("没有 whole-circuit 证书", script)
+        self.assertIn("全局相位为", script)
+        self.assertIn("最大误差", script)
+        self.assertIn("不当成形式化证明", script)
+        self.assertIn("semantic.scope.max_qubits", script)
+        self.assertIn("semantic.scope.tolerance", script)
         self.assertIn("coveredSourceOperations", script)
         self.assertIn("sourceMetrics.measurement_count", script)
         self.assertIn("agentHistory.splice(0)", script)
@@ -267,6 +284,20 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("addEvidenceReset", script)
         self.assertIn("function initializeTourState", script)
         self.assertIn("initializeTourState();", script)
+
+    def test_prooftrace_doc_uses_actual_benchmark_keys(self):
+        status, headers, body = self.request("/index.html")
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", headers["Content-Type"])
+
+        prooftrace_doc = Path(__file__).resolve().parents[1] / "PROOFTRACE.md"
+        with prooftrace_doc.open(encoding="utf-8") as handle:
+            content = handle.read()
+
+        self.assertIn('"detected_mutants": 225', content)
+        self.assertIn('"semantic_rejections": 225', content)
+        self.assertNotIn('"detected_structure_mutants"', content)
+        self.assertNotIn('"detected_semantic_mutants"', content)
 
     def test_styles_include_mobile_overflow_guards_for_evidence_panels(self):
         status, headers, body = self.request("/styles.css")
@@ -313,7 +344,14 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(set(result["probabilities"]), {"00", "11"})
         self.assertIn("OPENQASM 2.0", result["native_ir"])
         self.assertEqual(result["proof"]["schema_version"], "loomq-prooftrace-v1")
+        self.assertIn("whole_circuit_validation", result["proof"])
         self.assertTrue(result["proof"]["equivalence"]["verified"])
+        self.assertTrue(result["proof"]["whole_circuit_validation"]["verified"])
+        self.assertTrue(
+            result["proof"]["whole_circuit_validation"]["one_global_phase"]["consistent"]
+        )
+        self.assertEqual(result["proof"]["whole_circuit_validation"]["basis_columns_checked"], 4)
+        self.assertEqual(result["proof"]["whole_circuit_validation"]["maximum_absolute_error"], 0.0)
         self.assertEqual(set(result["proof"]["portability"]), {"spinq", "originq", "braket"})
         self.assertTrue(
             all(
@@ -803,8 +841,28 @@ qreg q[9]; creg c[9]; x q[8]; measure q -> c;
         payload = json.loads(body)
         self.assertEqual(status, 200)
         self.assertEqual(payload["result"]["counts"], {"100000000": 17})
+        self.assertIsNone(payload["proof"])
+        self.assertEqual(payload["proof_status"], "out_of_scope")
+        self.assertIn("no whole-circuit certificate beyond 8 qubits", payload["proof_notice"])
         self.assertEqual(payload["trace"], [])
         self.assertIn("at most 8 qubits", payload["trace_notice"])
+        self.assertIn("OPENQASM 2.0", payload["native_ir"])
+
+    def test_large_valid_circuit_does_not_emit_a_fake_proof_payload(self):
+        source = """OPENQASM 2.0; include "qelib1.inc";
+qreg q[9]; creg c[9]; x q[8]; measure q -> c;
+"""
+
+        status, _headers, body = self.request(
+            "/api/run", {"qasm": source, "target": "spinq", "shots": 8}
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertNotIn("schema_version", payload)
+        self.assertNotIn("whole_circuit_validation", payload)
+        self.assertNotIn("portability", payload)
+        self.assertIsNone(payload["proof"])
 
     def test_invalid_run_is_a_structured_400_error(self):
         request = urllib.request.Request(

@@ -18,7 +18,8 @@
 
 - L1 使用同一个解析器与 `Circuit` 中间表示生成 SpinQ OpenQASM 2.0、OriginIR 和 Braket OpenQASM 3.0；
 - 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
-- ProofTrace 对安全冗余门做命名重写，记录源门到优化门的 lineage，并为三后端输出可下载的确定性证明证书；
+- ProofTrace 对安全冗余门做命名重写，记录源门到优化门的 lineage，并为三后端输出可下载的确定性证书；
+- ProofTrace 证书把三类证据分开写明：局部重写是符号恒等式证据，whole-circuit validation 是 `<=8` qubit、`tol=1e-12` 的全矩阵重算支持证据，native IR structural round-trip 仍然 mandatory；
 - L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务；生成的 QASM 会验证 Bell/GHZ/W、计算基态和均匀叠加目标分布，后端推荐会复核比特数、排队、费用和设备类型；失败时携带诊断重试一次，两次无效回答后才由同一目标/能力表验证器生成安全回退；
 - Prompt Contract 在模型调用前抽取 fence 外语义、目标态和后端约束；模型输入与结果验证器共用这份合同，服务端可从原 prompt 重建并核对摘要；
 - Quantum World 把 Bell 的 H/CX 问题组织成“预测—对照实验—结论审计—护照”闭环；错误结论会引用 A/B 主导态和首门分歧进行纠正，而不是由模型自由评分；
@@ -42,7 +43,7 @@
 python3 -m starter_kit.loomq.web
 ```
 
-打开 <http://127.0.0.1:8765/>，先完成 Quantum World 的 Bell A/B 探究；再选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例并点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释、目标平台原生指令，以及可下载的 ProofTrace 三后端证明证书；长轨迹默认折叠，服务只监听本机地址。
+打开 <http://127.0.0.1:8765/>，先完成 Quantum World 的 Bell A/B 探究；再选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例并点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释、目标平台原生指令，以及可下载的 ProofTrace 三后端证书。证书明确区分局部恒等式、`<=8` qubit 的 bounded whole-circuit recomputation 与 native IR structural round-trip；边界见 [`WHOLE_CIRCUIT_VALIDATION.md`](WHOLE_CIRCUIT_VALIDATION.md)。长轨迹默认折叠，服务只监听本机地址。
 
 评委路径不要求先学 QASM。点击首屏六步按钮后，状态条会链接到产生每项结论的页面区域；模型调用是单独的可选步骤。
 

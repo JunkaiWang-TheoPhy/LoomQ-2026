@@ -11,15 +11,17 @@ from typing import Sequence
 try:
     from .. import adapter
     from ..loomq.emitters import emit
-    from ..loomq.native_ir import verify_native_ir
+    from ..loomq.native_ir import parse_native_ir, verify_native_ir
     from ..loomq.prooftrace import optimize_circuit
     from ..loomq.qasm import Circuit, Gate, Measurement, parse_qasm
+    from ..loomq.semantic_equivalence import compare_circuit_semantics
 except ImportError:  # Extracted starter_kit root.
     import adapter
     from loomq.emitters import emit
-    from loomq.native_ir import verify_native_ir
+    from loomq.native_ir import parse_native_ir, verify_native_ir
     from loomq.prooftrace import optimize_circuit
     from loomq.qasm import Circuit, Gate, Measurement, parse_qasm
+    from loomq.semantic_equivalence import compare_circuit_semantics
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -69,6 +71,10 @@ def run_benchmark() -> dict:
     mutants: set[tuple[str, str, str]] = set()
     detected_mutants = 0
     false_accept_details: list[dict] = []
+    semantic_checks = 0
+    semantic_rejections = 0
+    semantic_false_accept_details: list[dict] = []
+    semantic_scope_skips: list[dict] = []
     portability_checks = 0
     rewrite_checks = 0
     failures: list[dict] = []
@@ -135,20 +141,53 @@ def run_benchmark() -> dict:
                 false_accept_details.append(
                     {"circuit": circuit_name, "target": target, "kind": "delete-line"}
                 )
+        try:
+            parsed = parse_native_ir(mutated, target)
+            semantic_checks += 1
+            semantic_report = compare_circuit_semantics(expected, parsed)
+        except ValueError as exc:
+            if len(semantic_scope_skips) < 20:
+                semantic_scope_skips.append(
+                    {
+                        "circuit": circuit_name,
+                        "target": target,
+                        "kind": "delete-line",
+                        "reason": str(exc),
+                    }
+                )
+        else:
+            if semantic_report["verified"]:
+                if len(semantic_false_accept_details) < 20:
+                    semantic_false_accept_details.append(
+                        {"circuit": circuit_name, "target": target, "kind": "delete-line"}
+                    )
+            else:
+                semantic_rejections += 1
 
     false_accepts = len(mutants) - detected_mutants
+    semantic_false_accepts = semantic_checks - semantic_rejections
     return {
         "schema_version": "loomq-prooftrace-benchmark-v1",
         "circuit_count": len(CIRCUIT_NAMES),
         "total_mutants": len(mutants),
         "detected_mutants": detected_mutants,
         "false_accepts": false_accepts,
+        "semantic_checks": semantic_checks,
+        "semantic_rejections": semantic_rejections,
+        "semantic_false_accepts": semantic_false_accepts,
+        "semantic_false_accept_details": semantic_false_accept_details,
+        "semantic_scope_skips": semantic_scope_skips,
         "portability_checks": portability_checks,
         "rewrite_checks": rewrite_checks,
         "corpus_sha256": digest.hexdigest(),
         "false_accept_details": false_accept_details,
         "failures": failures[:20],
-        "passed": false_accepts == 0 and not failures,
+        "passed": (
+            false_accepts == 0
+            and semantic_false_accepts == 0
+            and not semantic_scope_skips
+            and not failures
+        ),
     }
 
 
@@ -156,12 +195,20 @@ def validate_report(report: dict) -> bool:
     """Bind benchmark claims to the committed corpus and exact check counts."""
     return bool(
         report.get("schema_version") == "loomq-prooftrace-benchmark-v1"
+        and report.get("circuit_count") == len(CIRCUIT_NAMES)
         and report.get("corpus_sha256") == EXPECTED_CORPUS_SHA256
         and report.get("total_mutants") == EXPECTED_MUTANTS
         and report.get("detected_mutants") == EXPECTED_MUTANTS
         and report.get("false_accepts") == 0
+        and report.get("false_accept_details") == []
+        and report.get("semantic_checks") == EXPECTED_MUTANTS
+        and report.get("semantic_rejections") == EXPECTED_MUTANTS
+        and report.get("semantic_false_accepts") == 0
+        and report.get("semantic_false_accept_details") == []
+        and report.get("semantic_scope_skips") == []
         and report.get("portability_checks") == EXPECTED_PORTABILITY_CHECKS
         and report.get("rewrite_checks") == EXPECTED_REWRITE_CHECKS
+        and report.get("failures") == []
         and report.get("passed") is True
     )
 

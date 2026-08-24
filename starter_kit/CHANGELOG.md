@@ -30,6 +30,7 @@
 - Add a content-addressed Witness Chain that aligns ProofTrace lineage, counterfactual first divergence, assertion measurement dependencies, and Hybrid branch provenance through stable `gN/mN` source-operation IDs; rebuild verification fails closed on tampering or mismatched Hybrid circuits.
 - Normalize EPR/cat-state/maximally-entangled synonyms, `qbit`/`quantum bit`/`量子位` units, and queue/cost paraphrases before deterministic L2 validation.
 - Add a recomputable Hybrid path certificate with exact mid-circuit collapse, unreachable outcomes, dead paths, and bounded dense/sparse execution through 30 qubits.
+- Add bounded whole-circuit validation to ProofTrace, exposing basis-column coverage, one-global-phase consistency, maximum error, and the `<=8` qubit / `1e-12` tolerance caveat in the Web panel and downloadable JSON certificate.
 
 ## 1.1.0 - 2026-07-27
 

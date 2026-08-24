@@ -19,6 +19,7 @@ OpenQASM 2.0
   │
 统一 Circuit IR
   ├─ prooftrace.py ── 安全重写、gate lineage、跨目标证书
+  ├─ semantic_equivalence.py ── `<=8` qubit 的 bounded whole-circuit recomputation
   ├─ emitters.py ── SpinQ OpenQASM 2.0
   ├─ emitters.py ── OriginIR
   ├─ emitters.py ── Braket OpenQASM 3.0
@@ -35,7 +36,8 @@ Web / CLI
 - `loomq/qasm.py`：解析赛题规定的 12 门子集，展开寄存器级操作，拒绝越界、未知门和不匹配的寄存器。
 - `loomq/emitters.py`：只负责从统一 IR 生成三种目标文本，避免三套互不一致的字符串替换逻辑。
 - `loomq/native_ir.py`：用与 emitter 分离的解析器回读 SpinQ QASM 2、OriginIR 和 Braket QASM 3；公开 `transpile()` 返回前必须与源 `Circuit` 完全相等，显式 ProofTrace API 则与安全优化后的 `Circuit` 比较。
-- `loomq/prooftrace.py`：只执行命名的相邻恒等式，记录每个最终操作的源索引、优化前后 metrics、三目标 SHA-256 与独立回读结果；普通 `transpile()` 保持单目标失败隔离，显式 ProofTrace API 才生成完整证书。
+- `loomq/semantic_equivalence.py`：对 `<=8` qubit 的线路重算所有计算基列，只接受同一个全局相位并要求终端测量映射一致；这是 bounded 数值支持证据，不是无界形式化证明。
+- `loomq/prooftrace.py`：只执行命名的相邻恒等式，记录每个最终操作的源索引、优化前后 metrics、whole-circuit validation、三目标 SHA-256 与独立回读结果；普通 `transpile()` 保持单目标失败隔离，显式 ProofTrace API 才生成完整证书。
 - `loomq/simulator.py`：实现 12 种门的状态向量语义和经典测量映射；20 比特内使用稠密状态向量，21–30 比特使用最多 1,000,000 个非零基态的有界稀疏表示，逐门概率/振幅/相位轨迹最多 8 比特。
 - `loomq/runtime.py`：把精确概率按最大余数法转换为整数 shots，并产生统一结果 Schema。
 - `loomq/assertions.py`：对 `support`、`parity`、`uniformity` 断言提供三种证据模式：本地精确 `exact-local`、有限 shots Wilson/总变差区间、以及 provider 概率；只报告一致/偏差/不确定，不归因具体噪声机制。
@@ -44,7 +46,7 @@ Web / CLI
 - `loomq/witness.py`：为源门与测量分配稳定 `gN/mN` witness，把 ProofTrace lineage/rewrite、counterfactual first divergence、assertion measurement dependencies 与 Hybrid branch provenance 对齐；规范 JSON SHA-256 后再从嵌入输入全量重算，篡改或 Hybrid 量子部分不一致时失败关闭。
 - `scripts/l2_stress_campaign.py`：通过公开 `adapter.agent_chat()` 执行固定的 500 例真实模型语料，支持断点续跑、脱敏记录和逐层 SHA-256 完整性复核。
 - `scripts/offline_stress_campaign.py`：执行固定的 40,000 项无凭据断言，分别统计 L1 模拟、三目标契约、L3 差分、量子 RISC-V 往返及拒绝路径，并锁定语料哈希。
-- `scripts/prooftrace_benchmark.py`：逐条删除五个算法在三目标 native IR 中的 225 条指令，验证全部篡改被拒绝；另执行 15 项 portability 与 132 项安全重写检查。
+- `scripts/prooftrace_benchmark.py`：逐条删除五个算法在三目标 native IR 中的 225 条指令，要求 structure rejection 与 semantic rejection 都成立；另执行 15 项 portability 与 132 项安全重写检查。
 - `loomq/hybrid.py`：解析赋值、算术、`if/else` 和测量位引用，检查 `creg` 边界并生成 `li/add/sub/addi/beq/bne/j` 子集。
 - `loomq/hybrid_trace.py`：在不改变 `compile_hybrid()` 公共 tuple 契约的前提下，复用编译器与 RISC-V trace 引擎回放 branch path、machine jump、source condition、measurement provenance、机器字和寄存器增量。
 - `loomq/quantum_riscv.py`：把全部白名单量子门编码为真实 32 位 `custom-0` 机器字，并完成字节序列化和严格解码。
@@ -61,6 +63,7 @@ Web / CLI
 
 - 所有 target 都经过同一个 `Circuit` IR。
 - 量子位 `q[0]` 使用状态索引最低位；输出经典位串最右侧固定为 `c[0]`。
+- ProofTrace 把三类证据分开处理：局部重写是符号恒等式证据；whole-circuit validation 是 `<=8` qubit、`tol=1e-12` 的数值全矩阵重算；native IR structural round-trip 仍然 mandatory。
 - 公开 Bell/GHZ 电路覆盖跨比特纠缠；归档内测试逐门、逐目标交叉覆盖全部 12 门 × 3 target。
 - 固定种子的随机三比特电路与 PyQuafu 状态向量交叉验证。
 - L3 使用 1,000 个固定种子随机经典程序、每个程序穷举 4 种测量输入，并与独立 Python 参考语义比较。
@@ -73,4 +76,4 @@ Web / CLI
 - 离线活动的每个计数对应具体断言：概率归一化、目标 IR/Schema、机器码语义往返、四输入差分执行或恶意输入拒绝；不是仅循环不检查结果的数量指标。
 - 真机证据验证器从 provider MessagePack、counts JSON 与 QASM 重算统计结果，并用 SHA-256 manifest 锁定原始材料、派生分析和桌面/移动端截图。
 - 资源合同在解析或分配前拒绝超过 1,000,000 字符、256 个声明 bit、100,000 个 QASM 操作、超过目标能力表的本地 qubit（SpinQ 24 / OriginQ 30 / Braket 25）、超过 1,000,000 个稀疏基态，以及超过 20,000 token、4,096 statement 或 64 层分支的 classical block；直接申请稠密状态向量仍限制为 20 qubit。
-- Web 断言诊断依赖 `assertions.py` 的证据模式区分；逐门 first-divergence 诊断只在最多 8 qubit 的精确状态比较上作出结论，不外推到更大电路或真机内部物理原因。
+- Web 断言诊断依赖 `assertions.py` 的证据模式区分；逐门 first-divergence 诊断只在最多 8 qubit 的精确状态比较上作出结论，不外推到更大电路或真机内部物理原因；ProofTrace 的 whole-circuit validation 也保持同一 `<=8` qubit、`tol=1e-12` 边界。

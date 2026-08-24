@@ -18,16 +18,16 @@
 - [jessicaruan #120](https://github.com/QAIDAO/LoomQ-2026/issues/120)，`434b01daf12b165dc18dd458c241a8977e4f62f4`（相对 #112 只修改 `evidence/README.md` 14 行；L1/L2/L3、双厂商真机材料、随机 L3 差分与 `CUSTOM-0` 机器码闭环保持不变）
 - [yiyuanrvk77 #115](https://github.com/QAIDAO/LoomQ-2026/issues/115)，`d85e5c2cd39f19082e640a435ec1a38d65844329`（Quantum Cave、四个纠错交互、L1/L2/L3、三门 `QUANT custom-0` 与单个 SpinQ 真机 job）
 
-“覆盖”表示当前仓库有可运行实现和直接验证证据；“外部证据缺口”表示代码路径存在，但没有凭据或新真机 job 时不能诚实伪造实验结果。本文件只声称公开可审能力覆盖；私有 12 例 DeepSeek 评测、未公开提交与组委会最终人工体验分仍然未知。
+“覆盖”表示当前仓库有可运行实现和直接验证证据；“外部证据缺口”表示代码路径存在，但没有凭据或新真机 job 时不能诚实伪造实验结果。本文件只声称公开可审能力覆盖；截至 2026-08-24，私有 12 例 DeepSeek 评测、未公开提交与组委会最终人工体验分仍然未知。
 
 容器判断固定到公开文件与发行版索引：talk2joan [#125 Dockerfile](https://github.com/talk2joan/LoomQ-2026/blob/f74b3d68bd2875fffa2df4934c7fea14d2197961/starter_kit/Dockerfile) 和 Pennie514 [#126 Dockerfile](https://github.com/Pennie514/LoomQ-2026/blob/2878b858d981d6b1667c434b8550deb662c895df/starter_kit/Dockerfile) 均为浮动 `python:3.10-slim` + `libcurl4`；[Debian Trixie](https://packages.debian.org/trixie/libcurl4t64) 提供 `libcurl4t64`，[Bookworm](https://packages.debian.org/bookworm/libcurl4) 提供 `libcurl4`。本仓库因此固定 Bookworm，而不把未执行的 Docker build 写成成功。
 
 | 能力 | 强对手公开实现 | 本仓库直接证据 | 判定 |
 |---|---|---|---|
 | 12 门 × SpinQ / OriginQ / Braket | 所列强队均覆盖 | `test_archive_core.py` 的 36 项门/target 矩阵；`evaluator.py --level l1` | 覆盖 |
-| 目标 IR 不是占位文本 | mayloveless、Wayne 的原生输出审计 | `loomq/native_ir.py` 独立回读三种语法；每次 `adapter.transpile()` 强制语义 round-trip | 覆盖并加强 |
-| 证明携带编译与门谱系 | 对手未展示统一证书路径 | ProofTrace 记录命名重写、source→optimized lineage、metrics、三目标哈希与独立回读；Web 可下载 JSON | 新增差异化能力 |
-| 编译篡改基准 | mayloveless hidden-like、Wayne fuzz | 五个算法 × 三目标的 225 个单指令删除变异全部检出；另有 15 portability + 132 rewrite checks | 新增量化证据 |
+| 目标 IR 不是占位文本 | mayloveless、Wayne 的原生输出审计 | `loomq/native_ir.py` 独立回读三种语法；每次 `adapter.transpile()` 强制语义 round-trip | 已实现并提供复核入口 |
+| 证明携带编译与门谱系 | 对手未展示统一证书路径 | ProofTrace 记录命名重写、source→optimized lineage、metrics、whole-circuit validation、三目标哈希与独立回读；Web 可下载 JSON | 额外提供可重算证书，不把等价检查本身说成研究创新 |
+| 编译篡改基准 | mayloveless hidden-like、Wayne fuzz | 五个算法 × 三目标的 225 个单指令删除变异全部触发 structure rejection，且全部触发 semantic rejection；另有 15 portability + 132 rewrite checks | 225 个固定变异全部被两层证据拒绝 |
 | 独立数值 oracle | Wayne 的 vendor SDK 检查 | PyQuafu 0.4.5 固定 40 电路、三 target 共 120/120；最大振幅误差 `1.19e-15` | 覆盖 |
 | 可运行算法展品 | 0Dionysus0 的 Deutsch；其他队的 Grover/QFT/教学示例 | `deutsch_jozsa_balanced.qasm`、`grover3.qasm`、`qft4.qasm`；三 target 运行测试 | 已实现并放进 Web 入口 |
 | 逐门调试与教学解释 | mayloveless 的 trace/debug/explainer | Web 与 CLI `trace` 展示每门后的概率、复振幅、相位和作用说明 | 已实现并提供复核入口 |
