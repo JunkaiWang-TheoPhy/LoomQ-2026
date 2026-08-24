@@ -14,7 +14,7 @@ from .simulator import _apply_gate
 
 SCHEMA_VERSION = "loomq-semantic-equivalence-v1"
 METHOD = "complete-unitary-column-comparison-v1"
-_SIMULATOR_HARD_LIMIT = 20
+_MAX_SUPPORTED_QUBITS = 8
 
 
 def _canonical_json(value: object) -> str:
@@ -62,8 +62,10 @@ def _gate_sequence(circuit: Circuit) -> list[Gate]:
 def _validate_bounds(max_qubits: int, tolerance: float) -> None:
     if not isinstance(max_qubits, int) or isinstance(max_qubits, bool) or max_qubits <= 0:
         raise ValueError("max_qubits must be a positive integer")
-    if max_qubits > _SIMULATOR_HARD_LIMIT:
-        raise ValueError(f"local statevector simulation supports at most {_SIMULATOR_HARD_LIMIT} qubits")
+    if max_qubits > _MAX_SUPPORTED_QUBITS:
+        raise ValueError(
+            f"whole-circuit semantic equivalence supports at most {_MAX_SUPPORTED_QUBITS} qubits"
+        )
     if not isinstance(tolerance, (int, float)) or isinstance(tolerance, bool):
         raise ValueError("tolerance must be a positive finite number")
     if not math.isfinite(float(tolerance)) or float(tolerance) <= 0.0:
@@ -188,7 +190,6 @@ def _base_report(
     max_qubits: int,
     tolerance: float,
 ) -> dict[str, Any]:
-    dimension = 1 << reference.num_qubits
     measurements = _measurement_map(reference)
     return {
         "schema_version": SCHEMA_VERSION,
@@ -201,7 +202,7 @@ def _base_report(
         "dimensions": {
             "num_qubits": reference.num_qubits,
             "num_clbits": reference.num_clbits,
-            "unitary_dimension": dimension,
+            "unitary_dimension": 1 << reference.num_qubits,
         },
         "identical_measurement_map": _measurement_map(reference) == _measurement_map(candidate),
         "reference_measurements": measurements,
@@ -211,8 +212,8 @@ def _base_report(
             "real": 1.0,
             "imag": 0.0,
         },
-        "basis_columns_checked": dimension,
-        "amplitudes_checked": dimension * dimension,
+        "basis_columns_checked": 0,
+        "amplitudes_checked": 0,
         "maximum_absolute_error": 0.0,
         "failing_entry": None,
         "operational_counterexample": None,
@@ -252,6 +253,8 @@ def compare_circuit_semantics(
 
     reference_columns = _matrix_columns(reference)
     candidate_columns = _matrix_columns(candidate)
+    report["basis_columns_checked"] = len(reference_columns)
+    report["amplitudes_checked"] = len(reference_columns) * len(reference_columns)
     anchor_row, anchor_column, reference_anchor = _largest_anchor(reference_columns)
     candidate_anchor = candidate_columns[anchor_column][anchor_row]
     phase = _safe_phase(reference_anchor, candidate_anchor)
@@ -340,6 +343,7 @@ def verify_semantic_equivalence_certificate(
     try:
         max_qubits = _require_positive_int("max_qubits", scope["max_qubits"])
         tolerance = _require_positive_float("tolerance", scope["tolerance"])
+        _validate_bounds(max_qubits, tolerance)
     except (KeyError, TypeError, ValueError) as exc:
         return {
             "valid": False,

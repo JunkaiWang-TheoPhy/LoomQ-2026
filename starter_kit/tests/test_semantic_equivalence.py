@@ -93,7 +93,20 @@ class CompareCircuitSemanticsTests(unittest.TestCase):
         self.assertFalse(report["verified"])
         self.assertFalse(report["identical_measurement_map"])
         self.assertEqual(report["reason"], "measurement mappings differ")
+        self.assertEqual(report["basis_columns_checked"], 0)
+        self.assertEqual(report["amplitudes_checked"], 0)
         self.assertIsNone(report["operational_counterexample"])
+
+    def test_register_mismatch_returns_without_matrix_enumeration(self):
+        reference = measured_circuit(1)
+        candidate = measured_circuit(2)
+
+        report = compare_circuit_semantics(reference, candidate)
+
+        self.assertFalse(report["verified"])
+        self.assertEqual(report["reason"], "register declarations differ")
+        self.assertEqual(report["basis_columns_checked"], 0)
+        self.assertEqual(report["amplitudes_checked"], 0)
 
     def test_gates_after_measurement_are_rejected(self):
         invalid = Circuit(1, 1, [Measurement(0, 0), Gate("x", (0,))])
@@ -106,6 +119,12 @@ class CompareCircuitSemanticsTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "at most 8 qubits"):
             compare_circuit_semantics(large, large)
+
+    def test_max_qubits_parameter_cannot_widen_beyond_eight(self):
+        bell = measured_circuit(2)
+
+        with self.assertRaisesRegex(ValueError, "at most 8 qubits"):
+            compare_circuit_semantics(bell, bell, max_qubits=9)
 
     def test_certificates_are_deterministic_and_hash_their_canonical_body(self):
         bell = measured_circuit(
@@ -134,6 +153,17 @@ class CompareCircuitSemanticsTests(unittest.TestCase):
         malformed = copy.deepcopy(certificate)
         malformed["scope"]["max_qubits"] = "8"
         result = verify_semantic_equivalence_certificate(reference, reference, malformed)
+        self.assertFalse(result["valid"])
+        self.assertIn("invalid schema", result["reason"])
+
+        widened_scope = copy.deepcopy(certificate)
+        widened_scope["scope"]["max_qubits"] = 9
+        widened_scope["integrity"]["body_sha256"] = hashlib.sha256(
+            canonical_json(
+                {key: value for key, value in widened_scope.items() if key != "integrity"}
+            ).encode("utf-8")
+        ).hexdigest()
+        result = verify_semantic_equivalence_certificate(reference, reference, widened_scope)
         self.assertFalse(result["valid"])
         self.assertIn("invalid schema", result["reason"])
 
