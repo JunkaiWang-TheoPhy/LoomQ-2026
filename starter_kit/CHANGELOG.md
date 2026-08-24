@@ -9,7 +9,7 @@
 - Fall back to a deterministically validated target-state circuit after two invalid model replies.
 - Archive traceable OriginQ and SpinQ real-hardware evidence, including SpinQ's provider-native MessagePack result.
 - Add a fixed 500-case L2 campaign with resume support, credential-safe records, and tamper-evident validation.
-- Ship a 168-test regression suite inside the formally archived `starter_kit/` directory.
+- Ship the complete regression suite inside the formally archived `starter_kit/` directory.
 - Archive a reproducible PyQuafu 0.4.5 cross-validation corpus and 120/120 target-check summary without adding a core dependency.
 - Archive a deterministic 40,000-check offline campaign with per-lane assertions, failure diagnostics, and a bound corpus hash.
 - Add four guided Web paths, accessible tabular results, recoverable Agent errors, responsive browser QA evidence, and stricter HTTP boundaries.
@@ -29,6 +29,7 @@
 - Close the L2 backend-selection chain with a capability-table constraint solver after two invalid model replies; all 500 campaign prompts survive an injected-completion forced-invalid path after exactly 1000 callbacks, while the separate qualification suite checks the HTTP service-call contract.
 - Add a content-addressed Witness Chain that aligns ProofTrace lineage, counterfactual first divergence, assertion measurement dependencies, and Hybrid branch provenance through stable `gN/mN` source-operation IDs; rebuild verification fails closed on tampering or mismatched Hybrid circuits.
 - Normalize EPR/cat-state/maximally-entangled synonyms, `qbit`/`quantum bit`/`量子位` units, and queue/cost paraphrases before deterministic L2 validation.
+- Add a recomputable Hybrid path certificate with exact mid-circuit collapse, unreachable outcomes, dead paths, and bounded dense/sparse execution through 30 qubits.
 
 ## 1.1.0 - 2026-07-27
 

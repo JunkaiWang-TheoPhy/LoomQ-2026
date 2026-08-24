@@ -1,7 +1,9 @@
 import copy
 import json
 import unittest
+from unittest import mock
 
+import loomq.hybrid_paths as hybrid_paths_module
 from loomq.hybrid_paths import (
     certify_hybrid_paths,
     measurement_branch_probabilities,
@@ -55,6 +57,33 @@ classical {
 }
 """
 
+HIGH_QUBIT_MID_CIRCUIT_COLLAPSE = """OPENQASM 2.0; include "qelib1.inc";
+qreg q[21]; creg c[1];
+h q[20];
+measure q[20] -> c[0];
+h q[20];
+measure q[20] -> c[0];
+"""
+
+HIGH_QUBIT_SPARSE_BRANCH = """OPENQASM 2.0; include "qelib1.inc";
+qreg q[21]; creg c[1];
+h q[20];
+measure q[20] -> c[0];
+h q[20];
+measure q[20] -> c[0];
+classical {
+  if (c[0] == 1) { r1 = 9; } else { r1 = 4; }
+}
+"""
+
+HIGH_QUBIT_SPARSE_OVERFLOW = """OPENQASM 2.0; include "qelib1.inc";
+qreg q[21]; creg c[1];
+h q[0];
+h q[1];
+h q[2];
+measure q[20] -> c[0];
+"""
+
 
 def canonical_json(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
@@ -66,6 +95,17 @@ def outcomes_by_key(certificate):
 
 def path_groups_by_id(certificate):
     return {item["path_id"]: item for item in certificate["path_groups"]}
+
+
+def high_qubit_collapse_qasm(num_qubits):
+    high = num_qubits - 1
+    return f"""OPENQASM 2.0; include "qelib1.inc";
+qreg q[{num_qubits}]; creg c[1];
+h q[{high}];
+measure q[{high}] -> c[0];
+h q[{high}];
+measure q[{high}] -> c[0];
+"""
 
 
 class MeasurementBranchProbabilitiesTests(unittest.TestCase):
@@ -84,6 +124,22 @@ class MeasurementBranchProbabilitiesTests(unittest.TestCase):
     def test_measurement_branching_rejects_live_history_overflow(self):
         with self.assertRaisesRegex(ValueError, "max_branches"):
             measurement_branch_probabilities(parse_qasm(BELL), max_branches=1)
+
+    def test_sparse_high_qubit_measurement_keeps_exact_mid_circuit_collapse(self):
+        self.assertEqual(
+            measurement_branch_probabilities(parse_qasm(HIGH_QUBIT_MID_CIRCUIT_COLLAPSE)),
+            {"0": 0.5, "1": 0.5},
+        )
+
+    def test_sparse_high_qubit_branching_fails_closed_at_populated_state_limit(self):
+        with mock.patch.object(hybrid_paths_module, "MAX_SPARSE_STATES", 4):
+            with self.assertRaisesRegex(ValueError, "local sparse simulation exceeds"):
+                measurement_branch_probabilities(parse_qasm(HIGH_QUBIT_SPARSE_OVERFLOW))
+
+    def test_dense_and_sparse_paths_match_across_the_20_qubit_boundary(self):
+        dense = measurement_branch_probabilities(parse_qasm(high_qubit_collapse_qasm(20)))
+        sparse = measurement_branch_probabilities(parse_qasm(high_qubit_collapse_qasm(21)))
+        self.assertEqual(dense, sparse)
 
 
 class HybridPathCertificateTests(unittest.TestCase):
@@ -149,6 +205,22 @@ class HybridPathCertificateTests(unittest.TestCase):
         self.assertEqual(path_groups["if1:T"]["outcomes"], ["00", "10"])
         self.assertEqual(path_groups["if1:T"]["reachable_outcomes"], ["00", "10"])
         self.assertEqual(len(path_groups["if1:T"]["final_register_sha256s"]), 2)
+
+    def test_certificate_supports_sparse_high_qubit_branches_without_dense_statevector(self):
+        certificate = certify_hybrid_paths(HIGH_QUBIT_SPARSE_BRANCH)
+        outcomes = outcomes_by_key(certificate)
+
+        self.assertEqual(certificate["scope"], {"num_qubits": 21, "num_clbits": 1})
+        self.assertEqual(
+            {key: outcomes[key]["probability"] for key in ["0", "1"]},
+            {"0": 0.5, "1": 0.5},
+        )
+        self.assertEqual(outcomes["0"]["final_registers"], {"x1": 4})
+        self.assertEqual(outcomes["1"]["final_registers"], {"x1": 9})
+
+        verified = verify_hybrid_path_certificate(HIGH_QUBIT_SPARSE_BRANCH, certificate)
+        self.assertTrue(verified["valid"])
+        self.assertEqual(verified["reason"], "ok")
 
 
 class HybridPathVerificationTests(unittest.TestCase):

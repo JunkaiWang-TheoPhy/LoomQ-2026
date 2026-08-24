@@ -67,7 +67,7 @@ Web / CLI
 - 模型生成的 QASM 先由确定性解析器与状态向量目标检查，后端 ID 再与官方 JSON 能力表复核。
 - L2 压力 campaign 的 500 条 prompt 在归档测试中检查唯一性和分类配额；证据验证器会重新生成语料并核对 prompt、记录及 JSONL 摘要。
 - Bonus 的 Bell 证明真实经历 `Circuit → 机器字 → 小端字节 → 解码 → 扩展模拟器 → counts`。
-- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录在 Node present 时执行 `node --check web/app.js`，否则显式 `SKIP`；并显式运行 Web/API/assert/compare/hybrid/witness 焦点套件，再在 `python3 -m unittest discover -s tests -v` 观察到的 168 项归档测试基础上复核 Web→多轮模型协议→确定性校验、反事实首门分歧、跨模块 Witness Chain 重算、12 例 L2 同形 HTTP 资格链、500 例注入式 completion 两次无效回复后的确定性恢复（1000 次回调）、ProofTrace 225 项变异基准、算法展品、三 native IR 回读、量子 RISC-V 固定机器字与随机线路、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
+- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录在 Node present 时执行 `node --check web/app.js`，否则显式 `SKIP`；并显式运行 Web/API/assert/compare/hybrid/witness 焦点套件，再用 `python3 -m unittest discover -s tests -v` 运行完整归档回归，复核 Web→多轮模型协议→确定性校验、反事实首门分歧、跨模块 Witness Chain 重算、12 例 L2 同形 HTTP 资格链、500 例注入式 completion 两次无效回复后的确定性恢复（1000 次回调）、ProofTrace 225 项变异基准、算法展品、三 native IR 回读、量子 RISC-V 固定机器字与随机线路、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
 - 可选的 PyQuafu 0.4.5 独立 oracle 使用固定 40 电路覆盖全部 12 门，对三个 target 完成 120 项状态向量与 counts 交叉检查；第三方包隔离在核心环境之外。
 - 离线活动的每个计数对应具体断言：概率归一化、目标 IR/Schema、机器码语义往返、四输入差分执行或恶意输入拒绝；不是仅循环不检查结果的数量指标。
 - 真机证据验证器从 provider MessagePack、counts JSON 与 QASM 重算统计结果，并用 SHA-256 manifest 锁定原始材料、派生分析和桌面/移动端截图。

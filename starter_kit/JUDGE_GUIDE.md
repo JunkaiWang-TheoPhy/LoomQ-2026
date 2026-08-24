@@ -33,7 +33,7 @@
 
 | 区域 | 一条复核命令 | 主要证据 |
 |---|---|---|
-| 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 168 项归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/compare/hybrid/witness 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
+| 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 完整归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/compare/hybrid/witness 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
 | ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
 | Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 27 项 Web 集成测试覆盖首屏证据导航、`/api/causal-audit` Witness Chain、`/api/compare` 首门分歧与结构拒绝、`/api/assert`、`/api/hybrid-trace`、ProofTrace、favicon 与移动端防溢出样式 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |

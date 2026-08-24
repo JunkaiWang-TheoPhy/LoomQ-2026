@@ -12,9 +12,14 @@ try:
     from .hybrid_trace import trace_hybrid
     from .qasm import Circuit, Gate, Measurement
     from .simulator import (
+        MAX_LOCAL_QUBITS,
+        MAX_SPARSE_STATES,
         MAX_SIMULATOR_QUBITS,
         _apply_gate,
+        _apply_sparse_gate,
         _initial_state,
+        _sparse_state_limit_error,
+        _split_sparse_measurement_branches,
         _split_measurement_branches,
     )
 except ImportError:
@@ -22,9 +27,14 @@ except ImportError:
     from loomq.hybrid_trace import trace_hybrid
     from loomq.qasm import Circuit, Gate, Measurement
     from loomq.simulator import (
+        MAX_LOCAL_QUBITS,
+        MAX_SPARSE_STATES,
         MAX_SIMULATOR_QUBITS,
         _apply_gate,
+        _apply_sparse_gate,
         _initial_state,
+        _sparse_state_limit_error,
+        _split_sparse_measurement_branches,
         _split_measurement_branches,
     )
 
@@ -71,52 +81,7 @@ def _source_visible_registers(registers: Mapping[str, int]) -> Dict[str, int]:
     return dict(sorted(visible.items()))
 
 
-def measurement_branch_probabilities(
-    circuit: Circuit, *, max_branches: int = DEFAULT_MAX_BRANCHES
-) -> dict[str, float]:
-    max_live_histories = _require_positive_bound("max_branches", max_branches)
-    if circuit.num_qubits > MAX_SIMULATOR_QUBITS:
-        raise ValueError(
-            f"local statevector simulation supports at most {MAX_SIMULATOR_QUBITS} qubits"
-        )
-
-    if not any(isinstance(operation, Measurement) for operation in circuit.operations):
-        raise ValueError("circuit must contain at least one measurement")
-
-    histories: List[Dict[str, Any]] = [
-        {
-            "probability": 1.0,
-            "state": _initial_state(circuit.num_qubits),
-            "classical_bits": [0] * circuit.num_clbits,
-        }
-    ]
-
-    for operation in circuit.operations:
-        if isinstance(operation, Gate):
-            for history in histories:
-                _apply_gate(history["state"], operation)
-            continue
-
-        next_histories: List[Dict[str, Any]] = []
-        for history in histories:
-            for bit, branch_probability, collapsed_state in _split_measurement_branches(
-                history["state"], operation.qubit
-            ):
-                classical_bits = list(history["classical_bits"])
-                classical_bits[operation.clbit] = bit
-                next_histories.append(
-                    {
-                        "probability": history["probability"] * branch_probability,
-                        "state": collapsed_state,
-                        "classical_bits": classical_bits,
-                    }
-                )
-        histories = next_histories
-        if len(histories) > max_live_histories:
-            raise ValueError(
-                f"max_branches={max_live_histories} is too small for exact live-history branching"
-            )
-
+def _normalize_branch_distribution(histories: List[Dict[str, Any]]) -> Dict[str, float]:
     distribution: Dict[str, float] = {}
     for history in histories:
         if history["probability"] < _NUMERICAL_DUST:
@@ -139,6 +104,90 @@ def measurement_branch_probabilities(
         key: value / normalized_total
         for key, value in sorted(normalized.items())
     }
+
+
+def measurement_branch_probabilities(
+    circuit: Circuit, *, max_branches: int = DEFAULT_MAX_BRANCHES
+) -> dict[str, float]:
+    max_live_histories = _require_positive_bound("max_branches", max_branches)
+    if not any(isinstance(operation, Measurement) for operation in circuit.operations):
+        raise ValueError("circuit must contain at least one measurement")
+
+    if circuit.num_qubits <= MAX_SIMULATOR_QUBITS:
+        histories: List[Dict[str, Any]] = [
+            {
+                "probability": 1.0,
+                "state": _initial_state(circuit.num_qubits),
+                "classical_bits": [0] * circuit.num_clbits,
+            }
+        ]
+
+        for operation in circuit.operations:
+            if isinstance(operation, Gate):
+                for history in histories:
+                    _apply_gate(history["state"], operation)
+                continue
+
+            next_histories: List[Dict[str, Any]] = []
+            for history in histories:
+                for bit, branch_probability, collapsed_state in _split_measurement_branches(
+                    history["state"], operation.qubit
+                ):
+                    classical_bits = list(history["classical_bits"])
+                    classical_bits[operation.clbit] = bit
+                    next_histories.append(
+                        {
+                            "probability": history["probability"] * branch_probability,
+                            "state": collapsed_state,
+                            "classical_bits": classical_bits,
+                        }
+                    )
+            histories = next_histories
+            if len(histories) > max_live_histories:
+                raise ValueError(
+                    f"max_branches={max_live_histories} is too small for exact live-history branching"
+                )
+        return _normalize_branch_distribution(histories)
+
+    if circuit.num_qubits > MAX_LOCAL_QUBITS:
+        raise ValueError(f"local execution supports at most {MAX_LOCAL_QUBITS} qubits")
+
+    histories = [
+        {
+            "probability": 1.0,
+            "state": {0: 1 + 0j},
+            "classical_bits": [0] * circuit.num_clbits,
+        }
+    ]
+    for operation in circuit.operations:
+        if isinstance(operation, Gate):
+            for history in histories:
+                history["state"] = _apply_sparse_gate(history["state"], operation)
+                if len(history["state"]) > MAX_SPARSE_STATES:
+                    raise _sparse_state_limit_error()
+            continue
+
+        next_histories = []
+        for history in histories:
+            for bit, branch_probability, collapsed_state in _split_sparse_measurement_branches(
+                history["state"], operation.qubit
+            ):
+                classical_bits = list(history["classical_bits"])
+                classical_bits[operation.clbit] = bit
+                next_histories.append(
+                    {
+                        "probability": history["probability"] * branch_probability,
+                        "state": collapsed_state,
+                        "classical_bits": classical_bits,
+                    }
+                )
+        histories = next_histories
+        if len(histories) > max_live_histories:
+            raise ValueError(
+                f"max_branches={max_live_histories} is too small for exact live-history branching"
+            )
+
+    return _normalize_branch_distribution(histories)
 
 
 def certify_hybrid_paths(source: str, *, max_outcomes: int = 256) -> dict[str, Any]:

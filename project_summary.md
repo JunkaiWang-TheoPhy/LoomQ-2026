@@ -12,12 +12,11 @@ LoomQ is a public competition fork whose scored submission root is `starter_kit/
 - `starter_kit/loomq/`: participant implementation modules.
 - `starter_kit/loomq_cli.py`: beginner-facing command line interface.
 - `starter_kit/loomq/web.py` + `starter_kit/web/`: zero-dependency local Web API and responsive beginner lab.
-- `starter_kit/tests/`: 46 regressions that remain present when the organizer extracts only the scored root.
+- `starter_kit/tests/`: regressions that remain present when the organizer extracts only the scored root.
 - `starter_kit/evaluator.py`: public contract checker, not the formal scorer.
 - `starter_kit/evidence/README.md`: manual scoring claims and evidence index.
 - `competition/`: organizer submission intake/archive tooling.
 - `tests/`: organizer tests plus participant regression and integration tests.
-- `docs/superpowers/plans/`: implementation plan and research record.
 
 ## Runtime and Dependencies
 

@@ -106,7 +106,7 @@ evidence/files/spinq-screenshot.png
 
 PyQuafu 0.4.5 的固定种子验证覆盖 40 个唯一电路、全部 12 门和三个 target，共 120/120 项通过；最大状态向量振幅误差为 `1.1802326323952682e-15`。协议、counts 浮点余数 tie 边界和复现命令见 `starter_kit/PYQUAFU_CROSS_VALIDATION.md`，摘要见 `starter_kit/evidence/files/pyquafu-cross-validation-summary.json`。它是软件交叉验证，不申报为第四个真机平台。
 
-此外，公开 `transpile()` 不直接信任自己的 emitter：`loomq/native_ir.py` 会把三种输出重新解析成 `Circuit` 并做完全相等检查。Deutsch–Jozsa、Grover 与 QFT 三个展品均跨三 target 回读和运行；恶意资源输入由 `tests.test_resource_boundaries` 验证在分配前拒绝。P1 断言报告明确区分本地精确、有限 shots 与 provider 概率三类证据；P2 Hybrid 回放显示 bit 顺序 `c[0], c[1], …`、branch path 与机器寄存器事件，而 Hybrid 路径证书在记录的 `max_outcomes` 上限内穷举全部 `2**num_clbits` outcome，显式列出路径总概率、不可达 outcome、死路径与重算验证结果，但这些工程证据都不外推成噪声归因。
+此外，公开 `transpile()` 不直接信任自己的 emitter：`loomq/native_ir.py` 会把三种输出重新解析成 `Circuit` 并做完全相等检查。Deutsch–Jozsa、Grover 与 QFT 三个展品均跨三 target 回读和运行；恶意资源输入由 `tests.test_resource_boundaries` 验证在分配前拒绝。P1 断言报告明确区分本地精确、有限 shots 与 provider 概率三类证据；P2 Hybrid 回放显示 bit 顺序 `c[0], c[1], …`、branch path 与机器寄存器事件。Hybrid 路径证书在记录的 `max_outcomes` 上限内穷举全部 `2**num_clbits` outcome：20 qubit 内使用稠密精确态，21–30 qubit 使用最多 1,000,000 个已占基态的稀疏精确态；超出任一边界会明确拒绝。证书列出路径总概率、不可达 outcome、死路径与重算结果，但不用于推断真机噪声来源。
 
 ProofTrace 在此基础上增加可审计的安全重写、源门 lineage、优化 metrics 和三目标证书。`python3 -m starter_kit.scripts.prooftrace_benchmark --json` 对五个算法的三目标输出执行 225 个单指令删除变异，结果 225/225 检出、0 false accept，并完成 15 项 portability 与 132 项重写检查。范围和不能外推的结论见 `starter_kit/PROOFTRACE.md`。
 

@@ -148,6 +148,120 @@ def _split_measurement_branches(
     return branches
 
 
+def _sparse_state_limit_error() -> ValueError:
+    return ValueError(
+        "local sparse simulation exceeds the 1000000 populated-state safety limit"
+    )
+
+
+def _apply_sparse_gate(state: SparseState, gate: Gate) -> SparseState:
+    if len(gate.qubits) == 1:
+        matrix = _single_matrix(gate)
+        mask = 1 << gate.qubits[0]
+        pairs: Dict[int, List[complex]] = {}
+        for index, amplitude in state.items():
+            zero_index = index & ~mask
+            pair = pairs.setdefault(zero_index, [0j, 0j])
+            pair[1 if index & mask else 0] = amplitude
+        updated: SparseState = {}
+        for zero_index, (zero, one) in pairs.items():
+            one_index = zero_index | mask
+            zero_result = matrix[0][0] * zero + matrix[0][1] * one
+            one_result = matrix[1][0] * zero + matrix[1][1] * one
+            if abs(zero_result) ** 2 > _NUMERICAL_DUST:
+                updated[zero_index] = zero_result
+            if abs(one_result) ** 2 > _NUMERICAL_DUST:
+                updated[one_index] = one_result
+            if len(updated) > MAX_SPARSE_STATES:
+                raise _sparse_state_limit_error()
+        return updated
+
+    if gate.name == "cx":
+        control, target = gate.qubits
+        control_mask, target_mask = 1 << control, 1 << target
+        return {
+            index ^ target_mask if index & control_mask else index: amplitude
+            for index, amplitude in state.items()
+        }
+
+    if gate.name == "ccx":
+        left, right, target = gate.qubits
+        controls = (1 << left) | (1 << right)
+        target_mask = 1 << target
+        return {
+            index ^ target_mask if index & controls == controls else index: amplitude
+            for index, amplitude in state.items()
+        }
+
+    if gate.name == "swap":
+        left_mask, right_mask = 1 << gate.qubits[0], 1 << gate.qubits[1]
+        swapped: SparseState = {}
+        for index, amplitude in state.items():
+            if bool(index & left_mask) != bool(index & right_mask):
+                index ^= left_mask | right_mask
+            swapped[index] = amplitude
+        return swapped
+
+    if gate.name == "cu1":
+        assert gate.parameter is not None
+        mask = (1 << gate.qubits[0]) | (1 << gate.qubits[1])
+        phase = cmath.exp(1j * gate.parameter)
+        return {
+            index: amplitude * phase if index & mask == mask else amplitude
+            for index, amplitude in state.items()
+        }
+
+    raise ValueError(f"unsupported simulated gate: {gate.name}")
+
+
+def _split_sparse_measurement_branches(
+    state: SparseState, qubit: int
+) -> List[Tuple[int, float, SparseState]]:
+    mask = 1 << qubit
+    zero_state: SparseState = {}
+    one_state: SparseState = {}
+    zero_probability = 0.0
+    one_probability = 0.0
+
+    for index, amplitude in state.items():
+        probability = abs(amplitude) ** 2
+        if index & mask:
+            one_state[index] = amplitude
+            one_probability += probability
+        else:
+            zero_state[index] = amplitude
+            zero_probability += probability
+
+    branches: List[Tuple[int, float, SparseState]] = []
+    if zero_probability >= _NUMERICAL_DUST:
+        scale = math.sqrt(zero_probability)
+        branches.append(
+            (
+                0,
+                zero_probability,
+                {
+                    index: amplitude / scale
+                    for index, amplitude in zero_state.items()
+                    if abs(amplitude) ** 2 > _NUMERICAL_DUST
+                },
+            )
+        )
+    if one_probability >= _NUMERICAL_DUST:
+        scale = math.sqrt(one_probability)
+        branches.append(
+            (
+                1,
+                one_probability,
+                {
+                    index: amplitude / scale
+                    for index, amplitude in one_state.items()
+                    if abs(amplitude) ** 2 > _NUMERICAL_DUST
+                },
+            )
+        )
+    return branches
+
+
 def _iter_exact_state_steps(
     circuit: Circuit,
 ) -> Iterator[Tuple[Dict[str, object], StateVector]]:
@@ -214,68 +328,10 @@ def _simulate_sparse(circuit: Circuit) -> SparseState:
             continue
         if measurement_seen:
             raise ValueError("mid-circuit measurement is outside the LoomQ L1 contract")
-
-        if len(operation.qubits) == 1:
-            matrix = _single_matrix(operation)
-            mask = 1 << operation.qubits[0]
-            pairs: Dict[int, List[complex]] = {}
-            for index, amplitude in state.items():
-                zero_index = index & ~mask
-                pair = pairs.setdefault(zero_index, [0j, 0j])
-                pair[1 if index & mask else 0] = amplitude
-            updated: SparseState = {}
-            for zero_index, (zero, one) in pairs.items():
-                one_index = zero_index | mask
-                zero_result = matrix[0][0] * zero + matrix[0][1] * one
-                one_result = matrix[1][0] * zero + matrix[1][1] * one
-                if abs(zero_result) ** 2 > 1e-15:
-                    updated[zero_index] = zero_result
-                if abs(one_result) ** 2 > 1e-15:
-                    updated[one_index] = one_result
-                if len(updated) > MAX_SPARSE_STATES:
-                    raise ValueError(
-                        "local sparse simulation exceeds the 1000000 "
-                        "populated-state safety limit"
-                    )
-            state = updated
-        elif operation.name == "cx":
-            control, target = operation.qubits
-            control_mask, target_mask = 1 << control, 1 << target
-            state = {
-                index ^ target_mask if index & control_mask else index: amplitude
-                for index, amplitude in state.items()
-            }
-        elif operation.name == "ccx":
-            left, right, target = operation.qubits
-            controls = (1 << left) | (1 << right)
-            target_mask = 1 << target
-            state = {
-                index ^ target_mask if index & controls == controls else index: amplitude
-                for index, amplitude in state.items()
-            }
-        elif operation.name == "swap":
-            left_mask, right_mask = 1 << operation.qubits[0], 1 << operation.qubits[1]
-            swapped: SparseState = {}
-            for index, amplitude in state.items():
-                if bool(index & left_mask) != bool(index & right_mask):
-                    index ^= left_mask | right_mask
-                swapped[index] = amplitude
-            state = swapped
-        elif operation.name == "cu1":
-            assert operation.parameter is not None
-            mask = (1 << operation.qubits[0]) | (1 << operation.qubits[1])
-            phase = cmath.exp(1j * operation.parameter)
-            state = {
-                index: amplitude * phase if index & mask == mask else amplitude
-                for index, amplitude in state.items()
-            }
-        else:
-            raise ValueError(f"unsupported simulated gate: {operation.name}")
+        state = _apply_sparse_gate(state, operation)
 
         if len(state) > MAX_SPARSE_STATES:
-            raise ValueError(
-                "local sparse simulation exceeds the 1000000 populated-state safety limit"
-            )
+            raise _sparse_state_limit_error()
     return state
 
 
