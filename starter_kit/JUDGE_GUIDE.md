@@ -1,6 +1,6 @@
 # LoomQ 评委快速复核
 
-页面首屏先给零基础用户一条三幕 Quantum World 旅程，第一章完成后紧接“这不是总结，是证据”的评委附录。附录中的真机卡区分 OriginQ finite-shot counts 与 SpinQ provider probabilities；本地路径不需要模型密钥、平台账号或网络服务。主视觉是 GPT image 生成的原创叙事资产，不参与科学判定。
+页面首屏先给零基础用户一条三幕 Quantum World 旅程，第一章后是标题为“每项结论都能复核”的评委附录。附录中的真机卡区分 OriginQ finite-shot counts 与 SpinQ provider probabilities；本地路径不需要模型密钥、平台账号或网络服务。主视觉由 OpenAI 图像生成工具生成，不参与科学判定。
 
 ## 30 秒入口
 
