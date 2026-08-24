@@ -47,12 +47,108 @@ class AssertionTests(unittest.TestCase):
         self.assertEqual(report[0]["status"], "inconclusive")
         self.assertIn("confidence_interval", report[0])
 
+    def test_provider_probabilities_are_labeled_without_fabricated_interval(self):
+        report = evaluate_distribution_assertions(
+            {"00": 0.5, "11": 0.5},
+            [{"kind": "support", "states": ["00", "11"], "minimum_probability": 0.90}],
+        )
+
+        self.assertEqual(report[0]["evidence_mode"], "provider-probabilities")
+        self.assertNotIn("confidence_interval", report[0])
+
+    def test_schema_validation_rejects_invalid_assertions(self):
+        cases = [
+            (
+                "unsupported kind",
+                {"00": 1.0},
+                [{"kind": "bogus"}],
+                None,
+                "unsupported assertion kind",
+            ),
+            (
+                "malformed state",
+                {"00": 1.0},
+                [{"kind": "support", "states": ["0x"], "minimum_probability": 0.1}],
+                None,
+                "states must be a non-empty list of unique bit strings",
+            ),
+            (
+                "duplicate state",
+                {"00": 1.0},
+                [{"kind": "support", "states": ["00", "00"], "minimum_probability": 0.1}],
+                None,
+                "states must be a non-empty list of unique bit strings",
+            ),
+            (
+                "mixed widths",
+                {"0": 0.5, "00": 0.5},
+                [{"kind": "support", "states": ["00"], "minimum_probability": 0.1}],
+                None,
+                "distribution keys must all have the same width",
+            ),
+            (
+                "invalid bit index",
+                {"00": 1.0},
+                [{"kind": "parity", "bits": [2], "expected": "even", "minimum_probability": 0.1}],
+                None,
+                "bit index out of range",
+            ),
+            (
+                "boolean threshold",
+                {"00": 1.0},
+                [{"kind": "support", "states": ["00"], "minimum_probability": True}],
+                None,
+                "minimum_probability must be a real number in \\[0, 1\\]",
+            ),
+            (
+                "boolean distribution value",
+                {"00": True},
+                [{"kind": "support", "states": ["00"], "minimum_probability": 0.1}],
+                None,
+                "distribution values must be finite non-negative real numbers",
+            ),
+            (
+                "non-normalizable distribution",
+                {"00": 0.0, "11": 0.0},
+                [{"kind": "support", "states": ["00"], "minimum_probability": 0.1}],
+                None,
+                "distribution must have positive total mass",
+            ),
+        ]
+
+        for label, distribution, assertions, shots, pattern in cases:
+            with self.subTest(label=label):
+                with self.assertRaisesRegex(ValueError, pattern):
+                    evaluate_distribution_assertions(distribution, assertions, shots=shots)
+
     def test_mutated_bell_reports_first_divergent_gate(self):
         report = diagnose_mutation(BELL, BELL.replace("cx q[0],q[1];", "x q[1];"))
 
         self.assertFalse(report["equivalent_output_distribution"])
         self.assertEqual(report["first_divergent_gate"], 1)
         self.assertEqual(report["scope"], "exact-up-to-global-phase-at-zero-input")
+
+    def test_mutation_diagnosis_reports_structural_mismatch_without_simulating(self):
+        report = diagnose_mutation(
+            BELL,
+            BELL.replace("measure q -> c;", "measure q[0] -> c[1];\nmeasure q[1] -> c[0];"),
+        )
+
+        self.assertEqual(report["scope"], "structural-mismatch")
+        self.assertEqual(report["reason"], "measurement mappings differ")
+        self.assertIsNone(report["first_divergent_gate"])
+        self.assertNotIn("max_amplitude_delta", report)
+
+    def test_mutation_diagnosis_rejects_more_than_eight_qubits(self):
+        large = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[9];
+creg c[9];
+measure q -> c;
+"""
+
+        with self.assertRaisesRegex(ValueError, "at most 8 qubits"):
+            diagnose_mutation(large, large)
 
     def test_hardware_failure_is_not_mislabeled_as_a_noise_mechanism(self):
         report = diagnose_observed_execution(
@@ -64,6 +160,29 @@ class AssertionTests(unittest.TestCase):
 
         self.assertEqual(report["classification"], "execution-deviation-detected")
         self.assertNotIn("depolarizing", json.dumps(report).lower())
+
+    def test_hardware_diagnosis_can_confirm_consistency_with_reference(self):
+        report = diagnose_observed_execution(
+            parse_qasm(BELL),
+            {"00": 55, "11": 45},
+            [{"kind": "support", "states": ["00", "11"], "minimum_probability": 0.90}],
+            shots=100,
+        )
+
+        self.assertEqual(report["classification"], "consistent-with-reference")
+        self.assertEqual(report["observed_assertions"][0]["status"], "pass")
+
+    def test_hardware_diagnosis_reports_reference_program_failures(self):
+        report = diagnose_observed_execution(
+            parse_qasm(BELL),
+            {"00": 100},
+            [{"kind": "support", "states": ["01"], "minimum_probability": 0.90}],
+            shots=100,
+        )
+
+        self.assertEqual(report["classification"], "reference-program-fails")
+        self.assertEqual(report["reference_assertions"][0]["status"], "fail")
+        self.assertEqual(report["observed_assertions"], [])
 
 
 if __name__ == "__main__":
