@@ -2,7 +2,7 @@
 
 本工具包定义参赛提交协议，并提供公开自测。它不包含正式评分器、隐藏答案、Mock 得分路径或任何 Level 的参考解答。
 
-评委入口：运行 `python3 -m starter_kit.loomq.web`，打开 <http://127.0.0.1:8765/>，点击 `一键运行 6 项本地证据`。逐项复核命令见 [`JUDGE_GUIDE.md`](JUDGE_GUIDE.md)，自然语言合同的字段与边界见 [`PROMPT_CONTRACT.md`](PROMPT_CONTRACT.md)。
+运行 `python3 -m starter_kit.loomq.web`，打开 <http://127.0.0.1:8765/>。页面先以三幕故事带零基础用户完成第一次 Bell 探究，再进入可折叠的评委证据附录；逐项复核命令见 [`JUDGE_GUIDE.md`](JUDGE_GUIDE.md)，自然语言合同的字段与边界见 [`PROMPT_CONTRACT.md`](PROMPT_CONTRACT.md)。
 
 最快复核只需三步：
 
@@ -10,7 +10,7 @@
 2. 点击六步按钮，等待状态显示 `6/6`。
 3. 沿状态条检查 ProofTrace、首门分歧、断言、Witness Chain、Hybrid 路径和 Prompt Contract。
 
-零基础用户从同一页面的 `Quantum World · 第一个探究任务` 开始：先预测删掉 CX 会发生什么，再运行只改变一个条件的 A/B 实验，选择结论并下载 `loomq-inquiry-passport-v1` 实验护照。该路径不要求模型密钥、平台账号或 QASM 知识。
+零基础用户从同一页面的 `Quantum World` 序章开始，以“观测者”身份走过三幕：在分岔以前留下预测，只拨动 CX 运行 A/B 实验，再带着证据边界和 `loomq-inquiry-passport-v1` 护照归来。该路径不要求模型密钥、平台账号或 QASM 知识；主视觉只是旅程隐喻，不作为量子态证据。
 
 ## 本 fork 的实现
 
