@@ -34,13 +34,27 @@
     { id: "npc", kind: "npc", x: 12, y: 7 },
     { id: "gate", kind: "gate", x: 20, y: 7 },
   ];
+  const SCENES = {
+    village: { name: "雾镜镇", range: [0, 8], accent: "#f6dd78" },
+    river: { name: "分岔河谷", range: [9, 15], accent: "#78c7d4" },
+    archive: { name: "证据塔庭院", range: [16, 23], accent: "#f06a7b" },
+  };
 
   function createPixelGame() {
     return { player: { x: 2, y: 14, facing: "right" } };
   }
 
   function isWall(x, y) {
-    return x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT || MAP[y][x] === "#";
+    return x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT || MAP[y][x] === "#" || isWater(x, y);
+  }
+
+  function isWater(x, y) {
+    return x >= 10 && x <= 12 && y !== 7;
+  }
+
+  function sceneAt(player) {
+    const x = Math.max(0, Math.min(WIDTH - 1, player.x));
+    return Object.entries(SCENES).find(([, scene]) => x >= scene.range[0] && x <= scene.range[1])[0];
   }
 
   function move(state, dx, dy) {
@@ -75,5 +89,5 @@
     return { event: target.kind, id: target.id };
   }
 
-  return { HEIGHT, MAP, SHARDS, TARGETS, WIDTH, createPixelGame, interact, isWall, move };
+  return { HEIGHT, MAP, SCENES, SHARDS, TARGETS, WIDTH, createPixelGame, interact, isWall, isWater, move, sceneAt };
 });

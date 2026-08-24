@@ -308,6 +308,7 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="pixel-quickbar"', page)
         self.assertIn('class="pixel-stage"', page)
         self.assertIn('data-slot="state"', page)
+        self.assertIn('id="pixel-scene-name"', page)
 
     def test_pixel_quantum_game_assets_are_served_locally(self):
         for path, content_type in (

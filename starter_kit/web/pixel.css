@@ -15,6 +15,10 @@ kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background
 .pixel-logo, .pixel-objective, .pixel-counter, .pixel-hud button { border:3px solid var(--ink); background:rgba(40,29,53,.93); box-shadow:4px 4px 0 rgba(17,24,45,.48); }
 .pixel-logo { display:flex; gap:8px; align-items:center; padding:9px 12px; color:var(--yellow); text-decoration:none; font-weight:900; }
 .pixel-logo span { color:var(--paper); font-size:11px; }
+.pixel-scene-name { min-width:135px; padding:8px 11px; border:3px solid var(--ink); background:rgba(17,24,45,.94); box-shadow:4px 4px 0 rgba(0,0,0,.3); }
+.pixel-scene-name small, .pixel-scene-name strong { display:block; }
+.pixel-scene-name small { color:var(--mint); font-size:8px; }
+.pixel-scene-name strong { margin-top:4px; color:var(--yellow); font-size:11px; }
 .pixel-objective { min-width:220px; flex:1; padding:8px 12px; }
 .pixel-objective small, .pixel-objective strong { display:block; }
 .pixel-objective small { color:var(--mint); font-size:9px; }
@@ -74,6 +78,8 @@ kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background
   .pixel-hud { top:9px; left:9px; right:9px; gap:6px; }
   .pixel-logo { padding:7px; font-size:12px; }
   .pixel-logo span { display:none; }
+  .pixel-scene-name { min-width:0; padding:7px; }
+  .pixel-scene-name strong { font-size:10px; }
   .pixel-objective { min-width:0; padding:7px; }
   .pixel-objective strong { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
   .pixel-counter { min-width:58px; padding:5px; }

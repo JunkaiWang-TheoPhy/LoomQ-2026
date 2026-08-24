@@ -47,6 +47,38 @@ process.stdout.write(JSON.stringify({start, moved, blocked, shard, repeat, npcLo
         self.assertEqual(result["npcReady"]["event"], "npc")
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_pixel_scenes_and_river_collision_keep_the_bridge_open(self):
+        """The river must block travel except at the bridge, and regions need names."""
+        script = """
+const pixel = require(process.argv[1]);
+const scenes = [
+  pixel.sceneAt({x: 3, y: 13}),
+  pixel.sceneAt({x: 11, y: 7}),
+  pixel.sceneAt({x: 19, y: 12})
+];
+const waterBlocked = pixel.move({player: {x: 9, y: 6}}, 1, 0);
+const bridgeOpen = pixel.move({player: {x: 9, y: 7}}, 1, 0);
+process.stdout.write(JSON.stringify({scenes, waterBlocked, bridgeOpen}));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "pixel_adventure_engine.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertEqual(result["scenes"], ["village", "river", "archive"])
+        self.assertEqual(result["waterBlocked"]["player"]["x"], 9)
+        self.assertEqual(result["bridgeOpen"]["player"]["x"], 10)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_adventure_world_moves_collides_and_unlocks_interactions(self):
         """A missing collision or quest gate would let players walk through the case."""
         script = """

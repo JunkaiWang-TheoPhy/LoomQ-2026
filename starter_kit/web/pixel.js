@@ -18,6 +18,7 @@ let keys = new Set();
 let touch = { x: 0, y: 0 };
 let toastTimer = 0;
 let lastFrame = performance.now();
+let currentScene = worldEngine.sceneAt(game.player);
 
 function announce(text) { $("#pixel-sr").textContent = text; }
 
@@ -39,6 +40,7 @@ function updateHud() {
   document.querySelectorAll(".quickbar-slot").forEach((slot) => {
     slot.classList.toggle("collected", mission.shards.includes(slot.dataset.slot));
   });
+  $("#pixel-scene-name strong").textContent = worldEngine.SCENES[currentScene].name;
 }
 
 function openDialogue({ speaker, kicker = "调查记录", text, choices = [], locked = false, afterClose = null }) {
@@ -117,8 +119,8 @@ function drawMap(time) {
     drawShard(target.x, target.y, time, index);
   });
   // NPCs and signposts.
-  drawPerson(3, 13, COLORS.pink, "林默");
-  drawPerson(12, 7, COLORS.sky, "小满");
+  drawPerson(3, 13, COLORS.pink, "林默", time);
+  drawPerson(12, 7, COLORS.sky, "小满", time);
 }
 
 function label(text, x, y, color) {
@@ -132,45 +134,74 @@ function label(text, x, y, color) {
   ctx.fillText(text, x * TILE + 1, y * TILE + 6);
 }
 
-function drawPerson(x, y, color, name) {
+function drawPerson(x, y, color, name, time = 0) {
   const px = x * TILE;
-  const py = y * TILE;
+  const bob = Math.floor(time / 260 + x) % 2;
+  const py = y * TILE - bob;
+  const isMentor = name === "林默";
   ctx.fillStyle = "rgba(40,29,53,.25)";
   ctx.fillRect(px + 1, py + 14, 14, 3);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(px + 4, py + 14, 3, 3);
+  ctx.fillRect(px + 9, py + 14, 3, 3);
   ctx.fillStyle = COLORS.ink;
   ctx.fillRect(px + 2, py + 7, 12, 8);
   ctx.fillStyle = color;
   ctx.fillRect(px + 3, py + 6, 10, 9);
   ctx.fillRect(px + 1, py + 8, 3, 5);
   ctx.fillRect(px + 12, py + 8, 3, 5);
+  ctx.fillStyle = isMentor ? COLORS.yellow : COLORS.pink;
+  ctx.fillRect(px + 5, py + 8, 6, 2);
   ctx.fillStyle = COLORS.paper;
   ctx.fillRect(px + 4, py + 1, 8, 7);
   ctx.fillStyle = COLORS.ink;
   ctx.fillRect(px + 3, py, 10, 3);
+  ctx.fillRect(px + 4, py + 3, 2, 3);
+  ctx.fillRect(px + 10, py + 3, 2, 3);
   ctx.fillRect(px + 5, py + 5, 2, 2);
   ctx.fillRect(px + 9, py + 5, 2, 2);
+  if (isMentor) {
+    ctx.fillStyle = COLORS.yellow;
+    ctx.fillRect(px + 13, py + 9, 3, 5);
+    ctx.fillStyle = COLORS.sky;
+    ctx.fillRect(px + 14, py + 8, 2, 2);
+  } else {
+    ctx.fillStyle = COLORS.paper;
+    ctx.fillRect(px + 1, py + 5, 3, 2);
+    ctx.fillStyle = COLORS.pink;
+    ctx.fillRect(px + 12, py + 2, 3, 5);
+  }
   label(name, x - 1, y - 2, COLORS.paper);
 }
 
-function drawPlayer() {
+function drawPlayer(time = 0) {
   const px = game.player.x * TILE;
-  const py = game.player.y * TILE;
+  const bob = Math.floor(time / 180) % 2;
+  const py = game.player.y * TILE - bob;
   ctx.fillStyle = "rgba(40,29,53,.3)";
   ctx.fillRect(px + 1, py + 14, 14, 3);
   ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(px + 4, py + 14, 3, 3);
+  ctx.fillRect(px + 9, py + 14, 3, 3);
   ctx.fillRect(px + 2, py + 7, 12, 8);
   ctx.fillStyle = COLORS.player;
   ctx.fillRect(px + 3, py + 6, 10, 9);
   ctx.fillRect(px + 1, py + 8, 3, 5);
   ctx.fillRect(px + 12, py + 8, 3, 5);
+  ctx.fillStyle = COLORS.yellow;
+  ctx.fillRect(px + 2, py + 8, 2, 5);
   ctx.fillStyle = COLORS.paper;
   ctx.fillRect(px + 4, py + 1, 8, 7);
   ctx.fillStyle = COLORS.ink;
   ctx.fillRect(px + 3, py, 10, 3);
+  ctx.fillRect(px + 4, py + 3, 2, 3);
+  ctx.fillRect(px + 10, py + 3, 2, 3);
   const eyeX = game.player.facing === "left" ? px + 5 : game.player.facing === "right" ? px + 9 : px + 6;
   ctx.fillRect(eyeX, py + 5, 2, 2);
   ctx.fillStyle = COLORS.yellow;
   ctx.fillRect(px + 5, py + 9, 6, 3);
+  ctx.fillStyle = COLORS.sky;
+  ctx.fillRect(px + 12, py + 10, 4, 4);
 }
 
 function drawShard(x, y, time, index) {
@@ -241,7 +272,7 @@ function drawQuantumWell(x, y, time) {
 function render(time) {
   ctx.imageSmoothingEnabled = false;
   drawMap(time);
-  drawPlayer();
+  drawPlayer(time);
 }
 
 function performMove(dx, dy) {
@@ -298,6 +329,12 @@ function update(delta) {
   if (keys.has("arrowup") || keys.has("w")) dy -= 1;
   if (keys.has("arrowdown") || keys.has("s")) dy += 1;
   if (dx || dy) performMove(dx, dy);
+  const nextScene = worldEngine.sceneAt(game.player);
+  if (nextScene !== currentScene) {
+    currentScene = nextScene;
+    updateHud();
+    toast(`进入${worldEngine.SCENES[currentScene].name}`);
+  }
 }
 
 function frame(time) {
@@ -311,6 +348,7 @@ function frame(time) {
 function reset() {
   game = worldEngine.createPixelGame();
   mission = { shards: [], complete: false };
+  currentScene = worldEngine.sceneAt(game.player);
   dialogueOpen = false;
   dialogueLocked = false;
   $("#pixel-dialogue").hidden = true;
