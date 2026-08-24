@@ -157,30 +157,20 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         if not isinstance(shots, int) or isinstance(shots, bool) or shots <= 0 or shots > 100_000:
             raise ValueError("shots 必须是 1–100000 的整数")
         result = adapter.run(qasm, target, shots)
+        proof = None
+        proof_status = "available"
+        proof_notice = ""
         try:
             native_ir, proof = adapter.transpile_with_proof(qasm, target)
         except ValueError as exc:
             if "supports at most 8 qubits" not in str(exc):
                 raise
             native_ir = adapter.transpile(qasm, target)
-            proof = {
-                "schema_version": "loomq-prooftrace-v1",
-                "selected_target": target,
-                "whole_circuit_validation": {
-                    "verified": False,
-                    "scope": {"max_qubits": 8, "tolerance": 1e-12},
-                    "one_global_phase": {"consistent": False, "real": 0.0, "imag": 0.0},
-                    "basis_columns_checked": 0,
-                    "amplitudes_checked": 0,
-                    "maximum_absolute_error": 0.0,
-                    "reason": str(exc),
-                },
-                "equivalence": {"verified": False},
-                "metrics": {},
-                "lineage": [],
-                "rewrites": [],
-                "portability": {},
-            }
+            proof_status = "out_of_scope"
+            proof_notice = (
+                "no whole-circuit certificate beyond 8 qubits; "
+                "kept run result and requested-target structural compilation only"
+            )
         probabilities = {
             state: count / result["shots"] for state, count in result["counts"].items()
         }
@@ -197,6 +187,8 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 "probabilities": probabilities,
                 "native_ir": native_ir,
                 "proof": proof,
+                "proof_status": proof_status,
+                "proof_notice": proof_notice,
                 "trace": trace,
                 "trace_notice": trace_notice,
             },

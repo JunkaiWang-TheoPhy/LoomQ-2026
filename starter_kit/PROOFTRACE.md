@@ -77,11 +77,12 @@ python3 -m scripts.prooftrace_benchmark --json
 ```json
 {
   "total_mutants": 225,
-  "detected_structure_mutants": 225,
-  "detected_semantic_mutants": 225,
+  "detected_mutants": 225,
   "false_accepts": 0,
   "portability_checks": 15,
   "rewrite_checks": 132,
+  "semantic_rejections": 225,
+  "semantic_false_accepts": 0,
   "corpus_sha256": "2f8dedadd11c815acb89ef7e5dfc85292420c5a5df81b76bbb4c95ee9d4c8f49"
 }
 ```

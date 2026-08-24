@@ -582,45 +582,67 @@ function renderResults(data) {
   });
   const leaders = entries.slice(0, 2).map(([state]) => `|${state}⟩`).join(" 与 ");
   $("#explanation").textContent = `共测量 ${data.result.shots} 次。主导结果为 ${leaders}；位串从左到右对应高位到低位。`;
-  const proof = data.proof || {};
-  const semantic = proof.whole_circuit_validation || null;
-  const sourceMetrics = proof.metrics?.source || {};
-  const optimizedMetrics = proof.metrics?.optimized || {};
-  $("#proof-status").textContent = proof.equivalence?.verified ? "已验证" : "有边界";
-  $("#proof-scope").textContent = semantic?.verified
+  const proof = data.proof;
+  const proofStatus = data.proof_status || "available";
+  const proofNotice = data.proof_notice || "";
+  const semantic = proof?.whole_circuit_validation || null;
+  const sourceMetrics = proof?.metrics?.source || {};
+  const optimizedMetrics = proof?.metrics?.optimized || {};
+  $("#proof-status").textContent = proofStatus === "out_of_scope"
+    ? "超出范围"
+    : proof?.equivalence?.verified ? "已验证" : "有边界";
+  $("#proof-scope").textContent = proofStatus === "out_of_scope"
+    ? `这次没有 whole-circuit 证书。${proofNotice}`
+    : semantic?.verified
     ? "局部重写是符号恒等式证据；native IR 结构回读仍然必须通过；整条电路只做有界数值重算，不把它写成形式化证明。"
     : "这次结果保留运行结果与结构回读；整条电路重算有量子比特上限，超过上限时不会把缺失证据伪装成通过。";
-  $("#proof-semantic-basis").textContent = semantic
+  $("#proof-semantic-basis").textContent = proofStatus === "out_of_scope"
+    ? "没有 whole-circuit 证书。"
+    : semantic
     ? `查了 ${semantic.basis_columns_checked} 列，合计 ${semantic.amplitudes_checked} 个振幅。`
     : "未提供整条电路重算字段。";
-  $("#proof-semantic-phase").textContent = !semantic
+  $("#proof-semantic-phase").textContent = proofStatus === "out_of_scope"
+    ? "超过 8 个量子比特时不生成整条电路相位证书。"
+    : !semantic
     ? "这次没有整条电路相位报告。"
     : semantic.verified && semantic.one_global_phase.consistent
       ? `是。全局相位为 ${formatPhaseComponent(semantic.one_global_phase.real)} + ${formatPhaseComponent(semantic.one_global_phase.imag)}i。`
       : "不是。找不到同一个全局相位。";
-  $("#proof-semantic-error").textContent = semantic
+  $("#proof-semantic-error").textContent = proofStatus === "out_of_scope"
+    ? "没有 whole-circuit 误差证书。"
+    : semantic
     ? `最大误差 ${formatAbsoluteError(semantic.maximum_absolute_error)}。`
     : "最大误差未计算。";
-  $("#proof-semantic-bound").textContent = semantic?.scope
+  $("#proof-semantic-bound").textContent = proofStatus === "out_of_scope"
+    ? "这里只保留运行结果与已请求目标的结构编译；不会伪造 JSON 证明下载。"
+    : semantic?.scope
     ? `这里只重算，不当成形式化证明。最多只重算 ${semantic.scope.max_qubits} 个量子比特，容差 ${semantic.scope.tolerance}。${semantic.reason ? ` ${semantic.reason}` : ""}`
     : "这里只重算，不当成形式化证明。";
-  $("#proof-gates").textContent = formatMetricDelta(sourceMetrics.gate_count, optimizedMetrics.gate_count);
-  $("#proof-depth").textContent = formatMetricDelta(sourceMetrics.depth, optimizedMetrics.depth);
-  $("#proof-two-qubit").textContent = formatMetricDelta(
+  $("#proof-gates").textContent = proofStatus === "out_of_scope"
+    ? "—"
+    : formatMetricDelta(sourceMetrics.gate_count, optimizedMetrics.gate_count);
+  $("#proof-depth").textContent = proofStatus === "out_of_scope"
+    ? "—"
+    : formatMetricDelta(sourceMetrics.depth, optimizedMetrics.depth);
+  $("#proof-two-qubit").textContent = proofStatus === "out_of_scope"
+    ? "—"
+    : formatMetricDelta(
     sourceMetrics.two_qubit_gate_count,
     optimizedMetrics.two_qubit_gate_count,
   );
   const coveredSourceOperations = new Set([
-    ...(proof.lineage || []).flatMap((item) => item.source_operation_indices || []),
-    ...(proof.rewrites || []).flatMap((item) => item.source_operation_indices || []),
+    ...((proof?.lineage) || []).flatMap((item) => item.source_operation_indices || []),
+    ...((proof?.rewrites) || []).flatMap((item) => item.source_operation_indices || []),
   ]);
   const sourceOperationCount = (sourceMetrics.gate_count || 0) + (sourceMetrics.measurement_count || 0);
-  $("#proof-lineage").textContent = sourceOperationCount
+  $("#proof-lineage").textContent = proofStatus === "out_of_scope"
+    ? "—"
+    : sourceOperationCount
     ? `${coveredSourceOperations.size}/${sourceOperationCount} 项`
     : "—";
   const proofTargets = $("#proof-targets");
   proofTargets.replaceChildren();
-  Object.entries(proof.portability || {}).forEach(([target, report]) => {
+  Object.entries(proof?.portability || {}).forEach(([target, report]) => {
     const hash = report.native_ir_sha256.slice(0, 10);
     const structural = report.roundtrip_verified ? "结构回读通过" : "结构回读失败";
     const wholeCircuit = report.whole_circuit_validation?.verified
@@ -629,11 +651,15 @@ function renderResults(data) {
     proofTargets.append(element("li", "", `${target} · ${structural} · ${wholeCircuit} · ${hash}…`));
   });
   if (!proofTargets.childElementCount) {
-    proofTargets.append(element("li", "", "这次没有三后端证书；当前结果只保留已请求目标的运行与结构检查。"));
+    proofTargets.append(element("li", "", proofStatus === "out_of_scope"
+      ? "这次没有 whole-circuit 证书；当前结果只保留已请求目标的运行与结构编译。"
+      : "这次没有三后端证书；当前结果只保留已请求目标的运行与结构检查。"));
   }
   const proofRewrites = $("#proof-rewrites");
   proofRewrites.replaceChildren();
-  if (!(proof.rewrites || []).length) {
+  if (proofStatus === "out_of_scope") {
+    proofRewrites.append(element("li", "", "这次没有 ProofTrace 证书，所以这里不展示重写记录。"));
+  } else if (!(proof?.rewrites || []).length) {
     proofRewrites.append(element("li", "", "未发现冗余门；原线路直接进入三后端验证。"));
   } else {
     proof.rewrites.forEach((rewrite) => {
@@ -642,7 +668,7 @@ function renderResults(data) {
     });
   }
   const downloadProof = $("#download-proof");
-  if (proof.schema_version && proof.source_sha256) {
+  if (proof?.schema_version && proof.source_sha256) {
     if (lastProofUrl) URL.revokeObjectURL(lastProofUrl);
     const proofBlob = new Blob([JSON.stringify(proof, null, 2)], { type: "application/json" });
     lastProofUrl = URL.createObjectURL(proofBlob);
