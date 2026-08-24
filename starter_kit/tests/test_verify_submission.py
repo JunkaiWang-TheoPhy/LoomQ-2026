@@ -1,3 +1,4 @@
+import sys
 import unittest
 from unittest import mock
 
@@ -7,7 +8,7 @@ import verify_submission
 class VerifySubmissionTests(unittest.TestCase):
     def test_legacy_tuple_phase_is_still_supported(self):
         report = verify_submission.run_phases(
-            [("legacy-phase", ["python3", "-c", "print('ok')"])]
+            [("legacy-phase", [sys.executable, "-c", "print('ok')"])]
         )
 
         self.assertTrue(report["passed"])

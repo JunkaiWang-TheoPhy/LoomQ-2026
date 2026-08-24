@@ -99,6 +99,15 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("LoomQ", page)
         self.assertIn("运行电路", page)
         self.assertIn("量子比特", page)
+        self.assertIn('rel="icon"', page)
+        self.assertIn("/favicon.ico", page)
+
+    def test_favicon_route_is_served_without_404(self):
+        status, headers, body = self.request("/favicon.ico")
+
+        self.assertEqual(status, 200)
+        self.assertIn("image", headers["Content-Type"])
+        self.assertTrue(body)
 
     def test_home_exposes_learn_repair_backend_and_accessible_results(self):
         _status, _headers, body = self.request("/")
@@ -147,6 +156,21 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("machine_jump_taken", script)
         self.assertIn("source_condition_true", script)
         self.assertIn("attribution_caveat", script)
+
+    def test_styles_include_mobile_overflow_guards_for_evidence_panels(self):
+        status, headers, body = self.request("/styles.css")
+
+        stylesheet = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("css", headers["Content-Type"])
+        self.assertIn("@media(max-width:900px)", stylesheet)
+        self.assertIn(".evidence-header{grid-template-columns:1fr", stylesheet)
+        self.assertIn(".evidence-grid{grid-template-columns:1fr", stylesheet)
+        self.assertIn("@media(max-width:620px)", stylesheet)
+        self.assertIn(".evidence-controls{grid-template-columns:1fr", stylesheet)
+        self.assertIn(".evidence-card{padding:18px", stylesheet)
+        self.assertIn("overflow-wrap:anywhere", stylesheet)
+        self.assertIn("word-break:break-word", stylesheet)
 
     def test_run_endpoint_returns_counts_native_ir_and_probability(self):
         status, _headers, body = self.request(

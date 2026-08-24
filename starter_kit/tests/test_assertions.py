@@ -80,6 +80,13 @@ class AssertionTests(unittest.TestCase):
                 "states must be a non-empty list of unique bit strings",
             ),
             (
+                "empty states",
+                {"00": 1.0},
+                [{"kind": "support", "states": [], "minimum_probability": 0.1}],
+                None,
+                "states must be a non-empty list of unique bit strings",
+            ),
+            (
                 "mixed widths",
                 {"0": 0.5, "00": 0.5},
                 [{"kind": "support", "states": ["00"], "minimum_probability": 0.1}],
@@ -94,11 +101,39 @@ class AssertionTests(unittest.TestCase):
                 "bit index out of range",
             ),
             (
+                "duplicate bit index",
+                {"00": 1.0},
+                [{"kind": "parity", "bits": [0, 0], "expected": "even", "minimum_probability": 0.1}],
+                None,
+                "bits must not contain duplicates",
+            ),
+            (
+                "invalid parity expected",
+                {"00": 1.0},
+                [{"kind": "parity", "bits": [0], "expected": "balanced", "minimum_probability": 0.1}],
+                None,
+                "expected parity must be 'even' or 'odd'",
+            ),
+            (
                 "boolean threshold",
                 {"00": 1.0},
                 [{"kind": "support", "states": ["00"], "minimum_probability": True}],
                 None,
                 "minimum_probability must be a real number in \\[0, 1\\]",
+            ),
+            (
+                "out of range minimum probability",
+                {"00": 1.0},
+                [{"kind": "support", "states": ["00"], "minimum_probability": 1.1}],
+                None,
+                "minimum_probability must be a real number in \\[0, 1\\]",
+            ),
+            (
+                "out of range maximum total variation",
+                {"00": 1.0},
+                [{"kind": "uniformity", "states": ["00"], "maximum_total_variation": -0.1}],
+                None,
+                "maximum_total_variation must be a real number in \\[0, 1\\]",
             ),
             (
                 "boolean distribution value",
