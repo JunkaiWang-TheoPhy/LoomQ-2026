@@ -45,6 +45,30 @@
           <a class="judge-choice" href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/tree/main/starter_kit/evidence" target="_blank" rel="noreferrer">查看原始材料</a>
         </div>
       </div>
+      <div class="hardware-proofline" aria-label="已归档真机证据">
+        <a href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/blob/main/starter_kit/evidence/files/originq-result.json" target="_blank" rel="noreferrer">
+          <span>OriginQ · finite-shot counts</span>
+          <strong>悟空 180 · 9D182F…</strong>
+          <small>1000 shots · Bell 理想支持集 95.8% · 原始 JSON + manifest</small>
+        </a>
+        <a href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/blob/main/starter_kit/evidence/files/spinq-result.msgpack" target="_blank" rel="noreferrer">
+          <span>SpinQ · provider probabilities</span>
+          <strong>2 比特核磁真机 · G-260824-0001</strong>
+          <small>不伪造 shots/置信区间 · 原始 MessagePack + 无损解码</small>
+        </a>
+      </div>
+      <div class="judge-tour-launch">
+        <button id="run-judge-tour" class="primary" type="button">一键运行 6 项本地证据</button>
+        <p id="judge-tour-status" role="status" aria-live="polite">尚未运行；不需要模型密钥或平台账号。</p>
+      </div>
+      <nav id="judge-tour" class="judge-tour" aria-label="90 秒评委导览">
+        <a href="#workspace" data-tour-step="run">运行与 ProofTrace <span id="tour-run-status">未运行</span></a>
+        <a href="#counterfactual-panel" data-tour-step="compare">首个因果分歧 <span id="tour-compare-status">未运行</span></a>
+        <a href="#assert-panel" data-tour-step="assert">统计断言 <span id="tour-assert-status">未运行</span></a>
+        <a href="#witness-panel" data-tour-step="witness">Witness Chain <span id="tour-witness-status">未运行</span></a>
+        <a href="#hybrid-panel" data-tour-step="hybrid">Mid-circuit 路径 <span id="tour-hybrid-status">未运行</span></a>
+        <a href="#prompt-contract-panel" data-tour-step="contract">Prompt Contract <span id="tour-contract-status">未运行</span></a>
+      </nav>
       <ol class="question-checklist">
         <li class="question-item">
           <h3>编译有没有改坏电路?</h3>
@@ -285,6 +309,23 @@
             <pre id="hybrid-registers"></pre>
           </details>
         </section>
+      </div>
+    </section>
+
+    <section id="prompt-contract-panel" class="prompt-contract-panel" aria-labelledby="prompt-contract-title" tabindex="-1">
+      <div>
+        <p class="eyebrow">模型调用前先锁定请求</p>
+        <h2 id="prompt-contract-title">这句话会被系统怎样理解?</h2>
+        <p>模型和结果验证器读取同一份确定性合同。摘要用于发现内容变化，不是身份签名，也不宣称某个后端唯一兼容。</p>
+      </div>
+      <div class="prompt-contract-controls">
+        <label for="contract-prompt">自然语言请求</label>
+        <input id="contract-prompt" maxlength="20000" value="Which free 20-qubit simulator on OriginQ needs no account?">
+        <button id="inspect-prompt-contract" class="secondary" type="button">检查 Prompt Contract</button>
+        <span id="prompt-contract-status" class="backend">等待检查</span>
+      </div>
+      <div id="prompt-contract-result" class="prompt-contract-result" aria-live="polite">
+        <p>运行后显示任务类型、目标态、平台与账号约束，以及服务端重建结果。</p>
       </div>
     </section>
 

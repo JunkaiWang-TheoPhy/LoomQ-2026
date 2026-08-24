@@ -144,6 +144,17 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="candidate-qasm"', page)
         self.assertIn('id="run-compare"', page)
         self.assertIn("不归因具体噪声机制", page)
+        self.assertIn('aria-label="90 秒评委导览"', page)
+        self.assertIn('id="run-judge-tour"', page)
+        self.assertIn('id="judge-tour-status"', page)
+        self.assertIn('href="#workspace"', page)
+        self.assertIn('href="#counterfactual-panel"', page)
+        self.assertIn('href="#assert-panel"', page)
+        self.assertIn('href="#witness-panel"', page)
+        self.assertIn('href="#hybrid-panel"', page)
+        self.assertIn('href="#prompt-contract-panel"', page)
+        self.assertIn('id="inspect-prompt-contract"', page)
+        self.assertIn('id="prompt-contract-result"', page)
 
     def test_home_places_evidence_navigator_before_feature_inventory(self):
         _status, _headers, body = self.request("/")
@@ -207,10 +218,30 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("final_distribution_distance", script)
         self.assertIn("confidence_interval", script)
         self.assertIn("machine_jump_taken", script)
+        self.assertIn('["费用", constraints.free ? "免费" : "未限定"]', script)
+        self.assertIn('["排队", constraints.no_queue ? "要求零排队" : "未要求零排队"]', script)
         self.assertIn("source_condition_true", script)
         self.assertIn("attribution_caveat", script)
         self.assertIn("这条路径会发生", script)
         self.assertIn("在当前量子态下不会发生", script)
+
+    def test_frontend_tour_requires_semantic_evidence_and_resets_changed_inputs(self):
+        status, headers, body = self.request("/app.js")
+
+        script = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("javascript", headers["Content-Type"])
+        self.assertIn('const TOUR_TARGETS = ["spinq", "originq", "braket"]', script)
+        self.assertIn("function requireTourEvidence", script)
+        self.assertIn("function markTourStep", script)
+        self.assertIn("function resetTourStep", script)
+        self.assertIn('api("/api/prompt-contract"', script)
+        self.assertIn("contract.integrity.is_signature === false", script)
+        self.assertIn("verification.valid === true", script)
+        self.assertIn('$("#run-judge-tour").addEventListener', script)
+        self.assertIn("addEvidenceReset", script)
+        self.assertIn("function initializeTourState", script)
+        self.assertIn("initializeTourState();", script)
 
     def test_styles_include_mobile_overflow_guards_for_evidence_panels(self):
         status, headers, body = self.request("/styles.css")
@@ -226,6 +257,11 @@ class WebLabTests(unittest.TestCase):
         self.assertIn(".evidence-card{padding:18px", stylesheet)
         self.assertIn("overflow-wrap:anywhere", stylesheet)
         self.assertIn("word-break:break-word", stylesheet)
+        self.assertIn(".hardware-proofline", stylesheet)
+        self.assertIn(".judge-tour", stylesheet)
+        self.assertIn(".judge-tour a.complete", stylesheet)
+        self.assertIn(".prompt-contract-panel", stylesheet)
+        self.assertIn("overflow-x:auto", stylesheet)
 
     def test_enhancement_styles_keep_hybrid_path_evidence_shrink_safe(self):
         status, headers, body = self.request("/enhancements.css")
@@ -409,6 +445,41 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 400)
         self.assertEqual(error_payload["error"]["code"], "invalid_request")
         self.assertIn("2**num_clbits <= max_outcomes", error_payload["error"]["message"])
+
+    def test_prompt_contract_endpoint_exposes_rebuild_verified_semantics(self):
+        prompt = "Which free 20-qubit simulator on OriginQ needs no account?"
+
+        try:
+            status, _headers, body = self.request(
+                "/api/prompt-contract",
+                {"prompt": prompt},
+            )
+        except urllib.error.HTTPError as exc:
+            status, body = exc.code, exc.read()
+            exc.close()
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["contract"]["task_kind"], "backend")
+        self.assertEqual(
+            payload["contract"]["backend_constraints"]["platforms"],
+            ["originq"],
+        )
+        self.assertEqual(
+            payload["contract"]["backend_constraints"]["kinds"],
+            ["simulator"],
+        )
+        self.assertEqual(
+            payload["contract"]["backend_constraints"]["minimum_qubits"],
+            20,
+        )
+        self.assertTrue(payload["contract"]["backend_constraints"]["free"])
+        self.assertFalse(payload["contract"]["backend_constraints"]["no_queue"])
+        self.assertFalse(
+            payload["contract"]["backend_constraints"]["requires_account"]
+        )
+        self.assertTrue(payload["verification"]["valid"])
+        self.assertFalse(payload["contract"]["integrity"]["is_signature"])
 
     def test_compare_endpoint_finds_the_first_causal_divergence(self):
         candidate = BELL.replace("cx q[0],q[1];", "x q[1];")

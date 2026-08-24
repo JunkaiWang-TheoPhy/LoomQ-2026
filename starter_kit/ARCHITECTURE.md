@@ -40,6 +40,7 @@ Web / CLI
 - `loomq/runtime.py`：把精确概率按最大余数法转换为整数 shots，并产生统一结果 Schema。
 - `loomq/assertions.py`：对 `support`、`parity`、`uniformity` 断言提供三种证据模式：本地精确 `exact-local`、有限 shots Wilson/总变差区间、以及 provider 概率；只报告一致/偏差/不确定，不归因具体噪声机制。
 - `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次；两次无效回答后才用同一目标合成器或能力表约束求解器安全回退；多轮历史严格交替并限制为 8 条消息。
+- `loomq/prompt_contract.py`：在模型调用前把自然语言请求规范化为任务类型、目标态和后端约束；原 prompt、语义字段与合同分别摘要，并可从原 prompt 确定性重建。摘要只检测内容变化，不承担身份认证。
 - `loomq/witness.py`：为源门与测量分配稳定 `gN/mN` witness，把 ProofTrace lineage/rewrite、counterfactual first divergence、assertion measurement dependencies 与 Hybrid branch provenance 对齐；规范 JSON SHA-256 后再从嵌入输入全量重算，篡改或 Hybrid 量子部分不一致时失败关闭。
 - `scripts/l2_stress_campaign.py`：通过公开 `adapter.agent_chat()` 执行固定的 500 例真实模型语料，支持断点续跑、脱敏记录和逐层 SHA-256 完整性复核。
 - `scripts/offline_stress_campaign.py`：执行固定的 40,000 项无凭据断言，分别统计 L1 模拟、三目标契约、L3 差分、量子 RISC-V 往返及拒绝路径，并锁定语料哈希。
@@ -49,7 +50,7 @@ Web / CLI
 - `loomq/quantum_riscv.py`：把全部白名单量子门编码为真实 32 位 `custom-0` 机器字，并完成字节序列化和严格解码。
 - `riscv_emulator.py`：保持官方 L3 文本汇编路径，同时增加量子机器码加载、解码和执行入口。
 - `loomq_cli.py`：面向零基础用户提供转译、执行、文本柱状图、逐门状态轨迹、自然语言 Agent 和一键生成运行。
-- `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图、反事实首门分歧实验、ProofTrace 面板、P1 断言报告、P2 Hybrid 分支回放、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。
+- `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图、反事实首门分歧实验、ProofTrace 面板、P1 断言报告、P2 Hybrid 分支回放、Prompt Contract 检查、六步评委路径、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。
 - `circuits/`：除 Bell/GHZ 外归档 Deutsch–Jozsa、Grover-3 与 QFT-4；相同源码跨三 target 转译和运行。
 
 ## 为什么基础评分路径不依赖平台 SDK

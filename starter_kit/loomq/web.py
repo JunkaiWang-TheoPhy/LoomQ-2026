@@ -15,6 +15,7 @@ try:
     from .. import adapter
     from .agent import normalize_history
     from .assertions import diagnose_mutation, diagnose_observed_execution, evaluate_assertions
+    from .prompt_contract import build_prompt_contract, verify_prompt_contract
     from .simulator import trace_statevector
     from .qasm import parse_qasm
     from .witness import build_causal_audit, verify_causal_audit
@@ -22,6 +23,7 @@ except ImportError:  # Direct execution from starter_kit/.
     import adapter
     from loomq.agent import normalize_history
     from loomq.assertions import diagnose_mutation, diagnose_observed_execution, evaluate_assertions
+    from loomq.prompt_contract import build_prompt_contract, verify_prompt_contract
     from loomq.simulator import trace_statevector
     from loomq.qasm import parse_qasm
     from loomq.witness import build_causal_audit, verify_causal_audit
@@ -123,6 +125,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 return
             if path == "/api/hybrid-path-certificate":
                 self._hybrid_paths(payload)
+                return
+            if path == "/api/prompt-contract":
+                self._prompt_contract(payload)
                 return
             if path == "/api/agent":
                 self._agent(payload)
@@ -313,6 +318,21 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         )
         audit["verification"] = verify_causal_audit(audit)
         self._send_json(HTTPStatus.OK, audit)
+
+    def _prompt_contract(self, payload: Dict[str, Any]) -> None:
+        prompt = payload.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("prompt 必须是非空字符串")
+        if len(prompt) > 20_000:
+            raise ValueError("prompt 最多 20000 个字符")
+        contract = build_prompt_contract(prompt)
+        self._send_json(
+            HTTPStatus.OK,
+            {
+                "contract": contract,
+                "verification": verify_prompt_contract(contract, prompt),
+            },
+        )
 
     def _agent(self, payload: Dict[str, Any]) -> None:
         prompt = payload.get("prompt")

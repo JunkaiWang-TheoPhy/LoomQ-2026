@@ -8,6 +8,14 @@ import re
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
+from .prompt_contract import (
+    build_prompt_contract,
+    classify_task,
+    extract_backend_constraints,
+    extract_qubit_count,
+    extract_state_goal,
+    extract_state_spec,
+)
 from .qasm import QASMError, parse_qasm
 from .simulator import probabilities
 
@@ -84,75 +92,7 @@ def _assistant_content(response: Dict[str, Any]) -> str:
 
 
 def _expects_qasm(prompt: str) -> bool:
-    lowered = prompt.lower()
-    generation_intent = (
-        "生成",
-        "创建",
-        "制备",
-        "修复",
-        "纠错",
-        "改正",
-        "generate",
-        "create",
-        "prepare",
-        "repair",
-        "fix",
-    )
-    if any(term in lowered for term in generation_intent):
-        return True
-    backend_objects = (
-        "后端",
-        "平台",
-        "simulator",
-        "qpu",
-        "真机",
-        "量子硬件",
-        "backend",
-        "platform",
-    )
-    selection_intent = (
-        "选哪个",
-        "选择",
-        "选择哪个",
-        "推荐",
-        "应该选",
-        "应该用",
-        "后端",
-        "平台",
-        "which backend",
-        "which platform",
-        "which qpu",
-        "which simulator",
-        "should i use",
-        "choose",
-        "select",
-        "recommend",
-    )
-    has_selection_intent = any(term in lowered for term in selection_intent)
-    if has_selection_intent and any(term in lowered for term in backend_objects):
-        return False
-    qasm_terms = (
-        "qasm",
-        "电路",
-        "量子态",
-        "bell",
-        "ghz",
-        "epr",
-        "cat state",
-        "maximally entangled",
-        "测量",
-        "纠缠",
-    )
-    if any(term in lowered for term in qasm_terms):
-        return True
-    if has_selection_intent:
-        return False
-    backend_terms = (
-        "排队",
-        "费用",
-        "成本",
-    ) + backend_objects
-    return not any(term in lowered for term in backend_terms)
+    return classify_task(prompt) != "backend"
 
 
 def _qasm_from_reply(reply: str) -> str:
@@ -163,64 +103,15 @@ def _qasm_from_reply(reply: str) -> str:
 
 
 def _qubit_count(prompt: str) -> int | None:
-    match = re.search(
-        r"(\d+)\s*-?\s*(?:个?\s*)?"
-        r"(?:(?:量子)?(?:比特|位)|qubits?|qbits?|quantum\s+bits?)"
-        r"|(?:qubits?|qbits?|quantum\s+bits?)\s*[:=]?\s*(\d+)",
-        prompt.lower(),
-    )
-    return int(match.group(1) or match.group(2)) if match else None
+    return extract_qubit_count(prompt)
 
 
 def _requested_qubits(prompt: str, default: int | None = None) -> int | None:
-    qubits = _qubit_count(prompt)
-    if qubits is not None:
-        return qubits
-    chinese_digits = {
-        "二": 2,
-        "两": 2,
-        "三": 3,
-        "四": 4,
-        "五": 5,
-        "六": 6,
-        "七": 7,
-        "八": 8,
-        "九": 9,
-    }
-    for character, value in chinese_digits.items():
-        if re.search(
-            character + r"\s*(?:个?\s*)?(?:量子)?(?:比特|位)", prompt.lower()
-        ):
-            return value
-    return default
+    return _qubit_count(prompt) or default
 
 
 def _state_goal(prompt: str) -> tuple[str, int] | None:
-    lowered = prompt.lower()
-    basis = re.search(r"\|\s*([01]+)\s*>", lowered)
-    if basis:
-        return "computational basis", len(basis.group(1))
-    if any(
-        term in lowered
-        for term in ("均匀叠加", "等概率叠加", "uniform superposition", "equal superposition")
-    ):
-        qubits = _requested_qubits(prompt)
-        return ("uniform superposition", qubits) if qubits is not None else None
-    if "w 态" in lowered or "w态" in lowered or re.search(r"\bw(?: state)?\b", lowered):
-        return "W", _requested_qubits(prompt, 3) or 3
-    if any(term in lowered for term in ("bell", "贝尔", "epr", "纠缠对")):
-        return "Bell", 2
-    maximally_entangled = any(
-        term in lowered for term in ("最大纠缠", "maximally entangled")
-    )
-    if maximally_entangled and _requested_qubits(prompt) == 2:
-        return "Bell", 2
-    if not any(
-        term in lowered
-        for term in ("ghz", "猫态", "cat state", "最大纠缠", "maximally entangled")
-    ):
-        return None
-    return "GHZ", _requested_qubits(prompt, 3) or 3
+    return extract_state_goal(prompt)
 
 
 def _expected_distribution(prompt: str, name: str, qubits: int) -> Dict[str, float]:
@@ -237,9 +128,10 @@ def _expected_distribution(prompt: str, name: str, qubits: int) -> Dict[str, flo
             format(index, f"0{qubits}b"): probability for index in range(1 << qubits)
         }
     if name == "computational basis":
-        match = re.search(r"\|\s*([01]+)\s*>", prompt)
-        assert match is not None
-        return {match.group(1): 1.0}
+        spec = extract_state_spec(prompt)
+        if spec is None or "basis_bits" not in spec:
+            raise ValueError("computational-basis target is missing a bit string")
+        return {spec["basis_bits"]: 1.0}
     raise ValueError(f"unsupported target-state family: {name}")
 
 
@@ -274,45 +166,19 @@ def _validate_qasm_reply(prompt: str, reply: str) -> None:
 
 
 def _backend_constraints(prompt: str) -> tuple[int | None, bool, bool, bool, bool]:
-    lowered = prompt.lower()
-    normalized = re.sub(r"[-_]+", " ", lowered)
-    qubits = _qubit_count(prompt)
-    no_queue = any(
-        term in normalized
-        for term in (
-            "零排队",
-            "无排队",
-            "不排队",
-            "免排队",
-            "无需排队",
-            "没有排队",
-            "zero queue",
-            "no queue",
-            "without queue",
-            "without waiting",
-            "no waiting",
-        )
+    constraints = extract_backend_constraints(prompt)
+    kinds = constraints["kinds"]
+    return (
+        constraints["minimum_qubits"],
+        constraints["no_queue"],
+        constraints["free"],
+        "qpu" in kinds,
+        "simulator" in kinds,
     )
-    free = any(
-        term in lowered
-        for term in (
-            "免费",
-            "零成本",
-            "零费用",
-            "无费用",
-            "不收费",
-            "free",
-            "no cost",
-            "without charge",
-            "at no charge",
-        )
-    )
-    qpu = any(term in lowered for term in ("真机", "量子硬件", "qpu"))
-    simulator = any(term in lowered for term in ("模拟器", "simulator"))
-    return qubits, no_queue, free, qpu, simulator
 
 
 def _compatible_backends(prompt: str) -> List[Dict[str, Any]]:
+    constraints = extract_backend_constraints(prompt)
     qubits, no_queue, free, qpu, simulator = _backend_constraints(prompt)
     compatible: List[Dict[str, Any]] = []
     for backend in _capability_payload()["backends"]:
@@ -326,11 +192,22 @@ def _compatible_backends(prompt: str) -> List[Dict[str, Any]]:
             continue
         if simulator and backend["kind"] != "simulator":
             continue
+        if constraints["platforms"] and backend["platform"] not in constraints["platforms"]:
+            continue
+        if constraints["requires_account"] is False and backend["requires_account"]:
+            continue
+        if constraints["local_only"]:
+            searchable = " ".join(
+                str(backend.get(field, "")) for field in ("id", "name", "notes")
+            ).lower()
+            if not any(term in searchable for term in ("local", "本地", "无需联网")):
+                continue
         compatible.append(backend)
     return compatible
 
 
 def _validate_backend_reply(prompt: str, reply: str) -> None:
+    contract_constraints = extract_backend_constraints(prompt)
     qubits, no_queue, free, qpu, simulator = _backend_constraints(prompt)
     backends = _capability_payload()["backends"]
     all_ids = [backend["id"] for backend in backends]
@@ -352,6 +229,12 @@ def _validate_backend_reply(prompt: str, reply: str) -> None:
             requirements.append("kind=qpu")
         if simulator:
             requirements.append("kind=simulator")
+        if contract_constraints["platforms"]:
+            requirements.append("platform=" + "|".join(contract_constraints["platforms"]))
+        if contract_constraints["requires_account"] is False:
+            requirements.append("requires_account=false")
+        if contract_constraints["local_only"]:
+            requirements.append("execution=local")
         detail = ", ".join(requirements) or "official backend id"
         raise ValueError(
             f"backend recommendation violates constraints ({detail}); compatible ids: "
@@ -405,11 +288,12 @@ def _deterministic_state_reply(prompt: str) -> str | None:
     elif name == "uniform superposition":
         operations.extend(f"h q[{index}];" for index in range(qubits))
     elif name == "computational basis":
-        match = re.search(r"\|\s*([01]+)\s*>", prompt)
-        assert match is not None
+        spec = extract_state_spec(prompt)
+        if spec is None or "basis_bits" not in spec:
+            return None
         operations.extend(
             f"x q[{index}];"
-            for index, bit in enumerate(reversed(match.group(1)))
+            for index, bit in enumerate(reversed(spec["basis_bits"]))
             if bit == "1"
         )
     else:
@@ -433,8 +317,21 @@ def chat(
     if not isinstance(prompt, str) or not prompt.strip():
         raise ValueError("prompt must be a non-empty string")
 
+    contract = build_prompt_contract(prompt)
+    model_contract = {
+        "task_kind": contract["task_kind"],
+        "state_goal": contract["state_goal"],
+        "backend_constraints": contract["backend_constraints"],
+    }
     messages: List[Dict[str, Any]] = [
-        {"role": "system", "content": _system_prompt()},
+        {
+            "role": "system",
+            "content": (
+                _system_prompt()
+                + "\n\nLOOMQ_PROMPT_CONTRACT（确定性解析，回答与校验均须满足）：\n"
+                + json.dumps(model_contract, ensure_ascii=False, sort_keys=True)
+            ),
+        },
         *normalize_history(history),
         {"role": "user", "content": prompt},
     ]
