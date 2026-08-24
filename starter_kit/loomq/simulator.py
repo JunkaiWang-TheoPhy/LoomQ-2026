@@ -15,6 +15,7 @@ Matrix2 = Tuple[Tuple[complex, complex], Tuple[complex, complex]]
 MAX_SIMULATOR_QUBITS = 20
 MAX_LOCAL_QUBITS = 30
 MAX_SPARSE_STATES = 1_000_000
+_NUMERICAL_DUST = 1e-15
 
 
 def _single_matrix(gate: Gate) -> Matrix2:
@@ -105,6 +106,46 @@ def _initial_state(num_qubits: int) -> StateVector:
     state: StateVector = [0j] * (1 << num_qubits)
     state[0] = 1 + 0j
     return state
+
+
+def _split_measurement_branches(
+    state: StateVector, qubit: int
+) -> List[Tuple[int, float, StateVector]]:
+    mask = 1 << qubit
+    zero_state: StateVector = [0j] * len(state)
+    one_state: StateVector = [0j] * len(state)
+    zero_probability = 0.0
+    one_probability = 0.0
+
+    for index, amplitude in enumerate(state):
+        probability = abs(amplitude) ** 2
+        if index & mask:
+            one_state[index] = amplitude
+            one_probability += probability
+        else:
+            zero_state[index] = amplitude
+            zero_probability += probability
+
+    branches: List[Tuple[int, float, StateVector]] = []
+    if zero_probability >= _NUMERICAL_DUST:
+        scale = math.sqrt(zero_probability)
+        branches.append(
+            (
+                0,
+                zero_probability,
+                [amplitude / scale for amplitude in zero_state],
+            )
+        )
+    if one_probability >= _NUMERICAL_DUST:
+        scale = math.sqrt(one_probability)
+        branches.append(
+            (
+                1,
+                one_probability,
+                [amplitude / scale for amplitude in one_state],
+            )
+        )
+    return branches
 
 
 def _iter_exact_state_steps(
