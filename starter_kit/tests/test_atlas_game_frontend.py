@@ -10,6 +10,61 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class AtlasGameFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_adventure_world_moves_collides_and_unlocks_interactions(self):
+        """A missing collision or quest gate would let players walk through the case."""
+        script = """
+const world = require(process.argv[1]);
+let state = world.createWorld();
+const start = state.player;
+state = world.move(state, 1, 0, 0.5, {clues: []});
+const moved = state.player;
+
+const blockedState = {...state, player: {x: 607, y: 525, facing: "right"}};
+const blocked = world.move(blockedState, 1, 0, 0.5, {clues: []});
+const unlocked = world.move(
+  blockedState,
+  1,
+  0,
+  0.5,
+  {clues: ["state", "possibility", "repeat", "control"]}
+);
+
+const clueState = {...state, player: {x: 370, y: 690, facing: "up"}};
+const clue = world.interact(clueState, {clues: []});
+const collectedClue = world.interact(clueState, {clues: ["state"]});
+
+const consoleState = {...state, player: {x: 965, y: 520, facing: "up"}};
+const consoleLocked = world.interact(consoleState, {clues: []});
+const consoleReady = world.interact(consoleState, {
+  clues: ["state", "possibility", "repeat", "control"]
+});
+
+process.stdout.write(JSON.stringify({start, moved, blocked, unlocked, clue, collectedClue, consoleLocked, consoleReady}));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "atlas_adventure_engine.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertGreater(result["moved"]["x"], result["start"]["x"])
+        self.assertEqual(result["blocked"]["player"]["x"], 607)
+        self.assertGreater(result["unlocked"]["player"]["x"], 607)
+        self.assertEqual(result["clue"]["event"], "clue")
+        self.assertEqual(result["clue"]["id"], "state")
+        self.assertEqual(result["collectedClue"]["event"], "none")
+        self.assertEqual(result["consoleLocked"]["event"], "locked")
+        self.assertEqual(result["consoleReady"]["event"], "experiment")
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_investigation_actions_unlock_the_world_and_build_a_score(self):
         passport = {
             "schema_version": "loomq-inquiry-passport-v1",

@@ -263,18 +263,16 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("text/html", headers["Content-Type"])
         page = body.decode()
-        self.assertIn("Quantum Atlas · 调查行动", page)
-        self.assertIn('id="game-world"', page)
-        self.assertIn('id="investigator"', page)
+        self.assertIn("Quantum Atlas · 无形世界调查局", page)
+        self.assertIn('id="adventure-canvas"', page)
+        self.assertIn('id="dialogue-box"', page)
+        self.assertIn('id="touch-stick"', page)
+        self.assertIn('id="touch-action"', page)
         self.assertIn('id="game-score"', page)
-        self.assertIn('data-clue="state"', page)
-        self.assertIn('data-clue="possibility"', page)
-        self.assertIn('data-clue="repeat"', page)
-        self.assertIn('data-clue="control"', page)
-        self.assertIn('id="game-prediction"', page)
-        self.assertIn('id="game-run-experiment"', page)
-        self.assertIn('id="game-audit"', page)
-        self.assertIn("方向键或 WASD", page)
+        self.assertIn("WASD", page)
+        self.assertIn("方向键移动", page)
+        self.assertIn("空格调查", page)
+        self.assertIn('aria-label="二维调查世界"', page)
         self.assertIn('aria-live="polite"', page)
 
     def test_home_links_to_the_standalone_quantum_atlas_game(self):
@@ -288,6 +286,7 @@ class WebLabTests(unittest.TestCase):
             ("/game.css", "text/css"),
             ("/game.js", "javascript"),
             ("/atlas-game-engine.js", "javascript"),
+            ("/atlas-adventure-engine.js", "javascript"),
         ):
             with self.subTest(path=path):
                 status, headers, body = self.request(path)

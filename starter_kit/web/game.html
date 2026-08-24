@@ -2,122 +2,93 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Quantum Atlas 零基础量子调查游戏">
-  <title>Quantum Atlas · 调查行动</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="在可探索的二维世界中，完成第一宗量子调查案件。">
+  <title>Quantum Atlas · 无形世界调查局</title>
   <link rel="icon" href="/favicon.ico" type="image/svg+xml">
   <link rel="stylesheet" href="/game.css">
 </head>
 <body>
-  <a class="skip-link" href="#scene-panel">跳到当前任务</a>
-  <header class="game-header">
-    <a class="game-brand" href="/"><span>QA</span><strong>Quantum Atlas</strong></a>
-    <div class="case-label">案件 001 · 分岔之前</div>
-    <a class="exit-link" href="/">退出游戏 / 返回实验台</a>
-  </header>
+  <main id="game-shell" class="game-shell">
+    <canvas id="adventure-canvas" tabindex="0" aria-label="二维调查世界"></canvas>
 
-  <main>
-    <section class="game-hud" aria-label="调查状态">
-      <div><span>调查员</span><strong>见习调查员 07</strong></div>
-      <div><span>当前位置</span><strong id="game-location">观测站</strong></div>
-      <div><span>证据分</span><strong><output id="game-score">0</output> / 100</strong></div>
-      <div><span>案件状态</span><strong id="game-case-status">收集调查规则</strong></div>
-      <button id="game-reset" type="button">重新开始</button>
+    <header class="top-hud" aria-label="案件状态">
+      <div class="case-mark" aria-label="Quantum Atlas 无形世界调查局">
+        <span>QA</span>
+        <div><strong>无形世界调查局</strong><small>CASE 001 · 分岔之前</small></div>
+      </div>
+      <div class="hud-objective">
+        <small>当前任务</small>
+        <strong id="game-objective">去和林默调查员碰面</strong>
+      </div>
+      <div class="hud-stats">
+        <div><small>线索</small><strong id="clue-count">0 / 4</strong></div>
+        <div><small>证据</small><strong><output id="game-score">0</output> / 100</strong></div>
+      </div>
+      <button id="game-reset" class="icon-button" type="button" aria-label="重新开始案件">↻</button>
+      <a class="exit-game" href="/" aria-label="退出游戏，返回 LoomQ 实验室">退出</a>
+    </header>
+
+    <aside class="control-hint" aria-label="操作说明">
+      <span><kbd>WASD</kbd> / 方向键移动</span>
+      <span><kbd>E</kbd> / 空格调查</span>
+    </aside>
+
+    <div id="region-card" class="region-card" aria-hidden="true">
+      <small>NOW ENTERING</small><strong>雾镜观测站</strong>
+    </div>
+
+    <div id="interaction-prompt" class="interaction-prompt" hidden>
+      <kbd>E</kbd><span>调查</span>
+    </div>
+
+    <section id="dialogue-box" class="dialogue-box" role="dialog" aria-modal="true" aria-labelledby="dialogue-speaker" hidden>
+      <div id="speaker-portrait" class="speaker-portrait" aria-hidden="true"><span></span></div>
+      <div class="dialogue-content">
+        <small id="dialogue-kicker">调查记录</small>
+        <h1 id="dialogue-speaker">林默</h1>
+        <p id="dialogue-text"></p>
+        <div id="dialogue-choices" class="dialogue-choices"></div>
+      </div>
+      <button id="dialogue-close" class="dialogue-close" type="button">继续 <kbd>空格</kbd></button>
     </section>
 
-    <section id="game-world" class="game-world" aria-label="可探索调查地图">
-      <img src="/assets/quantum-atlas-map.png" alt="观测站、分岔原野和证据塔由道路连接的调查地图">
-      <div id="investigator" class="investigator at-observatory" aria-hidden="true"><i></i><span>YOU</span></div>
-      <button class="world-node observatory current" type="button" data-game-location="observatory">
-        <span>01</span><strong>观测站</strong><small>调查方法</small>
-      </button>
-      <button class="world-node field locked" type="button" data-game-location="field" disabled>
-        <span>02</span><strong>分岔原野</strong><small>对照实验</small>
-      </button>
-      <button class="world-node archive locked" type="button" data-game-location="archive" disabled>
-        <span>03</span><strong>证据塔</strong><small>结论审计</small>
-      </button>
-      <p class="move-help">移动：方向键或 WASD · 数字 1/2/3 直达已解锁地点 · Enter 操作</p>
+    <div id="toast" class="toast" aria-hidden="true"></div>
+    <p id="sr-status" class="sr-only" aria-live="polite"></p>
+
+    <section id="start-screen" class="start-screen">
+      <div class="start-vignette" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><b></b>
+      </div>
+      <div class="start-copy">
+        <span class="agency-seal">QUANTUM ATLAS · CASE 001</span>
+        <h1>无形世界<br>调查局</h1>
+        <p>世界没有坏掉。只是有些真相，<br>一次观察看不见。</p>
+        <button id="start-game" type="button"><span>开始调查</span><small>ENTER THE ATLAS</small></button>
+        <small>无需量子基础 · 约 5 分钟</small>
+      </div>
     </section>
 
-    <section id="scene-panel" class="scene-panel" tabindex="-1">
-      <header class="scene-heading">
-        <div><span id="scene-index">地点 01</span><h1 id="scene-title">观测站</h1></div>
-        <p id="game-status" aria-live="polite">调查四件物品，拼出一套可靠的观察方法。</p>
-      </header>
-
-      <section class="game-scene active" data-game-scene="observatory" aria-labelledby="observatory-title">
-        <div class="scene-copy">
-          <p class="eyebrow">新人训练</p>
-          <h2 id="observatory-title">先学会调查，再接触门名</h2>
-          <p>每件物品藏着一条规则。全部收集后，通往分岔原野的路才会开放。</p>
-        </div>
-        <div class="clue-grid">
-          <button type="button" data-clue="state"><span>望远镜</span><strong>状态</strong><small>系统怎样被准备？</small></button>
-          <button type="button" data-clue="possibility"><span>分岔地图</span><strong>多种可能</strong><small>观察前别急着选唯一答案</small></button>
-          <button type="button" data-clue="repeat"><span>记录仪</span><strong>重复观察</strong><small>一条记录还不是分布</small></button>
-          <button type="button" data-clue="control"><span>对照夹板</span><strong>只改一个条件</strong><small>变化才有明确来源</small></button>
-        </div>
-        <div id="clue-notebook" class="notebook" aria-live="polite">
-          <strong>调查手册 0 / 4</strong><p>选择地图上的调查物品。</p>
-        </div>
-      </section>
-
-      <section class="game-scene" data-game-scene="field" aria-labelledby="field-title" hidden>
-        <div class="scene-copy">
-          <p class="eyebrow">真实本地实验</p>
-          <h2 id="field-title">删掉第二步，结果会改变吗？</h2>
-          <p>现在才给操作命名：实验 A 使用 H + CX，实验 B 只移除 CX。其他条件保持相同。</p>
-        </div>
-        <div class="experiment-console">
-          <label for="game-prediction">运行前预测</label>
-          <select id="game-prediction">
-            <option value="not-sure">我还不确定，先观察</option>
-            <option value="h-opens-branches">H 已产生多种结果，CX 改变关联</option>
-            <option value="cx-opens-branches">CX 才产生最初的多种结果</option>
-          </select>
-          <button id="game-run-experiment" type="button">运行 A/B 调查</button>
-          <span id="experiment-light">READY</span>
-        </div>
-        <div id="game-experiment-result" class="game-experiment-result" hidden>
-          <article><span>实验 A · H + CX</span><strong id="game-control-states">—</strong><div id="game-control-bars"></div></article>
-          <article><span>实验 B · 移除 CX</span><strong id="game-variant-states">—</strong><div id="game-variant-bars"></div></article>
-          <p id="game-divergence">等待首个分歧位置。</p>
-        </div>
-      </section>
-
-      <section class="game-scene" data-game-scene="archive" aria-labelledby="archive-title" hidden>
-        <div class="scene-copy">
-          <p class="eyebrow">最终调查</p>
-          <h2 id="archive-title">哪条结论没有越过证据边界？</h2>
-          <p>完成地点不等于结论正确。证据塔会保留 supported / unsupported 状态。</p>
-        </div>
-        <div class="archive-console">
-          <label for="game-conclusion">提交结论</label>
-          <select id="game-conclusion">
-            <option value="h-opens-branches-cx-correlates">H 建立分支，CX 改变两个比特的相关结构</option>
-            <option value="cx-opens-branches">CX 建立了最初的两个分支</option>
-            <option value="proves-nonlocality">一次 Z 基实验完整证明 Bell 非定域性</option>
-          </select>
-          <button id="game-audit" type="button">提交证据塔审计</button>
-        </div>
-        <div id="game-audit-result" class="game-audit-result" aria-live="polite">等待提交结论。</div>
-      </section>
+    <section id="case-complete" class="case-complete" role="dialog" aria-modal="true" aria-labelledby="complete-title" hidden>
+      <div class="complete-stamp" aria-hidden="true">ARCHIVED</div>
+      <small>CASE 001 · 调查完成</small>
+      <h2 id="complete-title">你留下的不是答案，<br>是一条可以复查的证据链。</h2>
+      <p id="complete-summary"></p>
+      <div class="complete-score"><span>调查完成度</span><strong><output id="final-score">100</output> / 100</strong></div>
+      <div class="complete-actions">
+        <button id="continue-world" type="button">回到世界</button>
+        <a href="/">进入 LoomQ 证据实验室</a>
+      </div>
     </section>
+
+    <div id="touch-stick" class="touch-stick" aria-label="触屏移动控制">
+      <div id="stick-knob"></div>
+    </div>
+    <button id="touch-action" class="touch-action" type="button" aria-label="调查附近目标">调查</button>
   </main>
 
-  <div id="case-complete" class="case-complete" role="dialog" aria-modal="true" aria-labelledby="complete-title" hidden>
-    <div>
-      <span>CASE CLOSED</span>
-      <h2 id="complete-title">第一份案件已经归档</h2>
-      <p>你没有靠猜答案通关，而是留下预测、运行对照实验，再让证据限制结论。</p>
-      <strong>证据分：<output id="final-score">100</output> / 100</strong>
-      <button id="close-complete" type="button">返回证据塔</button>
-      <a href="/">进入完整 LoomQ 实验台</a>
-    </div>
-  </div>
-
   <script src="/atlas-game-engine.js" defer></script>
+  <script src="/atlas-adventure-engine.js" defer></script>
   <script src="/game.js" defer></script>
 </body>
 </html>

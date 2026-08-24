@@ -40,6 +40,7 @@ _STATIC = {
     "/inquiry.js": ("inquiry.js", "text/javascript; charset=utf-8"),
     "/game.js": ("game.js", "text/javascript; charset=utf-8"),
     "/atlas-game-engine.js": ("atlas_game_engine.js", "text/javascript; charset=utf-8"),
+    "/atlas-adventure-engine.js": ("atlas_adventure_engine.js", "text/javascript; charset=utf-8"),
     "/assets/quantum-world-journey.png": (
         "assets/quantum-world-journey.png",
         "image/png",
