@@ -17,7 +17,7 @@ python3 -m unittest tests.test_web -v
 |---|---|---|
 | 桌面首屏 | 1440×1000；页面 `scrollWidth=innerWidth=1440`，无横向溢出；首屏先出现证据清单，再出现任务卡片 | 2026-08-24 Chromium 1440 验收，visual-verdict `92/100` |
 | 移动端首屏 | 390×844；页面 `scrollWidth=innerWidth=390`，证据区单列且无横向溢出 | 2026-08-24 Chromium 390 验收，visual-verdict `92/100` |
-| 键盘首屏顺序 | `Tab` 依次到达 skip link、brand、`1 分钟看证据`、`3 分钟跑示例` | 2026-08-24 Chromium 键盘验收 |
+| 键盘首屏顺序 | 在 1440×1000 与 390×844 下，连续 5 次 `Tab` 依次到达 skip link、brand、`1 分钟看证据`、`3 分钟跑示例`、`查看原始材料`；第 5 个链接指向 fork 内的 evidence 目录 | 2026-08-24 Chromium 键盘验收 |
 | Bell 运行 | 1024 shots 输出 `00=512, 11=512`；概率图、文本表、位序说明与原生指令同步更新 | 浏览器 DOM 与 `tests.test_web` |
 | ProofTrace | 点击 Run 后 `proof-status=已验证`；下载链接变为 `blob:` 且文件名为 `loomq-prooftrace-*.json` | 本次 Playwright/Chromium 交互与 `tests.test_prooftrace`、`tests.test_web` |
 | P1 断言报告 | 默认断言返回 `exact-local`，显示 `3` 条通过结果与“本地精确断言不归因具体噪声机制。” | 本次 Playwright/Chromium 交互与 `tests.test_web`、`tests.test_assertions` |
