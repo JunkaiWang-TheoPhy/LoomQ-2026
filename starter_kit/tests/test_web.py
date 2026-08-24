@@ -29,6 +29,17 @@ cx q[0],q[2];
 measure q -> c;
 """
 
+HYBRID = """OPENQASM 2.0; include "qelib1.inc";
+qreg q[2]; creg c[2];
+h q[0];
+cx q[0],q[1];
+measure q -> c;
+classical {
+  r1 = 10;
+  if (c[1] == 1) { r3 = r1 + 2; } else { r3 = r1 - 8; }
+}
+"""
+
 
 class CompatibleAgentAPIHandler(BaseHTTPRequestHandler):
     calls = []
@@ -110,6 +121,9 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('data-example="grover"', page)
         self.assertIn('data-example="qft"', page)
         self.assertIn('id="clear-conversation"', page)
+        self.assertIn('id="assert-panel"', page)
+        self.assertIn('id="hybrid-panel"', page)
+        self.assertIn("不归因具体噪声机制", page)
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
@@ -127,6 +141,12 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("coveredSourceOperations", script)
         self.assertIn("sourceMetrics.measurement_count", script)
         self.assertIn("agentHistory.splice(0)", script)
+        self.assertIn('api("/api/assert"', script)
+        self.assertIn('api("/api/hybrid-trace"', script)
+        self.assertIn("confidence_interval", script)
+        self.assertIn("machine_jump_taken", script)
+        self.assertIn("source_condition_true", script)
+        self.assertIn("attribution_caveat", script)
 
     def test_run_endpoint_returns_counts_native_ir_and_probability(self):
         status, _headers, body = self.request(
@@ -168,6 +188,70 @@ class WebLabTests(unittest.TestCase):
                 self.assertTrue(payload["result"]["backend"].startswith(target))
                 self.assertEqual(sum(payload["result"]["counts"].values()), 127)
                 self.assertAlmostEqual(sum(payload["probabilities"].values()), 1.0)
+
+    def test_assert_endpoint_reports_exact_local_assertions(self):
+        status, _headers, body = self.request(
+            "/api/assert",
+            {
+                "qasm": BELL,
+                "assertions": [
+                    {"kind": "support", "states": ["00", "11"], "minimum_probability": 0.999},
+                    {"kind": "parity", "bits": [0, 1], "expected": "even", "minimum_probability": 0.999},
+                ],
+            },
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["mode"], "exact-local")
+        self.assertEqual([item["status"] for item in payload["assertions"]], ["pass", "pass"])
+        self.assertTrue(all(item["evidence_mode"] == "exact-local" for item in payload["assertions"]))
+        self.assertEqual(payload["attribution_caveat"], "本地精确断言不归因具体噪声机制。")
+
+    def test_assert_endpoint_diagnoses_observed_execution_with_cautious_language(self):
+        status, _headers, body = self.request(
+            "/api/assert",
+            {
+                "qasm": BELL,
+                "assertions": [
+                    {"kind": "support", "states": ["00", "11"], "minimum_probability": 0.90}
+                ],
+                "observed": {"00": 48, "11": 47, "01": 3, "10": 2},
+                "shots": 100,
+            },
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["mode"], "observed-execution")
+        self.assertEqual(payload["diagnosis"]["classification"], "inconclusive")
+        self.assertEqual(
+            payload["diagnosis"]["observed_assertions"][0]["evidence_mode"],
+            "finite-shots",
+        )
+        self.assertIn(
+            "confidence_interval",
+            payload["diagnosis"]["observed_assertions"][0],
+        )
+        self.assertIn("does not identify a physical cause", payload["diagnosis"]["attribution_caveat"])
+
+    def test_hybrid_trace_endpoint_replays_branch_evidence(self):
+        status, _headers, body = self.request(
+            "/api/hybrid-trace",
+            {"source": HYBRID, "measurement_bits": [1, 0]},
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["schema_version"], "loomq-hybrid-trace-v1")
+        self.assertEqual(payload["measurement_inputs"], [1, 0])
+        self.assertEqual(payload["branch_path"], "if1:F")
+        self.assertEqual(payload["final_registers"]["x3"], 2)
+        branch = payload["branch_events"][0]
+        self.assertEqual(branch["pc"], 3)
+        self.assertTrue(branch["machine_jump_taken"])
+        self.assertFalse(branch["source_condition_true"])
+        self.assertEqual(branch["influencing_measurements"], ["c[1]"])
 
     def test_large_valid_circuit_keeps_running_when_visual_trace_is_bounded(self):
         source = """OPENQASM 2.0; include "qelib1.inc";

@@ -14,11 +14,13 @@ from urllib.parse import urlparse
 try:
     from .. import adapter
     from .agent import normalize_history
+    from .assertions import diagnose_observed_execution, evaluate_assertions
     from .simulator import trace_statevector
     from .qasm import parse_qasm
 except ImportError:  # Direct execution from starter_kit/.
     import adapter
     from loomq.agent import normalize_history
+    from loomq.assertions import diagnose_observed_execution, evaluate_assertions
     from loomq.simulator import trace_statevector
     from loomq.qasm import parse_qasm
 
@@ -101,6 +103,12 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             if path == "/api/run":
                 self._run(payload)
                 return
+            if path == "/api/assert":
+                self._assert(payload)
+                return
+            if path == "/api/hybrid-trace":
+                self._hybrid_trace(payload)
+                return
             if path == "/api/agent":
                 self._agent(payload)
                 return
@@ -155,6 +163,58 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 "trace_notice": trace_notice,
             },
         )
+
+    def _assert(self, payload: Dict[str, Any]) -> None:
+        qasm = payload.get("qasm")
+        assertions = payload.get("assertions")
+        observed = payload.get("observed")
+        shots = payload.get("shots")
+        if not isinstance(qasm, str) or not qasm.strip():
+            raise ValueError("qasm 必须是非空字符串")
+        if not isinstance(assertions, list) or not assertions:
+            raise ValueError("assertions 必须是非空列表")
+        circuit = parse_qasm(qasm)
+        if observed is None:
+            if shots is not None:
+                raise ValueError("shots 只能和 observed 一起提供")
+            report = evaluate_assertions(circuit, assertions)
+            self._send_json(
+                HTTPStatus.OK,
+                {
+                    "mode": "exact-local",
+                    "assertions": report,
+                    "attribution_caveat": "本地精确断言不归因具体噪声机制。",
+                },
+            )
+            return
+        if not isinstance(observed, dict) or not observed:
+            raise ValueError("observed 必须是非空对象")
+        if shots is not None and (
+            not isinstance(shots, int) or isinstance(shots, bool) or shots <= 0 or shots > 100_000
+        ):
+            raise ValueError("shots 必须是 1–100000 的整数")
+        diagnosis = diagnose_observed_execution(
+            circuit,
+            observed,
+            assertions,
+            shots=shots,
+        )
+        self._send_json(
+            HTTPStatus.OK,
+            {
+                "mode": "observed-execution",
+                "diagnosis": diagnosis,
+            },
+        )
+
+    def _hybrid_trace(self, payload: Dict[str, Any]) -> None:
+        source = payload.get("source")
+        measurement_bits = payload.get("measurement_bits")
+        if not isinstance(source, str) or not source.strip():
+            raise ValueError("source 必须是非空字符串")
+        if measurement_bits is None:
+            raise ValueError("measurement_bits 必须提供")
+        self._send_json(HTTPStatus.OK, adapter.trace_hybrid(source, measurement_bits))
 
     def _agent(self, payload: Dict[str, Any]) -> None:
         prompt = payload.get("prompt")

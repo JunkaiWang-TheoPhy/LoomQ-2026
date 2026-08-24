@@ -38,15 +38,17 @@ Web / CLI
 - `loomq/prooftrace.py`：只执行命名的相邻恒等式，记录每个最终操作的源索引、优化前后 metrics、三目标 SHA-256 与独立回读结果；普通 `transpile()` 保持单目标失败隔离，显式 ProofTrace API 才生成完整证书。
 - `loomq/simulator.py`：实现 12 种门的状态向量语义和经典测量映射；20 比特内使用稠密状态向量，21–30 比特使用最多 1,000,000 个非零基态的有界稀疏表示，逐门概率/振幅/相位轨迹最多 8 比特。
 - `loomq/runtime.py`：把精确概率按最大余数法转换为整数 shots，并产生统一结果 Schema。
+- `loomq/assertions.py`：对 `support`、`parity`、`uniformity` 断言提供三种证据模式：本地精确 `exact-local`、有限 shots Wilson/总变差区间、以及 provider 概率；只报告一致/偏差/不确定，不归因具体噪声机制。
 - `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次；多轮历史严格交替并限制为 8 条消息。
 - `scripts/l2_stress_campaign.py`：通过公开 `adapter.agent_chat()` 执行固定的 500 例真实模型语料，支持断点续跑、脱敏记录和逐层 SHA-256 完整性复核。
 - `scripts/offline_stress_campaign.py`：执行固定的 40,000 项无凭据断言，分别统计 L1 模拟、三目标契约、L3 差分、量子 RISC-V 往返及拒绝路径，并锁定语料哈希。
 - `scripts/prooftrace_benchmark.py`：逐条删除五个算法在三目标 native IR 中的 225 条指令，验证全部篡改被拒绝；另执行 15 项 portability 与 132 项安全重写检查。
 - `loomq/hybrid.py`：解析赋值、算术、`if/else` 和测量位引用，检查 `creg` 边界并生成 `li/add/sub/addi/beq/bne/j` 子集。
+- `loomq/hybrid_trace.py`：在不改变 `compile_hybrid()` 公共 tuple 契约的前提下，复用编译器与 RISC-V trace 引擎回放 branch path、machine jump、source condition、measurement provenance、机器字和寄存器增量。
 - `loomq/quantum_riscv.py`：把全部白名单量子门编码为真实 32 位 `custom-0` 机器字，并完成字节序列化和严格解码。
 - `riscv_emulator.py`：保持官方 L3 文本汇编路径，同时增加量子机器码加载、解码和执行入口。
 - `loomq_cli.py`：面向零基础用户提供转译、执行、文本柱状图、逐门状态轨迹、自然语言 Agent 和一键生成运行。
-- `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。
+- `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图、ProofTrace 面板、P1 断言报告、P2 Hybrid 分支回放、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。
 - `circuits/`：除 Bell/GHZ 外归档 Deutsch–Jozsa、Grover-3 与 QFT-4；相同源码跨三 target 转译和运行。
 
 ## 为什么基础评分路径不依赖平台 SDK
@@ -64,8 +66,9 @@ Web / CLI
 - 模型生成的 QASM 先由确定性解析器与状态向量目标检查，后端 ID 再与官方 JSON 能力表复核。
 - L2 压力 campaign 的 500 条 prompt 在归档测试中检查唯一性和分类配额；证据验证器会重新生成语料并核对 prompt、记录及 JSONL 摘要。
 - Bonus 的 Bell 证明真实经历 `Circuit → 机器字 → 小端字节 → 解码 → 扩展模拟器 → counts`。
-- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录执行 106 项归档测试，并复核 Web→多轮模型协议→确定性校验、ProofTrace 225 项变异基准、算法展品、三 native IR 回读、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、L2 语料、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
+- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录在 Node present 时执行 `node --check web/app.js`，否则显式 `SKIP`；并显式运行 Web/API/assert/hybrid 焦点套件，再在 `python3 -m unittest discover -s tests -v` 观察到的 140 项归档测试基础上复核 Web→多轮模型协议→确定性校验、ProofTrace 225 项变异基准、算法展品、三 native IR 回读、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、L2 语料、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
 - 可选的 PyQuafu 0.4.5 独立 oracle 使用固定 40 电路覆盖全部 12 门，对三个 target 完成 120 项状态向量与 counts 交叉检查；第三方包隔离在核心环境之外。
 - 离线活动的每个计数对应具体断言：概率归一化、目标 IR/Schema、机器码语义往返、四输入差分执行或恶意输入拒绝；不是仅循环不检查结果的数量指标。
 - 真机证据验证器从 provider MessagePack、counts JSON 与 QASM 重算统计结果，并用 SHA-256 manifest 锁定原始材料、派生分析和桌面/移动端截图。
 - 资源合同在解析或分配前拒绝超过 1,000,000 字符、256 个声明 bit、100,000 个 QASM 操作、超过目标能力表的本地 qubit（SpinQ 24 / OriginQ 30 / Braket 25）、超过 1,000,000 个稀疏基态，以及超过 20,000 token、4,096 statement 或 64 层分支的 classical block；直接申请稠密状态向量仍限制为 20 qubit。
+- Web 断言诊断依赖 `assertions.py` 的证据模式区分；逐门 first-divergence 诊断只在最多 8 qubit 的精确状态比较上作出结论，不外推到更大电路或真机内部物理原因。

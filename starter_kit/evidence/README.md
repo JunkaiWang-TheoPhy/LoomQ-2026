@@ -19,8 +19,8 @@
 | 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
 |---|---:|---|
 | L1 真机 | 10/10 分上限 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
-| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、ProofTrace 可下载证书、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、14 项 Web 测试 |
-| 工程与产品复核 | 5/5 分上限 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
+| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、ProofTrace 可下载证书、P1 断言报告、P2 Hybrid 回放、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、17 项 Web 测试 |
+| 工程与产品复核 | 10/10 分上限 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
 | 自定义量子 RISC-V | 8/8 分上限 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
 | 新手引导与视觉叙事 | 4/4 分上限 | Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
 
@@ -84,7 +84,7 @@ evidence/files/spinq-screenshot.png
 用于交互体验评测的 3 个用户任务：
 1. **Learn + Build**：选择“第一次理解量子电路”，运行 Bell 后观察 H/CX 时间线、`00`/`11` 概率图和文本表、位序解释与 SpinQ 原生指令；再切换“均匀叠加”和 Braket，比较 8 个等概率基态与 OpenQASM 3.0。
 2. **Repair**：点击“修复一段错误 QASM”，页面预填含越界 `cx q[0],q[2]` 的 Bell 修复任务；配置 `LOOMQ_LLM_*` 后提交，检查返回完整 OpenQASM 2.0，并确认语法、白名单门与 Bell 分布通过确定性校验，错误回答会携带诊断重试一次。
-3. **Backend Match**：点击“选择合适的后端”，把任务改为“推荐一个免费、零排队、至少 20 比特的模拟器后端”；回答必须包含能力表中的兼容规范 ID。未配置模型时，页面以 `role=alert` 说明环境变量，同时保留上方三后端本地转译与模拟能力。
+3. **Backend Match + Judge Evidence**：点击“选择合适的后端”，把任务改为“推荐一个免费、零排队、至少 20 比特的模拟器后端”；回答必须包含能力表中的兼容规范 ID。随后在同一页打开 P1 断言面板，检查 exact-local / finite-shot / provider-probabilities 三种证据标签与“不归因具体噪声机制”提示，再在 P2 Hybrid 面板核对 `branch_path`、`machine_jump_taken`、`source_condition_true` 与寄存器增量。
 截图或演示视频：桌面 `starter_kit/evidence/files/web-lab-desktop-current.jpg`，移动端 `starter_kit/evidence/files/web-lab-mobile-current.jpg`；完整验收矩阵见 `starter_kit/WEB_QA.md`。所有流程均由最终 commit 中的代码直接运行。
 ```
 
@@ -102,7 +102,7 @@ evidence/files/spinq-screenshot.png
 
 PyQuafu 0.4.5 的固定种子验证覆盖 40 个唯一电路、全部 12 门和三个 target，共 120/120 项通过；最大状态向量振幅误差为 `1.1802326323952682e-15`。协议、counts 浮点余数 tie 边界和复现命令见 `starter_kit/PYQUAFU_CROSS_VALIDATION.md`，摘要见 `starter_kit/evidence/files/pyquafu-cross-validation-summary.json`。它是软件交叉验证，不申报为第四个真机平台。
 
-此外，公开 `transpile()` 不直接信任自己的 emitter：`loomq/native_ir.py` 会把三种输出重新解析成 `Circuit` 并做完全相等检查。Deutsch–Jozsa、Grover 与 QFT 三个展品均跨三 target 回读和运行；恶意资源输入由 `tests.test_resource_boundaries` 验证在分配前拒绝。
+此外，公开 `transpile()` 不直接信任自己的 emitter：`loomq/native_ir.py` 会把三种输出重新解析成 `Circuit` 并做完全相等检查。Deutsch–Jozsa、Grover 与 QFT 三个展品均跨三 target 回读和运行；恶意资源输入由 `tests.test_resource_boundaries` 验证在分配前拒绝。P1 断言报告明确区分本地精确、有限 shots 与 provider 概率三类证据；P2 Hybrid 回放显示 bit 顺序 `c[0], c[1], …`、branch path 与机器寄存器事件，但不把这些工程证据外推成噪声归因。
 
 ProofTrace 在此基础上增加可审计的安全重写、源门 lineage、优化 metrics 和三目标证书。`python3 -m starter_kit.scripts.prooftrace_benchmark --json` 对五个算法的三目标输出执行 225 个单指令删除变异，结果 225/225 检出、0 false accept，并完成 15 项 portability 与 132 项重写检查。范围和不能外推的结论见 `starter_kit/PROOFTRACE.md`。
 

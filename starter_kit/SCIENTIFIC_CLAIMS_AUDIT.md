@@ -5,9 +5,14 @@
 | 对象 | 已有证据 | 允许结论 | 不作出的结论 |
 |---|---|---|---|
 | 本地 Bell 模拟 | 精确状态向量与 `00/11` counts | 程序在无噪声模型中产生目标分布 | 量子优势、真机保真度 |
+| P1 本地断言 | `evaluate_assertions()` 对本地精确分布执行 `support/parity/uniformity` | 断言在本地无噪声参考下通过或失败；证据模式明确标为 `exact-local` | 真机可达到同样结果，或断言失败的物理原因 |
+| P1 有限 shots 诊断 | `diagnose_observed_execution()` 与 Wilson / 总变差区间 | 观测数据与本地参考“相容 / 偏离 / 不确定”；区间只在提供 shots 时出现 | 将偏差归因到某种具体噪声机制、门保真度或硬件失效模式 |
+| Provider 概率诊断 | 平台直接返回的概率分布，无 shots | 如实报告为 `provider-probabilities`，不伪造置信区间 | 把 provider 概率冒充 shots、p-value 或统计显著性 |
 | 逐门状态故事 | 同一本地状态向量在每个门后的振幅、概率和相位；最多 8 比特 | 解释模拟器中的路径与相位干涉，支持手算和 CLI 复核 | 真机内部状态、实验层析结果或测量之外的直接观测 |
+| 最先分歧门诊断 | `diagnose_mutation()` 的精确态比较，最多 8 比特 | 给出 zero-input、global-phase 归一后的 first divergent gate；大电路超界时明确拒绝 | 对 8 比特以上电路或真实硬件运行宣称同样的 first-divergence 定位能力 |
 | 算法画廊 | 无噪声精确模拟：Deutsch–Jozsa `11=1`；两轮 Grover `P(111)=0.9453125`；QFT-4 测量均匀且振幅相位非平凡 | 这些归档电路在声明的理想模型和位序下具有对应分布/相位 | 量子加速、真实硬件优势，或任意 oracle/输入的普遍性能 |
 | Native IR 回读 | 三套独立语法 parser 重建与源完全相同的 `Circuit` | emitter 输出在所支持规范子集中没有丢门、换门、参数或测量映射 | 厂商云服务当前在线或接受所有扩展语法 |
+| P2 Hybrid 回放 | `trace_hybrid()` 返回 `branch_path`、`machine_jump_taken`、`source_condition_true`、measurement provenance、寄存器增量和机器字 | 源码条件真假、机器跳转真假、bit 顺序 `c[0], c[1], …` 和寄存器变化可复核；Web 只是展示这些确定性证据 | 量子硬件噪声导致某条经典分支被选中，或未编码到 replay 输入的测量位在机器寄存器中被真实执行 |
 | OriginQ Bell 真机 | job `9D182FA1EF76FF3807697CDF69DE7483`，Z 基 958/1000 位于 `00/11`，Wilson 95% 区间 `[0.9437,0.9688]` | 强 Z 基相关，与目标 Bell 电路的计算基支持集一致 | 单靠 Z 基数据证明纠缠、Bell 不等式或设备无关认证 |
 | SpinQ Bell 真机 | job `G-260824-0001`，provider MessagePack 投影概率，理想支持集概率 `0.66866048` | 全局主峰 `00` 是理想支持态；如实报告噪声和偏差 | 把投影概率伪造成 shots、置信区间或高保真双峰 |
 | L1 target 输出 | 同一 IR 的三种 emitter、公开 evaluator、PyQuafu 状态向量交叉验证 | 软件语义、位序和目标文本满足公开契约 | 对三家云端实时可用性或排队时间作保证 |
@@ -23,3 +28,4 @@
 3. “验证”必须说明验证对象：QASM 语义、目标分布、证据完整性或协议链路，不能含混地替代物理证明。
 4. 后端推荐只依据赛事固定能力表，不代表平台当前排队、价格或在线状态。
 5. PyQuafu 是独立开发 oracle，不是本赛题三个 target 的真机替代品。
+6. P1/P2 Web 面板复用本地确定性工具链；它们是公开可审的工程证据，不是对私有 12 例 DeepSeek 评测或未公开参赛材料的替代。

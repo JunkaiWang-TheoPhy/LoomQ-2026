@@ -138,6 +138,64 @@
       </aside>
     </section>
 
+    <section class="evidence-lab" aria-labelledby="evidence-title">
+      <div class="evidence-header">
+        <div>
+          <p class="eyebrow">P1 + P2 JUDGE EVIDENCE</p>
+          <h2 id="evidence-title">把断言报告与 Hybrid 分支证据放到同一页检查</h2>
+        </div>
+        <p class="evidence-copy">页面只报告本地精确结论、有限 shots 置信区间或 provider 概率对比；任何偏差都不归因具体噪声机制。</p>
+      </div>
+
+      <div class="evidence-grid">
+        <section id="assert-panel" class="evidence-card" aria-labelledby="assert-title">
+          <div class="panel-heading">
+            <div><span class="index">03</span><h3 id="assert-title">断言报告</h3></div>
+            <span id="assert-mode" class="backend">等待检查</span>
+          </div>
+          <p class="hint">复用上方当前 QASM。留空 observed 时走本地精确断言；填写 observed 后转为谨慎执行诊断，不归因具体噪声机制。</p>
+          <label class="code-label" for="assertions-input">assertions JSON <span>support / parity / uniformity</span></label>
+          <textarea id="assertions-input" spellcheck="false" aria-describedby="assert-help"></textarea>
+          <p id="assert-help" class="hint">shots 留空时把 observed 当作 provider 概率；填写 shots 时按有限采样区间解释 pass / fail / inconclusive。</p>
+          <label class="code-label" for="observed-input">observed JSON <span>可选</span></label>
+          <textarea id="observed-input" spellcheck="false" placeholder='{"00": 48, "11": 47, "01": 3, "10": 2}'></textarea>
+          <div class="evidence-controls">
+            <label>shots
+              <input id="observed-shots" type="number" min="1" max="100000" step="1" placeholder="100">
+            </label>
+            <button id="run-assert" class="secondary" type="button">生成断言报告</button>
+          </div>
+          <p id="assert-caveat" class="audit-note">等待断言结果。该报告只说明数据与本地参考是否一致，不归因具体噪声机制。</p>
+          <ul id="assert-results" class="audit-list"></ul>
+        </section>
+
+        <section id="hybrid-panel" class="evidence-card" aria-labelledby="hybrid-title">
+          <div class="panel-heading">
+            <div><span class="index">04</span><h3 id="hybrid-title">Hybrid 分支回放</h3></div>
+            <span id="hybrid-path" class="backend">等待回放</span>
+          </div>
+          <p class="hint">这里显示 source condition 与 machine jump 的分离证据、影响分支的测量位，以及每条机器指令造成的寄存器变化。</p>
+          <label class="code-label" for="hybrid-source">Hybrid-QASM 源码 <span>含 classical 块</span></label>
+          <textarea id="hybrid-source" spellcheck="false"></textarea>
+          <div class="evidence-controls">
+            <label>measurement_bits
+              <input id="hybrid-bits" type="text" value="[1, 0]" aria-describedby="hybrid-help">
+            </label>
+            <button id="run-hybrid" class="secondary" type="button">回放 Hybrid 分支</button>
+          </div>
+          <p id="hybrid-help" class="hint">bit 顺序直接对应 c[0], c[1], …；branch path 使用 ifN:T / ifN:F 标记源码条件真假，而不是机器跳转真假。</p>
+          <p id="hybrid-caveat" class="audit-note">等待 Hybrid 回放结果。</p>
+          <ol id="hybrid-branches" class="audit-list"></ol>
+          <ol id="hybrid-events" class="audit-list compact"></ol>
+          <details>
+            <summary>查看 Hybrid 汇编与最终寄存器</summary>
+            <pre id="hybrid-assembly"></pre>
+            <pre id="hybrid-registers"></pre>
+          </details>
+        </section>
+      </div>
+    </section>
+
     <section class="agent" aria-labelledby="agent-title">
       <div><p class="eyebrow">OPTIONAL · DEEPSEEK</p><h2 id="agent-title">用自然语言描述下一块电路</h2><p>Agent 的回答会经过门集、语法与目标态分布三重确定性校验。</p></div>
       <form id="agent-form">

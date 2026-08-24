@@ -115,6 +115,26 @@ const taskPrompts = {
   backend: "我需要运行一个 3 比特 GHZ 电路。请比较 SpinQ、本源 OriginQ 与 Braket 的适用性，给出推荐后端、限制和可运行的 OpenQASM 2.0。",
 };
 
+const defaultAssertions = JSON.stringify(
+  [
+    { kind: "support", states: ["00", "11"], minimum_probability: 0.9 },
+    { kind: "parity", bits: [0, 1], expected: "even", minimum_probability: 0.9 },
+    { kind: "uniformity", states: ["00", "11"], maximum_total_variation: 0.05 },
+  ],
+  null,
+  2,
+);
+
+const hybridExample = `OPENQASM 2.0; include "qelib1.inc";
+qreg q[2]; creg c[2];
+h q[0];
+cx q[0],q[1];
+measure q -> c;
+classical {
+  r1 = 10;
+  if (c[1] == 1) { r3 = r1 + 2; } else { r3 = r1 - 8; }
+}`;
+
 const $ = (selector) => document.querySelector(selector);
 const qasm = $("#qasm");
 const notice = $("#notice");
@@ -174,6 +194,8 @@ document.querySelectorAll(".chip").forEach((button) => {
 });
 qasm.addEventListener("input", renderCircuit);
 selectExample("bell");
+$("#assertions-input").value = defaultAssertions;
+$("#hybrid-source").value = hybridExample;
 
 document.querySelectorAll(".task-card").forEach((button) => {
   button.addEventListener("click", () => {
@@ -204,6 +226,118 @@ async function api(path, payload) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error?.message || "请求失败");
   return data;
+}
+
+function parseJsonInput(raw, label) {
+  try {
+    return JSON.parse(raw);
+  } catch (_error) {
+    throw new Error(`${label} 不是合法 JSON`);
+  }
+}
+
+function formatPercent(value) {
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function renderAssertionSummary(item) {
+  if ("minimum_probability" in item) {
+    return `观测 ${formatPercent(item.observed_probability)}，阈值 ≥ ${formatPercent(item.minimum_probability)}`;
+  }
+  return `观测 TV ${item.observed_total_variation.toFixed(4)}，阈值 ≤ ${item.maximum_total_variation.toFixed(4)}`;
+}
+
+function renderAssertionItems(items, label) {
+  const results = $("#assert-results");
+  results.replaceChildren();
+  items.forEach((item) => {
+    const row = element("li", `audit-item ${item.status}`);
+    const header = element(
+      "strong",
+      "",
+      `${label} #${item.index + 1} · ${item.kind} · ${item.status.toUpperCase()}`,
+    );
+    const meta = element(
+      "span",
+      "audit-meta",
+      `${item.evidence_mode} · ${renderAssertionSummary(item)}`,
+    );
+    row.append(header, meta);
+    if (item.confidence_interval) {
+      row.append(
+        element(
+          "small",
+          "audit-note-inline",
+          `confidence_interval ${item.confidence_interval.map(formatPercent).join(" – ")}`,
+        ),
+      );
+    }
+    results.append(row);
+  });
+}
+
+function renderAssertionReport(data) {
+  if (data.mode === "exact-local") {
+    $("#assert-mode").textContent = "exact-local";
+    $("#assert-caveat").textContent = data.attribution_caveat;
+    renderAssertionItems(data.assertions, "本地");
+    return;
+  }
+  const diagnosis = data.diagnosis;
+  const items = diagnosis.observed_assertions.length
+    ? diagnosis.observed_assertions
+    : diagnosis.reference_assertions;
+  const label = diagnosis.observed_assertions.length ? "观测" : "参考";
+  $("#assert-mode").textContent = `${data.mode} · ${diagnosis.classification}`;
+  $("#assert-caveat").textContent = diagnosis.attribution_caveat;
+  renderAssertionItems(items, label);
+}
+
+function renderHybridReport(report) {
+  $("#hybrid-path").textContent = report.branch_path || "无条件分支";
+  $("#hybrid-caveat").textContent =
+    "branch_path 以源码条件真假记为 ifN:T / ifN:F；machine_jump_taken 只说明机器是否跳转。";
+  const branches = $("#hybrid-branches");
+  branches.replaceChildren();
+  report.branch_events.forEach((branch) => {
+    const item = element("li", "audit-item");
+    item.append(
+      element(
+        "strong",
+        "",
+        `${branch.branch_id} 号分支 · pc ${branch.pc} · machine_jump_taken=${branch.machine_jump_taken} · source_condition_true=${branch.source_condition_true}`,
+      ),
+      element(
+        "span",
+        "audit-meta",
+        `source ${branch.source_operator} · measurements ${branch.influencing_measurements.join(", ") || "无"}`,
+      ),
+    );
+    branches.append(item);
+  });
+  if (!report.branch_events.length) {
+    branches.append(element("li", "audit-item", "该程序没有条件分支。"));
+  }
+
+  const events = $("#hybrid-events");
+  events.replaceChildren();
+  report.instruction_events.forEach((event) => {
+    const changes = Object.entries(event.register_changes)
+      .map(([register, value]) => `${register}=${value}`)
+      .join(", ") || "无寄存器变化";
+    const item = element("li", "audit-item");
+    item.append(
+      element(
+        "strong",
+        "",
+        `step ${event.step} · pc ${event.pc} · ${event.operation} ${event.args.join(", ")}`,
+      ),
+      element("span", "audit-meta", `next_pc ${event.next_pc} · Δ ${changes}`),
+    );
+    events.append(item);
+  });
+  $("#hybrid-assembly").textContent = report.assembly;
+  $("#hybrid-registers").textContent = JSON.stringify(report.final_registers, null, 2);
 }
 
 function renderResults(data) {
@@ -345,6 +479,53 @@ $("#run").addEventListener("click", async () => {
     const icon = element("span", "", "▶");
     icon.setAttribute("aria-hidden", "true");
     button.replaceChildren(icon, document.createTextNode(" 运行电路"));
+  }
+});
+
+$("#run-assert").addEventListener("click", async () => {
+  const button = $("#run-assert");
+  button.disabled = true;
+  button.textContent = "检查中…";
+  try {
+    const payload = {
+      qasm: qasm.value,
+      assertions: parseJsonInput($("#assertions-input").value, "assertions"),
+    };
+    const observedRaw = $("#observed-input").value.trim();
+    if (observedRaw) {
+      payload.observed = parseJsonInput(observedRaw, "observed");
+    }
+    const shotsRaw = $("#observed-shots").value.trim();
+    if (shotsRaw) {
+      payload.shots = Number(shotsRaw);
+    }
+    const data = await api("/api/assert", payload);
+    renderAssertionReport(data);
+    tell("断言报告已更新");
+  } catch (error) {
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "生成断言报告";
+  }
+});
+
+$("#run-hybrid").addEventListener("click", async () => {
+  const button = $("#run-hybrid");
+  button.disabled = true;
+  button.textContent = "回放中…";
+  try {
+    const data = await api("/api/hybrid-trace", {
+      source: $("#hybrid-source").value,
+      measurement_bits: parseJsonInput($("#hybrid-bits").value, "measurement_bits"),
+    });
+    renderHybridReport(data);
+    tell("Hybrid 分支证据已更新");
+  } catch (error) {
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "回放 Hybrid 分支";
   }
 });
 
