@@ -748,6 +748,8 @@ function renderPromptContract(data) {
     ["平台", constraints.platforms.join("、") || "未限定"],
     ["后端种类", constraints.kinds.join("、") || "未限定"],
     ["最少比特", constraints.minimum_qubits === null ? "未限定" : String(constraints.minimum_qubits)],
+    ["费用", constraints.free ? "免费" : "未限定"],
+    ["排队", constraints.no_queue ? "要求零排队" : "未要求零排队"],
     ["账号", constraints.requires_account === false ? "不需要" : constraints.requires_account === true ? "需要" : "未限定"],
   ].forEach(([label, value]) => {
     const row = document.createElement("div");

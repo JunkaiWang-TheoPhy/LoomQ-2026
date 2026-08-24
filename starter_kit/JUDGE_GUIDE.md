@@ -1,33 +1,25 @@
 # LoomQ 评委快速复核
 
-这套材料解决的是一个很具体的问题：如果评委不会 QASM，也不想先读一堆实现细节，怎样在 90 秒内判断这份电路有没有被改坏、测量后的经典路径是不是说得清、自然语言入口在出错时会不会安全回退。
+页面首屏先给出两张真机证据卡，再提供一个本地评委路径。真机卡区分 OriginQ finite-shot counts 与 SpinQ provider probabilities；本地路径不需要模型密钥、平台账号或网络服务。
 
-先点这 3 个按钮：
+## 30 秒入口
 
-1. `1 分钟看证据`
-2. `列出所有可能分支`
-3. `修复一段错误 QASM`
+1. 打开页面，核对两张真机卡的 provider、job ID、结果类型和原始文件链接。
+2. 点击 `一键运行 6 项本地证据`。
+3. 等状态显示 `6/6 已由真实本地 API 完成`。沿深色状态条点开任意一项，可查看产生该状态的完整结果。
 
-先看这 3 个结果：
+每个状态都由对应 API 的语义检查产生。点击按钮或收到 HTTP 200 不足以把状态改成完成；输入变化也会清除受影响的旧状态。
 
-1. `ProofTrace：这次转译改了什么`
-   会看到同一份电路如何落到 3 个目标平台，以及每一步可下载的证书入口。
-2. `列出所有可能分支`
-   会看到每条路径的概率、可达/不可达 outcome 和死路径。
-3. `修复一段错误 QASM`
-   会看到 Agent 先给出答案，再由本地规则检查语法、白名单门和目标分布。
+## 90 秒页面验收
 
-有一个边界需要先说清：这些证据说明的是本地可重算的软件结论，不把差异归因到某种真实硬件噪声，也不把 SHA-256 当成身份签名。
+1. `运行与 ProofTrace`：默认 Bell 电路必须通过等价性检查，SpinQ、OriginQ、Braket 三种目标 IR 都要独立回读成功。
+2. `首个因果分歧`：默认 Bell 反例必须定位到第 2 扇门，并显示 `CX` 对 `X`。
+3. `统计断言`：默认 support、parity 和 uniformity 断言必须带 `exact-local` evidence mode、可识别状态和不归因具体噪声机制的边界说明。
+4. `Witness Chain`：`verification.valid` 必须来自对输入的本地重建，下载件使用稳定 `gN/mN` 坐标。
+5. `Mid-circuit 路径`：服务端重新计算全部 declared clbits outcome，页面显示精确路径概率、不可达 outcome 和 dead path。该实现支持测量后继续施加量子门。
+6. `Prompt Contract`：默认自然语言请求应解析为 OriginQ、免费、至少 20 比特、simulator、无需账号；合同通过服务端重建。SHA-256 用于发现内容变化，不是身份签名，也不证明某个后端唯一兼容。
 
-## 90 秒走法
-
-1. 打开页面后先点 `1 分钟看证据`，确认首屏问题清单已经出现。
-2. 在默认 Bell 例子上点击 `运行电路`，展开 `ProofTrace：这次转译改了什么`。
-3. 看 `已应用的可证明重写`、`三后端独立回读`，再点下载 JSON。
-4. 回到证据区点击 `列出所有可能分支`，确认会出现路径概率、不可达 outcome 和死路径。
-5. 点击 `修复一段错误 QASM`，看输入框是否自动填入修复任务，再检查失败时不会跳过本地校验。
-
-`112` 是赛题各项相加的理论上限，不是本项目已获得的分数。私有 case、人工体验和真机可追溯性仍由组委会判定。
+Agent 生成是可选的第 7 步。配置 `LOOMQ_LLM_*` 后再运行它；模型回答仍需通过独立的 QASM 或后端能力验证器。私有 case 和人工体验分由组委会判定。
 
 ## 60 秒索引
 
@@ -35,7 +27,7 @@
 |---|---|---|
 | 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 完整归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/compare/hybrid/witness 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
 | ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
-| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 27 项 Web 集成测试覆盖首屏证据导航、`/api/causal-audit` Witness Chain、`/api/compare` 首门分歧与结构拒绝、`/api/assert`、`/api/hybrid-trace`、ProofTrace、favicon 与移动端防溢出样式 |
+| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 29 项 Web 集成测试覆盖六步评委路径、Prompt Contract、`/api/causal-audit`、首门分歧、统计断言、Hybrid trace/path、ProofTrace、安全头与移动端防溢出样式 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |
 | L1 三目标 | `python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket` | 统一 Circuit IR、12 门 × 3 target 归档测试 |
 | L1 语义回读 | `cd starter_kit && python3 -m unittest tests.test_native_ir_verifier -v` | SpinQ QASM 2、OriginIR、Braket QASM 3 独立 parser；篡改门负例 |
@@ -58,6 +50,6 @@
 2. 点击 Learn，运行 Bell，读取逐门概率/相位与 ProofTrace 三目标证书；随后进入 Counterfactual Circuit Lab 单独查看 `CX` 对 `X` 与 TV 距离 `0.5`。
 3. 点击 Repair 验证错误 QASM 的确定性恢复，再用 Backend Match 询问“免费、零排队、至少 20 比特的模拟器”，核对规范 capability ID。
 
-与十二个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只记录公开可审事实；私有 12 例 DeepSeek 评测和未公开提交仍然未知。
+与十四个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只记录 accepted archive 中可复核的事实；私有 12 例 DeepSeek 评测和未公开提交仍然未知。
 
 Web 不接收或保存模型 Key；启动进程只从 `LOOMQ_LLM_*` 读取。未配置模型时，L1 本地实验仍可完整使用。

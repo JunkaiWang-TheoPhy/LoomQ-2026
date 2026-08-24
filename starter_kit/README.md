@@ -2,11 +2,13 @@
 
 本工具包定义参赛提交协议，并提供公开自测。它不包含正式评分器、隐藏答案、Mock 得分路径或任何 Level 的参考解答。
 
-如果你只想先判断这份提交值不值得细看，先做这三步：
+评委入口：运行 `python3 -m starter_kit.loomq.web`，打开 <http://127.0.0.1:8765/>，点击 `一键运行 6 项本地证据`。逐项复核命令见 [`JUDGE_GUIDE.md`](JUDGE_GUIDE.md)，自然语言合同的字段与边界见 [`PROMPT_CONTRACT.md`](PROMPT_CONTRACT.md)。
 
-1. 打开 Web 页面，点 `1 分钟看证据`。
-2. 在默认 Bell 例子上点 `运行电路`，展开 `ProofTrace：这次转译改了什么`。
-3. 再点 `列出所有可能分支`，看路径概率、不可达 outcome 和死路径。
+最快复核只需三步：
+
+1. 核对首屏 OriginQ 与 SpinQ 真机卡的 job ID、结果类型和原始文件。
+2. 点击六步按钮，等待状态显示 `6/6`。
+3. 沿状态条检查 ProofTrace、首门分歧、断言、Witness Chain、Hybrid 路径和 Prompt Contract。
 
 ## 本 fork 的实现
 
@@ -16,9 +18,11 @@
 - 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
 - ProofTrace 对安全冗余门做命名重写，记录源门到优化门的 lineage，并为三后端输出可下载的确定性证明证书；
 - L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务；生成的 QASM 会验证 Bell/GHZ/W、计算基态和均匀叠加目标分布，后端推荐会复核比特数、排队、费用和设备类型；失败时携带诊断重试一次，两次无效回答后才由同一目标/能力表验证器生成安全回退；
+- Prompt Contract 在模型调用前抽取 fence 外语义、目标态和后端约束；模型输入与结果验证器共用这份合同，服务端可从原 prompt 重建并核对摘要；
 - L2 附带固定种子、可恢复且带完整性哈希的 500 例真实模型压力 campaign，覆盖生成、修复、后端推荐、对抗输入和表述稳定性；
 - Witness Chain 用稳定的 `gN/mN` 源操作 ID，把 ProofTrace 谱系、反事实首门分歧、断言测量依赖与 Hybrid 分支 provenance 串成可下载、可重算的审计工件；
 - L3 将有界 Hybrid-QASM 经典块解析为 AST，并生成官方轻量模拟器可执行的 RISC-V 控制流；
+- Hybrid 路径证书穷举有界 declared clbits，精确处理 mid-circuit measurement 后续量子门，聚合路径概率并标出不可达 outcome 与 dead path；
 - Bonus 使用真实 32 位 RISC-V `custom-0` 机器字编码全部 12 门和测量，扩展模拟器完成编码、解码与执行闭环；
 - 固定种子离线活动以独立断言执行 40,000 项检查，覆盖 L1、三目标、L3 差分、量子 RISC-V 往返和拒绝路径；
 - 零依赖 Web 实验台与命令行入口共同提供 Learn、Build、Repair、Backend Match、电路预览、三后端转译、运行、逐门概率/振幅/相位轨迹和受验证的多轮 Agent 对话。
@@ -37,7 +41,7 @@ python3 -m starter_kit.loomq.web
 
 打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例，然后点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释、目标平台原生指令，以及可下载的 ProofTrace 三后端证明证书；长轨迹默认折叠，服务只监听本机地址。
 
-如果你只看评委路径，不必先学 QASM。首屏先点 `1 分钟看证据`，然后按问题清单去看 `ProofTrace：这次转译改了什么`、`列出所有可能分支` 和 `修复一段错误 QASM`。
+评委路径不要求先学 QASM。点击首屏六步按钮后，状态条会链接到产生每项结论的页面区域；模型调用是单独的可选步骤。
 
 也可以使用 CLI：
 

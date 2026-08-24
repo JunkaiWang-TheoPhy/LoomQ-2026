@@ -218,6 +218,8 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("final_distribution_distance", script)
         self.assertIn("confidence_interval", script)
         self.assertIn("machine_jump_taken", script)
+        self.assertIn('["费用", constraints.free ? "免费" : "未限定"]', script)
+        self.assertIn('["排队", constraints.no_queue ? "要求零排队" : "未要求零排队"]', script)
         self.assertIn("source_condition_true", script)
         self.assertIn("attribution_caveat", script)
         self.assertIn("这条路径会发生", script)
@@ -463,6 +465,16 @@ class WebLabTests(unittest.TestCase):
             payload["contract"]["backend_constraints"]["platforms"],
             ["originq"],
         )
+        self.assertEqual(
+            payload["contract"]["backend_constraints"]["kinds"],
+            ["simulator"],
+        )
+        self.assertEqual(
+            payload["contract"]["backend_constraints"]["minimum_qubits"],
+            20,
+        )
+        self.assertTrue(payload["contract"]["backend_constraints"]["free"])
+        self.assertFalse(payload["contract"]["backend_constraints"]["no_queue"])
         self.assertFalse(
             payload["contract"]["backend_constraints"]["requires_account"]
         )
