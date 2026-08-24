@@ -19,7 +19,7 @@
 | 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
 |---|---:|---|
 | L1 真机 | 10/10 分上限 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
-| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、可下载并重算的 Witness Chain、反事实首门分歧、ProofTrace 证书、P1 断言、P2 Hybrid 回放、可重算的 Hybrid 路径证书、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、22 项 Web 测试 |
+| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、可下载并重算的 Witness Chain、反事实首门分歧、ProofTrace 证书、P1 断言、P2 Hybrid 回放、可重算的 Hybrid 路径证书、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图，以及当前仓库中的 Web 测试套件 |
 | 工程与产品复核 | 10/10 分上限 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
 | 自定义量子 RISC-V | 8/8 分上限 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
 | 新手引导与视觉叙事 | 4/4 分上限 | Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |

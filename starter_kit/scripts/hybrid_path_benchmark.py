@@ -88,7 +88,7 @@ def _fixture_corpus_sha256() -> str:
     return digest.hexdigest()
 
 
-EXPECTED_CORPUS_SHA256 = _fixture_corpus_sha256()
+EXPECTED_CORPUS_SHA256 = "f452982ce91335709cc63911312a8bd1b73f48886dcea2e174b6b4d3396cc7f0"
 
 
 def _tampered_certificate(certificate: dict[str, Any]) -> dict[str, Any]:
@@ -105,9 +105,13 @@ def _tampered_certificate(certificate: dict[str, Any]) -> dict[str, Any]:
 
 
 def run_benchmark() -> dict[str, Any]:
+    actual_corpus_sha256 = _fixture_corpus_sha256()
     fixtures = []
     tamper_rejections = 0
     failures = []
+
+    if actual_corpus_sha256 != EXPECTED_CORPUS_SHA256:
+        failures.append({"name": "fixture-corpus", "kind": "corpus-sha256"})
 
     for fixture in FIXTURES:
         certificate = adapter.certify_hybrid_paths(
@@ -162,10 +166,14 @@ def run_benchmark() -> dict[str, Any]:
         "schema_version": "loomq-hybrid-path-benchmark-v1",
         "fixture_count": len(FIXTURES),
         "tamper_rejections": tamper_rejections,
-        "corpus_sha256": EXPECTED_CORPUS_SHA256,
+        "corpus_sha256": actual_corpus_sha256,
         "fixtures": fixtures,
         "failures": failures,
-        "passed": not failures and tamper_rejections == len(FIXTURES),
+        "passed": (
+            not failures
+            and tamper_rejections == len(FIXTURES)
+            and actual_corpus_sha256 == EXPECTED_CORPUS_SHA256
+        ),
     }
 
 
