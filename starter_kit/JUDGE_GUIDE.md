@@ -8,7 +8,7 @@
 
 | 区域 | 一条复核命令 | 主要证据 |
 |---|---|---|
-| 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 144 项归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/hybrid 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
+| 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 149 项归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/hybrid 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
 | ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
 | P1 断言与 P2 Hybrid 回放 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 19 项 Web 集成测试覆盖 `/api/assert`、`/api/hybrid-trace`、ProofTrace 面板保留、有限 shots 区间、branch path、寄存器增量、favicon 与移动端防溢出样式 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |
@@ -22,7 +22,7 @@
 | L2 体验 | `python3 -m starter_kit.loomq.web` | Learn / Build / Repair / Backend Match、ProofTrace 证书下载、P1 断言报告、P2 Hybrid 分支回放、逐门状态故事、受限多轮上下文、桌面/移动端验收、`WEB_QA.md` |
 | L3 | `python3 starter_kit/evaluator.py --level l3` | AST 编译器、独立参考语义与固定种子随机程序 |
 | 对抗边界 | `cd starter_kit && python3 -m unittest tests.test_resource_boundaries -v` | 超大寄存器、稠密 21-qubit 拒绝、稀疏执行匹配 24/30/25 比特能力表、31-qubit Web 400、65 层分支拒绝 |
-| 自定义量子 RISC-V | `python3 starter_kit/bonus_evaluator.py` | 32 位 `custom-0` 编码、字节序列、严格解码与扩展模拟器执行 |
+| 自定义量子 RISC-V | `python3 starter_kit/bonus_evaluator.py`；`cd starter_kit && python3 -m unittest tests.test_quantum_riscv -v` | 32 位 `custom-0` 编码、字节序列、严格解码、12 门固定机器字、字面 Bell 执行、无损参数表、100 条随机线路与扩展模拟器闭环 |
 | 科学边界 | 阅读 `SCIENTIFIC_CLAIMS_AUDIT.md` | 模拟器、Z 基相关、真机噪声、模型 fixture 的允许结论与非声明 |
 
 ## 建议体验的三个任务

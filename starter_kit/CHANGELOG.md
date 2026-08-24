@@ -9,7 +9,7 @@
 - Fall back to a deterministically validated target-state circuit after two invalid model replies.
 - Archive traceable OriginQ and SpinQ real-hardware evidence, including SpinQ's provider-native MessagePack result.
 - Add a fixed 500-case L2 campaign with resume support, credential-safe records, and tamper-evident validation.
-- Ship a 144-test regression suite inside the formally archived `starter_kit/` directory.
+- Ship a 149-test regression suite inside the formally archived `starter_kit/` directory.
 - Archive a reproducible PyQuafu 0.4.5 cross-validation corpus and 120/120 target-check summary without adding a core dependency.
 - Archive a deterministic 40,000-check offline campaign with per-lane assertions, failure diagnostics, and a bound corpus hash.
 - Add four guided Web paths, accessible tabular results, recoverable Agent errors, responsive browser QA evidence, and stricter HTTP boundaries.
@@ -23,6 +23,7 @@
 - Add ProofTrace safe rewrites, per-operation source lineage, deterministic three-target certificates, a Web proof/download panel, and a 225-mutant integrity benchmark.
 - Add exact/finite-shot assertion reports with bounded first-divergence diagnosis, without attributing hardware deviations to unmeasured physical causes.
 - Add replayable Hybrid-QASM → RISC-V branch traces with source conditions, machine jumps, measurement provenance, machine words, and register deltas.
+- Archive independent fixed-word, literal Bell execution, lossless-parameter, malformed-word, and randomized all-gate quantum RISC-V tests at the documented judge command.
 
 ## 1.1.0 - 2026-07-27
 
