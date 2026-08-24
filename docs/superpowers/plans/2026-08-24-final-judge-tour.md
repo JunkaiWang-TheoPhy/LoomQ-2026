@@ -102,8 +102,8 @@ Commit the endpoint and test with a Lore message that records the no-model-call 
 
 **Interfaces:**
 - Consumes: `/api/prompt-contract`, `/api/run`, `/api/compare`, `/api/assert`, `/api/causal-audit`, and `/api/hybrid-paths`.
-- Produces: anchors `#workspace`, `#counterfactual-panel`, `#assert-panel`, `#witness-panel`, `#hybrid-path-panel`, and `#prompt-contract-panel`.
-- Produces: `markTourStep(step: "run" | "compare" | "assert" | "witness" | "hybrid" | "contract", detail: string) -> void`.
+- Produces: anchors `#workspace`, `#counterfactual-panel`, `#assert-panel`, `#witness-panel`, `#hybrid-panel`, and `#prompt-contract-panel`.
+- Produces: `markTourStep(step: "run" | "compare" | "assert" | "witness" | "hybrid" | "contract", detail: string) -> void` and `resetTourStep(step, reason) -> void`.
 
 - [ ] **Step 1: Add a failing home-page contract test**
 
@@ -115,7 +115,7 @@ self.assertIn('href="#workspace"', page)
 self.assertIn('href="#counterfactual-panel"', page)
 self.assertIn('href="#assert-panel"', page)
 self.assertIn('href="#witness-panel"', page)
-self.assertIn('href="#hybrid-path-panel"', page)
+self.assertIn('href="#hybrid-panel"', page)
 self.assertIn('href="#prompt-contract-panel"', page)
 self.assertIn('id="inspect-prompt-contract"', page)
 self.assertIn('id="prompt-contract-result"', page)
@@ -141,7 +141,7 @@ Place a `<nav id="judge-tour" aria-label="90 秒评委导览">` after the hero. 
 <a href="#counterfactual-panel" data-tour-step="compare">首个因果分歧 <span id="tour-compare-status">未运行</span></a>
 <a href="#assert-panel" data-tour-step="assert">统计断言 <span id="tour-assert-status">未运行</span></a>
 <a href="#witness-panel" data-tour-step="witness">Witness Chain <span id="tour-witness-status">未运行</span></a>
-<a href="#hybrid-path-panel" data-tour-step="hybrid">Mid-circuit 路径证书 <span id="tour-hybrid-status">未运行</span></a>
+<a href="#hybrid-panel" data-tour-step="hybrid">Mid-circuit 路径证书 <span id="tour-hybrid-status">未运行</span></a>
 <a href="#prompt-contract-panel" data-tour-step="contract">L2 Prompt Contract <span id="tour-contract-status">未运行</span></a>
 ```
 
@@ -167,6 +167,12 @@ function markTourStep(step, detail) {
   status.textContent = `完成 · ${detail}`;
   status.closest("a").classList.add("complete");
 }
+
+function resetTourStep(step, reason = "输入已变化") {
+  const status = $(`#tour-${step}-status`);
+  status.textContent = reason;
+  status.closest("a").classList.remove("complete");
+}
 ```
 
 Call it only after the corresponding semantic evidence gate succeeds:
@@ -179,6 +185,16 @@ Call it only after the corresponding semantic evidence gate succeeds:
 - `/api/prompt-contract`: require `verification.valid === true`, contract schema `loomq-prompt-contract-v1`, and `integrity.is_signature === false` before `markTourStep("contract", contract.task_kind)`.
 
 Errors leave the step incomplete and continue through the existing error notice.
+
+Attach input/change listeners so completed evidence cannot outlive the inputs that produced it:
+
+- QASM, target, or shots changes reset `run`; QASM changes also reset `compare`, `assert`, and `witness`.
+- candidate QASM changes reset `compare` and `witness`.
+- assertion JSON, observed JSON, or observed shots changes reset `assert` and `witness`.
+- Hybrid source changes reset `hybrid` and `witness`; `max_outcomes` changes reset `hybrid`; replay-only measurement bits reset `witness` but do not invalidate a source-only path certificate.
+- Prompt Contract text changes reset `contract`.
+
+Do not persist tour state in local storage: a page reload starts from `未运行`, which prevents a previous session's evidence from appearing current.
 
 - [ ] **Step 6: Run Web tests and JavaScript syntax check**
 
@@ -269,6 +285,8 @@ Expected: every required verifier phase passes; root PyQuafu skips, if any, rema
 - [ ] **Step 2: Run desktop Browser QA**
 
 At 1440×900, execute all six evidence-rail actions. Verify that each semantically valid API changes exactly one rail item to `完成`, the target panel receives focus or scroll position, and console/page/network errors remain empty.
+
+After all six complete, edit each relevant input once and confirm only the dependent rail items reset. Reload the page and confirm every item returns to `未运行`.
 
 - [ ] **Step 3: Run mobile Browser QA**
 
