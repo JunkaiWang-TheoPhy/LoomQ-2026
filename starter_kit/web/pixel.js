@@ -36,6 +36,9 @@ function updateHud() {
   $("#pixel-objective").textContent = mission.complete
     ? "调查完成 · 继续探索"
     : mission.shards.length === 3 ? "去找小满，启动量子井" : `找齐三枚调查碎片 · ${mission.shards.length} / 3`;
+  document.querySelectorAll(".quickbar-slot").forEach((slot) => {
+    slot.classList.toggle("collected", mission.shards.includes(slot.dataset.slot));
+  });
 }
 
 function openDialogue({ speaker, kicker = "调查记录", text, choices = [], locked = false, afterClose = null }) {
@@ -104,72 +107,135 @@ function drawMap(time) {
       }
     }
   }
-  // Tiny pond and bridge make the map read as a place rather than a grid.
-  drawPixelRect(15, 1, 7, 2, COLORS.water);
-  drawPixelRect(16, 2, 5, 1, COLORS.water);
-  drawPixelRect(9, 11, 4, 2, COLORS.water);
-  for (let x = 9; x < 13; x += 1) drawPixelRect(x, 11, 1, 1, COLORS.yellow);
-  // Quest gate.
-  drawPixelRect(20, 6, 1, 3, mission.shards.length === 3 ? COLORS.yellow : COLORS.pink);
-  ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(20 * TILE + 4, 6 * TILE, 8, 4);
-  if (mission.shards.length === 3) {
-    ctx.fillStyle = COLORS.yellow;
-    ctx.fillRect(20 * TILE + 6, 6 * TILE + 5, 4, 38);
-  }
+  drawGate();
+  drawQuantumWell(18, 12, time);
   // Labels.
   label("雾镜镇", 2, 2, COLORS.ink);
-  label("量子井", 18, 12, COLORS.ink);
+  label("量子井", 17, 10, COLORS.ink);
   // Shards.
   worldEngine.TARGETS.filter((target) => target.kind === "shard" && !mission.shards.includes(target.id)).forEach((target, index) => {
-    const pulse = Math.floor((time / 180 + index) % 2);
-    drawPixelRect(target.x, target.y, 1, 1, pulse ? COLORS.yellow : COLORS.paper);
-    drawPixelRect(target.x, target.y + 1, 1, 1, COLORS.pink);
-    ctx.fillStyle = "rgba(246,221,120,.32)";
-    ctx.fillRect(target.x * TILE - 4, target.y * TILE - 4, TILE + 8, TILE + 8);
+    drawShard(target.x, target.y, time, index);
   });
   // NPCs and signposts.
   drawPerson(3, 13, COLORS.pink, "林默");
   drawPerson(12, 7, COLORS.sky, "小满");
-  drawPixelRect(18, 12, 3, 1, COLORS.wall);
-  drawPixelRect(19, 11, 1, 2, COLORS.wallTop);
 }
 
 function label(text, x, y, color) {
-  ctx.fillStyle = "rgba(255,242,200,.78)";
-  ctx.fillRect(x * TILE - 2, y * TILE - 2, text.length * 7 + 6, 12);
+  ctx.fillStyle = "rgba(40,29,53,.86)";
+  ctx.fillRect(x * TILE - 2, y * TILE - 2, text.length * 6 + 6, 11);
+  ctx.strokeStyle = "rgba(246,221,120,.7)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x * TILE - 1, y * TILE - 1, text.length * 6 + 4, 9);
   ctx.fillStyle = color;
-  ctx.font = "bold 8px monospace";
-  ctx.fillText(text, x * TILE + 1, y * TILE + 7);
+  ctx.font = "bold 6px monospace";
+  ctx.fillText(text, x * TILE + 1, y * TILE + 6);
 }
 
 function drawPerson(x, y, color, name) {
   const px = x * TILE;
   const py = y * TILE;
   ctx.fillStyle = "rgba(40,29,53,.25)";
-  ctx.fillRect(px + 3, py + 13, 11, 3);
+  ctx.fillRect(px + 1, py + 14, 14, 3);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(px + 2, py + 7, 12, 8);
   ctx.fillStyle = color;
   ctx.fillRect(px + 3, py + 6, 10, 9);
+  ctx.fillRect(px + 1, py + 8, 3, 5);
+  ctx.fillRect(px + 12, py + 8, 3, 5);
   ctx.fillStyle = COLORS.paper;
-  ctx.fillRect(px + 4, py + 1, 8, 8);
+  ctx.fillRect(px + 4, py + 1, 8, 7);
   ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(px + 5, py, 7, 3);
-  label(name, x - 1, y - 2, COLORS.ink);
+  ctx.fillRect(px + 3, py, 10, 3);
+  ctx.fillRect(px + 5, py + 5, 2, 2);
+  ctx.fillRect(px + 9, py + 5, 2, 2);
+  label(name, x - 1, y - 2, COLORS.paper);
 }
 
 function drawPlayer() {
   const px = game.player.x * TILE;
   const py = game.player.y * TILE;
   ctx.fillStyle = "rgba(40,29,53,.3)";
-  ctx.fillRect(px + 2, py + 13, 12, 3);
+  ctx.fillRect(px + 1, py + 14, 14, 3);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(px + 2, py + 7, 12, 8);
   ctx.fillStyle = COLORS.player;
   ctx.fillRect(px + 3, py + 6, 10, 9);
+  ctx.fillRect(px + 1, py + 8, 3, 5);
+  ctx.fillRect(px + 12, py + 8, 3, 5);
   ctx.fillStyle = COLORS.paper;
-  ctx.fillRect(px + 4, py + 1, 8, 8);
+  ctx.fillRect(px + 4, py + 1, 8, 7);
   ctx.fillStyle = COLORS.ink;
   ctx.fillRect(px + 3, py, 10, 3);
+  const eyeX = game.player.facing === "left" ? px + 5 : game.player.facing === "right" ? px + 9 : px + 6;
+  ctx.fillRect(eyeX, py + 5, 2, 2);
   ctx.fillStyle = COLORS.yellow;
-  ctx.fillRect(px + 6, py + 9, 4, 3);
+  ctx.fillRect(px + 5, py + 9, 6, 3);
+}
+
+function drawShard(x, y, time, index) {
+  const px = x * TILE;
+  const py = y * TILE;
+  const bob = Math.floor((time / 160 + index) % 2);
+  ctx.fillStyle = "rgba(246,221,120,.24)";
+  ctx.fillRect(px - 5, py - 5 - bob, TILE + 10, TILE + 10);
+  ctx.fillStyle = COLORS.ink;
+  ctx.beginPath();
+  ctx.moveTo(px + 8, py - 1 - bob);
+  ctx.lineTo(px + 14, py + 7 - bob);
+  ctx.lineTo(px + 8, py + 17 - bob);
+  ctx.lineTo(px + 2, py + 7 - bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = index === 0 ? COLORS.sky : index === 1 ? COLORS.yellow : COLORS.pink;
+  ctx.beginPath();
+  ctx.moveTo(px + 8, py + 1 - bob);
+  ctx.lineTo(px + 11, py + 7 - bob);
+  ctx.lineTo(px + 8, py + 13 - bob);
+  ctx.lineTo(px + 5, py + 7 - bob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = COLORS.paper;
+  ctx.fillRect(px + 7, py + 3 - bob, 2, 3);
+}
+
+function drawGate() {
+  const x = 20 * TILE;
+  const y = 6 * TILE;
+  ctx.fillStyle = "rgba(40,29,53,.35)";
+  ctx.fillRect(x - 3, y + 27, 22, 4);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(x, y, 4, 28);
+  ctx.fillRect(x + 12, y, 4, 28);
+  ctx.fillRect(x, y, 16, 4);
+  ctx.fillStyle = mission.shards.length === 3 ? COLORS.yellow : COLORS.pink;
+  ctx.fillRect(x + 5, y + 8, 2, 16);
+  ctx.fillRect(x + 10, y + 8, 2, 16);
+  if (mission.shards.length === 3) {
+    ctx.fillStyle = "rgba(246,221,120,.6)";
+    ctx.fillRect(x - 3, y - 4, 22, 2);
+  }
+}
+
+function drawQuantumWell(x, y, time) {
+  const px = x * TILE;
+  const py = y * TILE;
+  const pulse = Math.floor(time / 240) % 2;
+  ctx.fillStyle = "rgba(40,29,53,.35)";
+  ctx.fillRect(px - 5, py + 25, 42, 5);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(px, py + 8, 32, 18);
+  ctx.fillStyle = COLORS.wallTop;
+  ctx.fillRect(px + 3, py + 5, 26, 7);
+  ctx.fillStyle = COLORS.sky;
+  ctx.fillRect(px + 7, py + 10, 18, 10);
+  ctx.fillStyle = pulse ? COLORS.yellow : COLORS.pink;
+  ctx.fillRect(px + 13, py + 7, 6, 16);
+  ctx.fillStyle = COLORS.paper;
+  ctx.fillRect(px + 15, py + 9, 2, 5);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(px - 3, py + 2, 4, 9);
+  ctx.fillRect(px + 29, py + 2, 4, 9);
 }
 
 function render(time) {

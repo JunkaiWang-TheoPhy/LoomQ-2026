@@ -10,13 +10,22 @@
 </head>
 <body>
   <main class="pixel-shell">
-    <canvas id="pixel-canvas" width="384" height="256" tabindex="0" aria-label="像素风二维调查地图"></canvas>
+    <section class="pixel-stage" aria-label="像素风二维调查地图">
+      <canvas id="pixel-canvas" width="384" height="256" tabindex="0" aria-label="像素风二维调查地图"></canvas>
+    </section>
     <header class="pixel-hud" aria-label="像素案件状态">
       <a class="pixel-logo" href="/">QA <span>像素调查局</span></a>
       <div class="pixel-objective"><small>MISSION 01</small><strong id="pixel-objective">找齐三枚调查碎片</strong></div>
       <div class="pixel-counter"><span id="pixel-shards">0 / 3</span><small>碎片</small></div>
       <button id="pixel-reset" type="button" aria-label="重置像素案件">↻</button>
     </header>
+    <section id="pixel-quickbar" class="pixel-quickbar" aria-label="调查碎片快捷栏">
+      <span class="quickbar-title">调查手册</span>
+      <div class="quickbar-slot" data-slot="state"><i></i><small>状态</small></div>
+      <div class="quickbar-slot" data-slot="repeat"><i></i><small>重复</small></div>
+      <div class="quickbar-slot" data-slot="control"><i></i><small>对照</small></div>
+      <span class="quickbar-tip">靠近发光碎片按 <kbd>E</kbd></span>
+    </section>
     <aside class="pixel-controls"><kbd>方向键 / WASD</kbd> 移动 <kbd>E</kbd> 调查</aside>
     <div id="pixel-toast" class="pixel-toast" aria-hidden="true"></div>
     <section id="pixel-dialogue" class="pixel-dialogue" role="dialog" aria-modal="true" aria-labelledby="pixel-speaker" hidden>
