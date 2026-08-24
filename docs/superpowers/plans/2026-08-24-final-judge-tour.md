@@ -11,6 +11,8 @@
 ## Global Constraints
 
 - Start from the accepted mid-circuit Hybrid certificate integration commit, then replay Prompt Contract commits `149fbe8c9b5a4a6c591125c4de37a26950889de0` and `6c8d152cd69e6b57b20e1810da0270c1751b2e8c`.
+- Accept only the audited `loomq.hybrid_paths` implementation for mid-circuit semantics. Remove the superseded terminal-state certificate module and do not preserve its projected-bit response shape.
+- Make `/api/hybrid-path-certificate` return `{certificate, verification}` where `verification` is produced by server-side semantic recomputation against the submitted source. A client-side probability sum is not certificate verification.
 - Do not copy a mascot, XP system, quiz, or full-screen intro from another submission.
 - A tour step may show `完成` only after its corresponding local API returns a successful, schema-valid response.
 - Do not show static provider status, queue state, job ID, or hardware availability.
@@ -165,13 +167,13 @@ function markTourStep(step, detail) {
 }
 ```
 
-Call it only after schema checks already performed by the corresponding render path:
+Call it only after the corresponding semantic evidence gate succeeds:
 
-- successful `/api/run`: `markTourStep("run", "三后端回读")`
-- successful `/api/compare`: `markTourStep("compare", "首门已定位")`
-- valid `/api/causal-audit`: `markTourStep("witness", "本地重算通过")`
-- valid `/api/hybrid-path-certificate`: `markTourStep("hybrid", "概率已归一")`
-- valid `/api/prompt-contract`: `markTourStep("contract", contract.task_kind)`
+- `/api/run`: require `proof.equivalence.verified === true`, exactly the three declared portability targets, and `roundtrip_verified === true` for every target before `markTourStep("run", "三后端回读")`.
+- `/api/compare`: require a non-null `first_divergence` for the default counterexample before `markTourStep("compare", "首门已定位")`; an HTTP 200 response alone is insufficient.
+- `/api/causal-audit`: require `verification.valid === true` before `markTourStep("witness", "本地重算通过")`.
+- `/api/hybrid-path-certificate`: require the response schema `{certificate, verification}`, `verification.valid === true`, and certificate schema `loomq-hybrid-path-certificate-v1` before `markTourStep("hybrid", "语义重算通过")`. Render exhaustive declared-clbit outcomes and dead paths from `certificate`; do not consume the removed projected-bit schema.
+- `/api/prompt-contract`: require `verification.valid === true`, contract schema `loomq-prompt-contract-v1`, and `integrity.is_signature === false` before `markTourStep("contract", contract.task_kind)`.
 
 Errors leave the step incomplete and continue through the existing error notice.
 
@@ -212,9 +214,9 @@ Add a `90 秒页面验收` section to `JUDGE_GUIDE.md` with this order:
 2. Run the default Bell counterexample and read the first divergent gate.
 3. Generate Witness Chain and confirm local rebuild verification.
 4. Generate the default mid-circuit Hybrid path certificate and inspect reachable and unreachable paths.
-5. Inspect the default Prompt Contract and confirm `originq_local_simulator` is the only compatible backend.
+5. Inspect the default Prompt Contract and confirm that it records a backend task with OriginQ, at least 20 qubits, simulator, free, and no-account constraints, then passes deterministic rebuild verification.
 
-State that the fifth step's contract inspection needs no API key. Keep Agent generation as an optional sixth step for environments with `LOOMQ_LLM_*` configured.
+State that Prompt Contract inspection needs no API key and does not itself claim a uniquely compatible backend. Keep Agent generation and its separate backend-compatibility validator as an optional sixth step for environments with `LOOMQ_LLM_*` configured.
 
 - [ ] **Step 2: Update Web QA facts**
 
@@ -284,7 +286,7 @@ Create a new official Final Submission Issue through the repository form. Comple
 
 ## Self-Review
 
-- Spec coverage: the plan covers discoverability, real API-backed progress, Prompt Contract inspection, mid-circuit evidence, documentation, responsive QA, and official archive acceptance.
+- Spec coverage: the plan covers discoverability, semantic-evidence-backed progress, Prompt Contract inspection, server-recomputed mid-circuit evidence, documentation, responsive QA, and official archive acceptance.
 - Placeholder scan: no deferred implementation placeholders or unspecified error handling remain.
 - Type consistency: tour step names, DOM IDs, routes, and response fields match across tasks.
 - Scope: all Web edits wait for the Hybrid integration commit; this plan does not modify the concurrently owned Hybrid worktree.
