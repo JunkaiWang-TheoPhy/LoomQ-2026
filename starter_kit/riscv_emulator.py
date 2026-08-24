@@ -6,7 +6,10 @@ LoomQ 量子接入平权计划 - 轻量级 RISC-V 寄存器与控制流模拟器
 支持基础的通用寄存器操作和控制流分支跳转指令，无需选手配置重型 QEMU。
 """
 
-from typing import Dict, List, Tuple, Any
+import copy
+import hashlib
+import json
+from typing import Dict, List, Tuple, Any, Mapping
 
 class TinyRISCVEmulator:
     def __init__(self):
@@ -17,6 +20,7 @@ class TinyRISCVEmulator:
         self.instructions: List[Tuple[str, List[str]]] = []
         self.max_steps = 1000  # 防止死循环
         self.quantum_program = None
+        self._program_digest = self._compute_program_digest([], {})
 
     def set_register(self, reg: str, value: int):
         idx = self._parse_reg_idx(reg)
@@ -44,6 +48,7 @@ class TinyRISCVEmulator:
         self.labels = {}
         self.pc = 0
         self.registers = [0] * 32
+        self._program_digest = self._compute_program_digest([], {})
         
         lines = asm_code.split("\n")
         temp_instructions = []
@@ -78,77 +83,156 @@ class TinyRISCVEmulator:
             temp_instructions.append((op, args))
             
         self.instructions = temp_instructions
+        self._program_digest = self._compute_program_digest(self.instructions, self.labels)
 
     def execute(self) -> Dict[str, int]:
         """
         执行已载入的指令直到程序结束，返回所有寄存器状态字典
         """
+        return self._execute(capture_trace=False)
+
+    def execute_with_trace(self) -> Dict[str, Any]:
+        """Execute the loaded program and capture an instruction trace keyed by instruction index PCs."""
+        return self._execute(capture_trace=True)
+
+    def replay_trace(self, trace: Mapping[str, Any]) -> Dict[str, Any]:
+        """Replay a trace against the currently loaded program and reject any integrity mismatch."""
+        trace_program_digest = trace.get("program_digest")
+        if trace_program_digest != self._program_digest:
+            raise ValueError("trace program digest does not match the currently loaded program")
+
+        replay = TinyRISCVEmulator()
+        replay.instructions = copy.deepcopy(self.instructions)
+        replay.labels = copy.deepcopy(self.labels)
+        replay.max_steps = self.max_steps
+        replay._program_digest = self._program_digest
+        replay.pc = 0
+        replay.registers = [0] * 32
+        for reg, value in trace.get("initial_registers", {}).items():
+            replay.set_register(reg, value)
+
+        expected = replay.execute_with_trace()
+        if expected != dict(trace):
+            raise ValueError("trace integrity check failed")
+        return expected
+
+    def _execute(self, capture_trace: bool):
         steps = 0
         num_instr = len(self.instructions)
-        
+        initial_registers = self._sparse_registers()
+        events: List[Dict[str, Any]] = []
+        branches: List[Dict[str, Any]] = []
+
         while 0 <= self.pc < num_instr:
             steps += 1
             if steps > self.max_steps:
                 raise RuntimeError("程序执行超出最大步数限制，疑似发生死循环")
-                
-            op, args = self.instructions[self.pc]
-            next_pc = self.pc + 1
-            
-            # 模拟执行各指令
+
+            pc = self.pc
+            op, args = self.instructions[pc]
+            next_pc = pc + 1
+            register_changes: Dict[str, int] = {}
+            branch = None
+
             if op == "li":
-                # li rd, imm
                 rd, imm = args[0], int(args[1])
-                self.set_register(rd, imm)
-                
+                register_changes = self._write_register(rd, imm)
             elif op == "add":
-                # add rd, rs1, rs2
                 rd, rs1, rs2 = args[0], args[1], args[2]
-                self.set_register(rd, self.get_register(rs1) + self.get_register(rs2))
-                
+                register_changes = self._write_register(rd, self.get_register(rs1) + self.get_register(rs2))
             elif op == "sub":
-                # sub rd, rs1, rs2
                 rd, rs1, rs2 = args[0], args[1], args[2]
-                self.set_register(rd, self.get_register(rs1) - self.get_register(rs2))
-                
+                register_changes = self._write_register(rd, self.get_register(rs1) - self.get_register(rs2))
             elif op == "addi":
-                # addi rd, rs1, imm
                 rd, rs1, imm = args[0], args[1], int(args[2])
-                self.set_register(rd, self.get_register(rs1) + imm)
-                
-            elif op == "beq":
-                # beq rs1, rs2, label
+                register_changes = self._write_register(rd, self.get_register(rs1) + imm)
+            elif op in {"beq", "bne"}:
                 rs1, rs2, label = args[0], args[1], args[2]
-                if self.get_register(rs1) == self.get_register(rs2):
-                    if label not in self.labels:
-                        raise ValueError(f"未定义的跳转标签: {label}")
-                    next_pc = self.labels[label]
-                    
-            elif op == "bne":
-                # bne rs1, rs2, label
-                rs1, rs2, label = args[0], args[1], args[2]
-                if self.get_register(rs1) != self.get_register(rs2):
-                    if label not in self.labels:
-                        raise ValueError(f"未定义的跳转标签: {label}")
-                    next_pc = self.labels[label]
-                    
+                target_pc = self._resolve_label(label)
+                left = self.get_register(rs1)
+                right = self.get_register(rs2)
+                taken = left == right if op == "beq" else left != right
+                if taken:
+                    next_pc = target_pc
+                branch = {
+                    "kind": "conditional",
+                    "registers": [
+                        {"name": rs1, "value": left},
+                        {"name": rs2, "value": right},
+                    ],
+                    "target_label": label,
+                    "target_pc": target_pc,
+                    "taken": taken,
+                }
             elif op == "j":
-                # j label
                 label = args[0]
-                if label not in self.labels:
-                    raise ValueError(f"未定义的跳转标签: {label}")
-                next_pc = self.labels[label]
-                
+                target_pc = self._resolve_label(label)
+                next_pc = target_pc
+                branch = {
+                    "kind": "jump",
+                    "target_label": label,
+                    "target_pc": target_pc,
+                    "taken": True,
+                }
             else:
                 raise ValueError(f"不支持的指令操作: {op}")
-                
+
             self.pc = next_pc
-            
-        # 返回非零寄存器的状态汇总
+            if capture_trace:
+                event = {
+                    "step": steps,
+                    "pc": pc,
+                    "operation": op,
+                    "args": list(args),
+                    "register_changes": register_changes,
+                    "branch": branch,
+                    "next_pc": next_pc,
+                }
+                events.append(event)
+                if branch is not None:
+                    branches.append(copy.deepcopy(event))
+
+        final_registers = self._sparse_registers()
+        if not capture_trace:
+            return final_registers
+
+        return {
+            "schema_version": 1,
+            "program_digest": self._program_digest,
+            "initial_registers": initial_registers,
+            "events": events,
+            "branches": branches,
+            "final_registers": final_registers,
+            "steps": steps,
+            "terminated": True,
+        }
+
+    def _write_register(self, reg: str, value: int) -> Dict[str, int]:
+        idx = self._parse_reg_idx(reg)
+        if idx == 0:
+            return {}
+        self.registers[idx] = value
+        return {f"x{idx}": value}
+
+    def _resolve_label(self, label: str) -> int:
+        if label not in self.labels:
+            raise ValueError(f"未定义的跳转标签: {label}")
+        return self.labels[label]
+
+    def _sparse_registers(self) -> Dict[str, int]:
         result = {}
         for idx, val in enumerate(self.registers):
             if val != 0:
                 result[f"x{idx}"] = val
         return result
+
+    def _compute_program_digest(self, instructions: List[Tuple[str, List[str]]], labels: Mapping[str, int]) -> str:
+        payload = {
+            "instructions": [[op, list(args)] for op, args in instructions],
+            "labels": sorted(labels.items()),
+        }
+        serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
     def load_quantum_program(self, program):
         """Load and decode a 32-bit custom-opcode quantum program."""
