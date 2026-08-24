@@ -10,17 +10,15 @@ from typing import Any, Dict, List, Tuple
 try:
     from . import llm_client
     from .loomq.agent import chat
-    from .loomq.emitters import emit
     from .loomq.hybrid import compile_hybrid as compile_hybrid_program
-    from .loomq.native_ir import verify_native_ir
+    from .loomq.prooftrace import compile_target, compile_with_proof
     from .loomq.qasm import parse_qasm
     from .loomq.runtime import execute
 except ImportError:  # Direct execution from starter_kit/.
     import llm_client
     from loomq.agent import chat
-    from loomq.emitters import emit
     from loomq.hybrid import compile_hybrid as compile_hybrid_program
-    from loomq.native_ir import verify_native_ir
+    from loomq.prooftrace import compile_target, compile_with_proof
     from loomq.qasm import parse_qasm
     from loomq.runtime import execute
 
@@ -30,10 +28,18 @@ SUPPORTED_TARGETS = ("spinq", "originq", "braket")
 
 def transpile(qasm_str: str, target: str) -> str:
     """Translate OpenQASM 2.0 into the target backend's native representation."""
-    circuit = parse_qasm(qasm_str)
-    native_ir = emit(circuit, target)
-    verify_native_ir(circuit, native_ir, target)
-    return native_ir
+    return compile_target(qasm_str, target)
+
+
+def transpile_with_proof(qasm_str: str, target: str) -> Tuple[str, Dict[str, object]]:
+    """Translate QASM and return its deterministic ProofTrace certificate."""
+    return compile_with_proof(qasm_str, target)
+
+
+def prooftrace(qasm_str: str, target: str) -> Dict[str, object]:
+    """Return the proof certificate without changing the public transpile contract."""
+    _native_ir, certificate = compile_with_proof(qasm_str, target)
+    return certificate
 
 
 def run(qasm_str: str, target: str, shots: int) -> Dict[str, Any]:

@@ -8,6 +8,7 @@
 
 - L1 使用同一个解析器与 `Circuit` 中间表示生成 SpinQ OpenQASM 2.0、OriginIR 和 Braket OpenQASM 3.0；
 - 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
+- ProofTrace 对安全冗余门做命名重写，记录源门到优化门的 lineage，并为三后端输出可下载的确定性证明证书；
 - L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务；生成的 QASM 会验证 Bell/GHZ/W、计算基态和均匀叠加目标分布，后端推荐会复核比特数、排队、费用和设备类型，失败时自动携带诊断重试一次；
 - L2 附带固定种子、可恢复且带完整性哈希的 500 例真实模型压力 campaign，覆盖生成、修复、后端推荐、对抗输入和表述稳定性；
 - L3 将有界 Hybrid-QASM 经典块解析为 AST，并生成官方轻量模拟器可执行的 RISC-V 控制流；
@@ -27,7 +28,7 @@
 python3 -m starter_kit.loomq.web
 ```
 
-打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例，然后点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释和目标平台原生指令；长轨迹默认折叠，服务只监听本机地址。
+打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例，然后点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释、目标平台原生指令，以及可下载的 ProofTrace 三后端证明证书；长轨迹默认折叠，服务只监听本机地址。
 
 也可以使用 CLI：
 
@@ -122,6 +123,7 @@ starter_kit/
 ├── QUANTUM_RISCV_SPEC.md
 ├── L2_STRESS_CAMPAIGN.md
 ├── PYQUAFU_CROSS_VALIDATION.md
+├── PROOFTRACE.md
 ├── JUDGE_GUIDE.md
 ├── SCIENTIFIC_CLAIMS_AUDIT.md
 ├── WEB_QA.md
@@ -135,7 +137,7 @@ starter_kit/
 ├── evidence/
 │   ├── README.md
 │   └── files/                # 可选附件
-├── tests/                    # 随正式提交归档的 96 项回归测试
+├── tests/                    # 随正式提交归档的 106 项回归测试
 ├── scripts/                  # 压力活动、交叉验证与真机证据验证器
 ├── web/                      # 零依赖响应式 Web UI
 ├── circuits/

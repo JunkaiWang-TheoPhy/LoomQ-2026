@@ -42,6 +42,10 @@ def default_phases() -> list[tuple[str, list[str]]]:
             [sys.executable, "-m", "scripts.quafu_cross_validate", "--validate"],
         ),
         (
+            "prooftrace-benchmark",
+            [sys.executable, "-m", "scripts.prooftrace_benchmark", "--json"],
+        ),
+        (
             "offline-stress-evidence",
             [sys.executable, "-m", "scripts.offline_stress_campaign", "--validate"],
         ),

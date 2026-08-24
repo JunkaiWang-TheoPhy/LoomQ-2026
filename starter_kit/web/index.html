@@ -105,6 +105,24 @@
             <tbody id="result-rows"></tbody>
           </table>
           <p id="explanation" class="explanation"></p>
+          <details id="proof-panel" class="proof-panel" open>
+            <summary>
+              <strong>ProofTrace · 为什么可信</strong>
+              <span id="proof-status">等待证明</span>
+            </summary>
+            <p id="proof-scope" class="proof-scope"></p>
+            <dl class="proof-metrics">
+              <div><dt>量子门</dt><dd id="proof-gates">—</dd></div>
+              <div><dt>深度</dt><dd id="proof-depth">—</dd></div>
+              <div><dt>双比特门</dt><dd id="proof-two-qubit">—</dd></div>
+              <div><dt>来源覆盖</dt><dd id="proof-lineage">—</dd></div>
+            </dl>
+            <strong class="proof-label">三后端独立回读</strong>
+            <ul id="proof-targets" class="proof-targets"></ul>
+            <strong class="proof-label">已应用的可证明重写</strong>
+            <ol id="proof-rewrites" class="proof-rewrites"></ol>
+            <a id="download-proof" class="proof-download" href="#" aria-disabled="true">下载证明证书 JSON</a>
+          </details>
           <details id="state-trace" class="state-trace" aria-label="逐门量子状态" open>
             <summary class="trace-heading">
               <strong>逐门状态故事</strong>

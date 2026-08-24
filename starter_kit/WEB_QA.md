@@ -18,6 +18,7 @@ python3 -m unittest tests.test_web -v
 | 桌面首屏 | 1440×1000；四条任务路径和实验台同时可见 | `evidence/files/web-lab-desktop-current.jpg` |
 | 移动端首屏 | 390×844；单列任务卡；页面 `scrollWidth=innerWidth=390` | `evidence/files/web-lab-mobile-current.jpg` |
 | Bell 运行 | 1024 shots 输出 `00=512, 11=512`；概率图、文本表、位序说明与原生指令同步更新 | 浏览器 DOM 与 `tests.test_web` |
+| ProofTrace | 每次运行显示三后端回读、门数/深度/双比特门变化、重写规则和来源覆盖；JSON 下载只在浏览器生成 | 浏览器 DOM、`tests.test_prooftrace` 与 `tests.test_web` |
 | 逐门状态 | Bell 显示 `|00⟩ → (|00⟩+|01⟩)/√2 → (|00⟩+|11⟩)/√2`；`H-S-S-H` 显示中间相位 `0 → π/2 → π` 并最终得到 `|1⟩` | 浏览器 DOM、`tests.test_state_trace` 与 CLI `trace` |
 | 算法画廊 | Deutsch–Jozsa 输出 `11=100%`；Grover 输出 `111=94.53125%`；QFT 为 16 个等概率态且 UI 显示 π/8 相位递进 | 浏览器 DOM 与 `tests.test_algorithm_gallery` |
 | 长轨迹 | Bell 等短电路自动展开；40 门 Grover 轨迹默认折叠，用户可用原生 `details/summary` 展开 | 浏览器交互验收 |

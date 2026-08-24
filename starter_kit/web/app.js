@@ -119,6 +119,7 @@ const $ = (selector) => document.querySelector(selector);
 const qasm = $("#qasm");
 const notice = $("#notice");
 const agentHistory = [];
+let lastProofUrl = null;
 
 function tell(message) {
   notice.textContent = message;
@@ -237,6 +238,48 @@ function renderResults(data) {
   });
   const leaders = entries.slice(0, 2).map(([state]) => `|${state}⟩`).join(" 与 ");
   $("#explanation").textContent = `共测量 ${data.result.shots} 次。主导结果为 ${leaders}；位串从左到右对应高位到低位。`;
+  const proof = data.proof;
+  const sourceMetrics = proof.metrics.source;
+  const optimizedMetrics = proof.metrics.optimized;
+  const metricDelta = (before, after) => before === after ? String(after) : `${before} → ${after}`;
+  $("#proof-status").textContent = proof.equivalence.verified ? "已验证" : "未验证";
+  $("#proof-scope").textContent =
+    "证明范围：命名的通用酉恒等式；测量映射保持不变。它不把模拟结果冒充真机保真度。";
+  $("#proof-gates").textContent = metricDelta(sourceMetrics.gate_count, optimizedMetrics.gate_count);
+  $("#proof-depth").textContent = metricDelta(sourceMetrics.depth, optimizedMetrics.depth);
+  $("#proof-two-qubit").textContent = metricDelta(
+    sourceMetrics.two_qubit_gate_count,
+    optimizedMetrics.two_qubit_gate_count,
+  );
+  const coveredSourceOperations = new Set([
+    ...proof.lineage.flatMap((item) => item.source_operation_indices),
+    ...proof.rewrites.flatMap((item) => item.source_operation_indices),
+  ]);
+  const sourceOperationCount = sourceMetrics.gate_count + sourceMetrics.measurement_count;
+  $("#proof-lineage").textContent = `${coveredSourceOperations.size}/${sourceOperationCount} 项`;
+  const proofTargets = $("#proof-targets");
+  proofTargets.replaceChildren();
+  Object.entries(data.proof.portability).forEach(([target, report]) => {
+    const hash = report.native_ir_sha256.slice(0, 10);
+    proofTargets.append(element("li", "", `${target} · ${report.roundtrip_verified ? "通过" : "失败"} · ${hash}…`));
+  });
+  const proofRewrites = $("#proof-rewrites");
+  proofRewrites.replaceChildren();
+  if (!proof.rewrites.length) {
+    proofRewrites.append(element("li", "", "未发现冗余门；原线路直接进入三后端验证。"));
+  } else {
+    proof.rewrites.forEach((rewrite) => {
+      const sources = rewrite.source_operation_indices.join(", ");
+      proofRewrites.append(element("li", "", `${rewrite.rule} · 源操作 ${sources}`));
+    });
+  }
+  if (lastProofUrl) URL.revokeObjectURL(lastProofUrl);
+  const proofBlob = new Blob([JSON.stringify(proof, null, 2)], { type: "application/json" });
+  lastProofUrl = URL.createObjectURL(proofBlob);
+  const downloadProof = $("#download-proof");
+  downloadProof.href = lastProofUrl;
+  downloadProof.download = `loomq-prooftrace-${proof.source_sha256.slice(0, 12)}.json`;
+  downloadProof.setAttribute("aria-disabled", "false");
   const traceSteps = $("#trace-steps");
   $("#state-trace").open = data.trace.length <= 15;
   traceSteps.replaceChildren();

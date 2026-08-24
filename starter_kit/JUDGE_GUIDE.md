@@ -8,7 +8,8 @@
 
 | 区域 | 一条复核命令 | 主要证据 |
 |---|---|---|
-| 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 96 项归档回归、L2 固定语料、真机 manifest、L1/L3/RISC-V |
+| 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 106 项归档回归、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
+| ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |
 | L1 三目标 | `python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket` | 统一 Circuit IR、12 门 × 3 target 归档测试 |
 | L1 语义回读 | `cd starter_kit && python3 -m unittest tests.test_native_ir_verifier -v` | SpinQ QASM 2、OriginIR、Braket QASM 3 独立 parser；篡改门负例 |
@@ -25,7 +26,7 @@
 
 ## 建议体验的三个任务
 
-1. 点击 Learn，运行 Bell，再切换“相位干涉”和 Braket，读取逐门概率/相位、测量表、位序与原生 IR；CLI 可执行 `python3 -m starter_kit.loomq_cli trace starter_kit/circuits/bell.qasm`。
+1. 点击 Learn，运行 Bell，再切换“相位干涉”和 Braket，读取逐门概率/相位、测量表、位序、原生 IR 和 ProofTrace 三目标证书，并下载 JSON；CLI 可执行 `python3 -m starter_kit.loomq_cli trace starter_kit/circuits/bell.qasm`。
 2. 点击 Repair，提交预填的越界 Bell QASM；只让通过确定性验证的完整 QASM 到达用户。
 3. 点击 Backend Match，询问“免费、零排队、至少 20 比特的模拟器”；回答必须包含官方能力表的兼容规范 ID。
 

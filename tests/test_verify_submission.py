@@ -39,6 +39,7 @@ class SubmissionVerifierTests(unittest.TestCase):
                 "l2-corpus",
                 "hardware-evidence",
                 "pyquafu-evidence",
+                "prooftrace-benchmark",
                 "offline-stress-evidence",
                 "l1",
                 "l3",

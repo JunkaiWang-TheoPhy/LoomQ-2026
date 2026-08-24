@@ -134,7 +134,7 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         if not isinstance(shots, int) or isinstance(shots, bool) or shots <= 0 or shots > 100_000:
             raise ValueError("shots 必须是 1–100000 的整数")
         result = adapter.run(qasm, target, shots)
-        native_ir = adapter.transpile(qasm, target)
+        native_ir, proof = adapter.transpile_with_proof(qasm, target)
         probabilities = {
             state: count / result["shots"] for state, count in result["counts"].items()
         }
@@ -150,6 +150,7 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 "result": result,
                 "probabilities": probabilities,
                 "native_ir": native_ir,
+                "proof": proof,
                 "trace": trace,
                 "trace_notice": trace_notice,
             },

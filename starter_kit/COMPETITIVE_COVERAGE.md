@@ -13,6 +13,8 @@
 |---|---|---|---|
 | 12 门 × SpinQ / OriginQ / Braket | 四队均覆盖 | `test_archive_core.py` 的 36 项门/target 矩阵；`evaluator.py --level l1` | 覆盖 |
 | 目标 IR 不是占位文本 | mayloveless、Wayne 的原生输出审计 | `loomq/native_ir.py` 独立回读三种语法；每次 `adapter.transpile()` 强制语义 round-trip | 覆盖并加强 |
+| 证明携带编译与门谱系 | 对手未展示统一证书路径 | ProofTrace 记录命名重写、source→optimized lineage、metrics、三目标哈希与独立回读；Web 可下载 JSON | 新增差异化能力 |
+| 编译篡改基准 | mayloveless hidden-like、Wayne fuzz | 五个算法 × 三目标的 225 个单指令删除变异全部检出；另有 15 portability + 90 rewrite checks | 新增量化证据 |
 | 独立数值 oracle | Wayne 的 vendor SDK 检查 | PyQuafu 0.4.5 固定 40 电路、三 target 共 120/120；最大振幅误差 `1.19e-15` | 覆盖 |
 | 可运行算法展品 | 0Dionysus0 的 Deutsch；其他队的 Grover/QFT/教学示例 | `deutsch_jozsa_balanced.qasm`、`grover3.qasm`、`qft4.qasm`；三 target 运行测试 | 覆盖并合并到 Web |
 | 逐门调试与教学解释 | mayloveless 的 trace/debug/explainer | Web 与 CLI `trace` 展示每门后的概率、复振幅、相位和作用说明 | 覆盖 |

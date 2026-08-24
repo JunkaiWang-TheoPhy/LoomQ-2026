@@ -98,6 +98,8 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('data-task="repair"', page)
         self.assertIn('data-task="backend"', page)
         self.assertIn('id="result-table"', page)
+        self.assertIn('id="proof-panel"', page)
+        self.assertIn('id="download-proof"', page)
         self.assertIn('role="alert"', page)
         self.assertIn('aria-describedby="prompt-help"', page)
         self.assertIn('<details id="state-trace"', page)
@@ -118,6 +120,12 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("state.amplitude_real", script)
         self.assertIn("state.amplitude_imag", script)
         self.assertIn("data.trace.length <= 15", script)
+        self.assertIn("data.proof.portability", script)
+        self.assertIn("application/json", script)
+        self.assertIn("downloadProof.href = lastProofUrl", script)
+        self.assertIn("downloadProof.download =", script)
+        self.assertIn("coveredSourceOperations", script)
+        self.assertIn("sourceMetrics.measurement_count", script)
         self.assertIn("agentHistory.splice(0)", script)
 
     def test_run_endpoint_returns_counts_native_ir_and_probability(self):
@@ -131,6 +139,15 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(set(result["result"]["counts"]), {"00", "11"})
         self.assertEqual(set(result["probabilities"]), {"00", "11"})
         self.assertIn("OPENQASM 2.0", result["native_ir"])
+        self.assertEqual(result["proof"]["schema_version"], "loomq-prooftrace-v1")
+        self.assertTrue(result["proof"]["equivalence"]["verified"])
+        self.assertEqual(set(result["proof"]["portability"]), {"spinq", "originq", "braket"})
+        self.assertTrue(
+            all(
+                target["roundtrip_verified"]
+                for target in result["proof"]["portability"].values()
+            )
+        )
         self.assertEqual(
             [event["operation"]["kind"] for event in result["trace"]],
             ["initial", "gate", "gate", "measure"],
