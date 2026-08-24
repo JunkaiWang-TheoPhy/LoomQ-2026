@@ -19,6 +19,14 @@ cx q[0],q[1];
 measure q -> c;
 """
 
+BELL_WITHOUT_CX = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+measure q -> c;
+"""
+
 GHZ = """OPENQASM 2.0;
 include "qelib1.inc";
 qreg q[3];
@@ -189,6 +197,23 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("会看到每条路径的概率", page)
         self.assertIn("点击修复一段错误 QASM", page)
         self.assertIn("会看到 Agent 先给出可运行答案", page)
+
+    def test_home_starts_a_beginner_inquiry_before_exposing_the_qasm_workspace(self):
+        _status, _headers, body = self.request("/")
+
+        page = body.decode()
+        self.assertIn('id="inquiry-world"', page)
+        self.assertIn('aria-labelledby="inquiry-title"', page)
+        self.assertIn('id="inquiry-prediction"', page)
+        self.assertIn('id="run-inquiry"', page)
+        self.assertIn('id="inquiry-control-chart"', page)
+        self.assertIn('id="inquiry-variant-chart"', page)
+        self.assertIn('id="inquiry-conclusion"', page)
+        self.assertIn('id="audit-inquiry"', page)
+        self.assertIn('id="download-inquiry"', page)
+        self.assertIn("H 和 CX 分别做了什么", page)
+        self.assertIn("先预测，再运行对照实验", page)
+        self.assertLess(page.index('id="inquiry-world"'), page.index('id="workspace"'))
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
@@ -514,6 +539,218 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(payload["scope"], "structural-mismatch")
         self.assertIsNone(payload["first_divergent_gate"])
         self.assertIn("测量映射", payload["explanation"])
+
+    def test_inquiry_endpoint_turns_a_beginner_prediction_into_a_replayable_experiment(self):
+        try:
+            status, _headers, body = self.request(
+                "/api/inquiry",
+                {
+                    "mission": "bell-gates",
+                    "prediction": "h-opens-branches",
+                    "conclusion": "h-opens-branches-cx-correlates",
+                    "shots": 128,
+                },
+            )
+        except urllib.error.HTTPError as exc:
+            status, body = exc.code, exc.read()
+            exc.close()
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["schema_version"], "loomq-inquiry-passport-v1")
+        self.assertEqual(payload["mission"]["id"], "bell-gates")
+        self.assertEqual(payload["learner"]["prediction"], "h-opens-branches")
+        self.assertEqual(payload["learner"]["conclusion"], "h-opens-branches-cx-correlates")
+        self.assertEqual(payload["prediction_review"]["status"], "matched")
+        self.assertEqual(payload["conclusion_audit"]["status"], "supported")
+        self.assertEqual(payload["experiment"]["control"]["qasm"], BELL)
+        self.assertEqual(payload["experiment"]["variant"]["qasm"], BELL_WITHOUT_CX)
+        self.assertEqual(
+            set(payload["experiment"]["control"]["probabilities"]),
+            {"00", "11"},
+        )
+        self.assertEqual(
+            set(payload["experiment"]["variant"]["probabilities"]),
+            {"00", "01"},
+        )
+        self.assertEqual(payload["comparison"]["first_divergent_gate"], 1)
+        self.assertEqual(payload["comparison"]["reference_operation"]["gate"], "cx")
+        self.assertEqual(payload["experiment"]["changed_variable"]["witness_id"], "g2")
+        self.assertTrue(
+            any(
+                "不能单独证明 Bell 非定域性" in caveat
+                for caveat in payload["scope_caveats"]
+            )
+        )
+        self.assertEqual(
+            payload["replay"],
+            {
+                "endpoint": "/api/inquiry",
+                "request": {
+                    "mission": "bell-gates",
+                    "prediction": "h-opens-branches",
+                    "conclusion": "h-opens-branches-cx-correlates",
+                    "shots": 128,
+                },
+            },
+        )
+        replay_status, _headers, replay_body = self.request(
+            payload["replay"]["endpoint"], payload["replay"]["request"]
+        )
+        replayed = json.loads(replay_body)
+        self.assertEqual(replay_status, 200)
+        self.assertEqual(replayed["learner"], payload["learner"])
+        for experiment in ("control", "variant"):
+            self.assertEqual(
+                replayed["experiment"][experiment]["qasm"],
+                payload["experiment"][experiment]["qasm"],
+            )
+            self.assertEqual(
+                replayed["experiment"][experiment]["result"]["counts"],
+                payload["experiment"][experiment]["result"]["counts"],
+            )
+            self.assertEqual(
+                replayed["experiment"][experiment]["probabilities"],
+                payload["experiment"][experiment]["probabilities"],
+            )
+        self.assertEqual(
+            replayed["experiment"]["changed_variable"],
+            payload["experiment"]["changed_variable"],
+        )
+
+    def test_inquiry_observation_language_is_derived_from_sparse_counts(self):
+        sparse_control = {"backend": "local", "shots": 16, "counts": {"00": 16}}
+        sparse_variant = {"backend": "local", "shots": 16, "counts": {"00": 16}}
+        with mock.patch(
+            "loomq.web.adapter.run", side_effect=[sparse_control, sparse_variant]
+        ):
+            status, _headers, body = self.request(
+                "/api/inquiry",
+                {
+                    "mission": "bell-gates",
+                    "prediction": "not-sure",
+                    "conclusion": "h-opens-branches-cx-correlates",
+                    "shots": 16,
+                },
+            )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        observed_text = " ".join(
+            [
+                payload["prediction_review"]["reason"],
+                payload["conclusion_audit"]["reason"],
+            ]
+        )
+        self.assertNotIn("00、11", observed_text)
+        self.assertNotIn("00、01", observed_text)
+        self.assertNotIn("两个分支", observed_text)
+        self.assertEqual(
+            payload["conclusion_audit"]["evidence"][:2],
+            [
+                {"experiment": "control", "observed_states": ["00"]},
+                {"experiment": "variant", "observed_states": ["00"]},
+            ],
+        )
+        self.assertEqual(payload["conclusion_audit"]["status"], "inconclusive")
+
+    def test_inquiry_returns_every_conclusion_audit_for_same_experiment(self):
+        status, _headers, body = self.request(
+            "/api/inquiry",
+            {
+                "mission": "bell-gates",
+                "prediction": "h-opens-branches",
+                "conclusion": "h-opens-branches-cx-correlates",
+                "shots": 128,
+            },
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            set(payload["conclusion_audits"]),
+            {
+                "h-opens-branches-cx-correlates",
+                "cx-opens-branches",
+                "proves-nonlocality",
+            },
+        )
+        self.assertEqual(
+            payload["conclusion_audit"],
+            payload["conclusion_audits"]["h-opens-branches-cx-correlates"],
+        )
+
+    def test_inquiry_rejects_sampling_below_the_mission_floor(self):
+        request = urllib.request.Request(
+            self.base + "/api/inquiry",
+            data=json.dumps(
+                {
+                    "mission": "bell-gates",
+                    "prediction": "not-sure",
+                    "conclusion": "h-opens-branches-cx-correlates",
+                    "shots": 1,
+                }
+            ).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        with self.assertRaises(urllib.error.HTTPError) as caught:
+            urllib.request.urlopen(request, timeout=3)
+        payload = json.loads(caught.exception.read())
+        caught.exception.close()
+        self.assertEqual(caught.exception.code, 400)
+        self.assertIn("16", payload["error"]["message"])
+
+    def test_inquiry_rejects_invalid_contract_values(self):
+        valid = {
+            "mission": "bell-gates",
+            "prediction": "not-sure",
+            "conclusion": "h-opens-branches-cx-correlates",
+            "shots": 16,
+        }
+        invalid_values = {
+            "bool shots": {"shots": True},
+            "unknown mission": {"mission": "unknown"},
+            "unknown prediction": {"prediction": "unknown"},
+            "unknown conclusion": {"conclusion": "unknown"},
+        }
+        for label, change in invalid_values.items():
+            with self.subTest(label=label):
+                request = urllib.request.Request(
+                    self.base + "/api/inquiry",
+                    data=json.dumps({**valid, **change}).encode(),
+                    headers={"Content-Type": "application/json"},
+                )
+                with self.assertRaises(urllib.error.HTTPError) as caught:
+                    urllib.request.urlopen(request, timeout=3)
+                caught.exception.read()
+                caught.exception.close()
+                self.assertEqual(caught.exception.code, 400)
+
+    def test_inquiry_endpoint_uses_the_control_experiment_to_correct_a_wrong_conclusion(self):
+        status, _headers, body = self.request(
+            "/api/inquiry",
+            {
+                "mission": "bell-gates",
+                "prediction": "cx-opens-branches",
+                "conclusion": "cx-opens-branches",
+                "shots": 128,
+            },
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["prediction_review"]["status"], "revised")
+        self.assertIn("删掉 CX", payload["prediction_review"].get("reason", ""))
+        self.assertEqual(payload["conclusion_audit"]["status"], "unsupported")
+        self.assertIn("00、01", payload["conclusion_audit"].get("reason", ""))
+        self.assertEqual(
+            payload["conclusion_audit"]["evidence"],
+            [
+                {"experiment": "control", "observed_states": ["00", "11"]},
+                {"experiment": "variant", "observed_states": ["00", "01"]},
+                {"first_divergent_gate": "g2", "reference_operation": "cx"},
+            ],
+        )
 
     def test_causal_audit_endpoint_unifies_cross_module_witnesses(self):
         candidate = BELL.replace("cx q[0],q[1];", "x q[1];")

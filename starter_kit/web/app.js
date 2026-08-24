@@ -146,6 +146,8 @@ const TOUR_STATUSES = new Set(["pass", "fail", "inconclusive"]);
 let lastProofUrl = null;
 let lastHybridPathUrl = null;
 let lastWitnessUrl = null;
+let lastInquiryUrl = null;
+let currentInquiryPassport = null;
 
 function tell(message) {
   notice.textContent = message;
@@ -572,6 +574,84 @@ function renderComparison(report) {
   $("#compare-result").focus();
 }
 
+function renderInquiryBars(selector, bars) {
+  const chart = $(selector);
+  chart.replaceChildren();
+  bars.forEach((item) => {
+    const row = element("div", "inquiry-bar-row");
+    const progress = element("progress", "inquiry-bar");
+    progress.max = 1;
+    progress.value = item.probability;
+    progress.setAttribute("aria-label", `状态 ${item.state} 的概率 ${item.percent}`);
+    row.append(
+      element("strong", "", `|${item.state}⟩`),
+      progress,
+      element("span", "", item.percent),
+    );
+    chart.append(row);
+  });
+}
+
+function resetInquiryAudit(message = "选择一条结论，让系统指出证据支持到哪里。") {
+  const audit = $("#inquiry-audit");
+  audit.className = "inquiry-audit";
+  audit.textContent = message;
+  const download = $("#download-inquiry");
+  download.href = "#";
+  download.setAttribute("aria-disabled", "true");
+  if (lastInquiryUrl) {
+    URL.revokeObjectURL(lastInquiryUrl);
+    lastInquiryUrl = null;
+  }
+}
+
+function renderInquiryExperiment(passport) {
+  const view = globalThis.LoomQInquiry.viewModel(passport);
+  renderInquiryBars("#inquiry-control-chart", view.controlBars);
+  renderInquiryBars("#inquiry-variant-chart", view.variantBars);
+  $("#inquiry-control-observation").textContent = view.controlObservation;
+  $("#inquiry-variant-observation").textContent = view.variantObservation;
+  $("#inquiry-finding-title").textContent =
+    `${view.divergence} 是两次实验首次出现状态差异的位置。`;
+  $("#inquiry-finding-copy").textContent = view.predictionReason;
+  $("#inquiry-divergence").textContent = `first divergence ${view.divergence}`;
+  $("#inquiry-results").hidden = false;
+  $("#inquiry-results").scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    block: "start",
+  });
+  return view;
+}
+
+function renderInquiryAudit(passport) {
+  const view = globalThis.LoomQInquiry.viewModel(passport);
+  const audit = $("#inquiry-audit");
+  audit.className = `inquiry-audit ${view.auditStatus}`;
+  audit.replaceChildren(
+    element("strong", "", view.auditStatus === "supported" ? "证据支持这条结论" : "证据不支持这条结论"),
+    element("p", "", view.auditClaim),
+    element("p", "inquiry-audit-reason", view.auditReason),
+    element("small", "", `证据边界：${view.caveat}`),
+  );
+  if (lastInquiryUrl) URL.revokeObjectURL(lastInquiryUrl);
+  lastInquiryUrl = URL.createObjectURL(
+    new Blob([JSON.stringify(passport, null, 2)], { type: "application/json" }),
+  );
+  const download = $("#download-inquiry");
+  download.href = lastInquiryUrl;
+  download.download = "loomq-inquiry-bell-gates.json";
+  download.setAttribute("aria-disabled", "false");
+}
+
+async function requestInquiry() {
+  const payload = globalThis.LoomQInquiry.requestPayload(
+    $("#inquiry-prediction").value,
+    $("#inquiry-conclusion").value,
+    128,
+  );
+  return api("/api/inquiry", payload);
+}
+
 function renderResults(data) {
   $("#empty").hidden = true;
   const results = $("#results");
@@ -877,6 +957,64 @@ $("#run").addEventListener("click", async () => {
     icon.setAttribute("aria-hidden", "true");
     button.replaceChildren(icon, document.createTextNode(" 运行电路"));
   }
+});
+
+$("#run-inquiry").addEventListener("click", async () => {
+  const button = $("#run-inquiry");
+  const status = $("#inquiry-status");
+  button.disabled = true;
+  button.textContent = "正在运行两组实验…";
+  status.textContent = "实验 A 与实验 B 正在使用相同 shots 运行。";
+  try {
+    const passport = await requestInquiry();
+    currentInquiryPassport = passport;
+    renderInquiryExperiment(passport);
+    resetInquiryAudit("实验已完成。现在选择结论，并让证据检查它。");
+    status.textContent = "A/B 实验完成：只改变了 CX，下一步请形成结论。";
+    tell("Quantum World：对照实验完成");
+  } catch (error) {
+    status.textContent = `实验失败：${error.message}`;
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "重新运行 A/B 对照实验";
+  }
+});
+
+$("#audit-inquiry").addEventListener("click", async () => {
+  const button = $("#audit-inquiry");
+  button.disabled = true;
+  button.textContent = "正在核对证据…";
+  try {
+    if (!currentInquiryPassport) {
+      throw new Error("请先运行 A/B 对照实验，再审计结论");
+    }
+    const passport = globalThis.LoomQInquiry.withConclusion(
+      currentInquiryPassport,
+      $("#inquiry-conclusion").value,
+    );
+    renderInquiryAudit(passport);
+    $("#inquiry-audit").setAttribute("tabindex", "-1");
+    $("#inquiry-audit").focus();
+    tell("结论审计完成；实验护照可以下载");
+  } catch (error) {
+    resetInquiryAudit(`结论审计失败：${error.message}`);
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "用实验审计结论";
+  }
+});
+
+$("#inquiry-prediction").addEventListener("change", () => {
+  currentInquiryPassport = null;
+  $("#inquiry-results").hidden = true;
+  $("#inquiry-status").textContent = "预测已记录；运行实验后再看答案。";
+  resetInquiryAudit();
+});
+
+$("#inquiry-conclusion").addEventListener("change", () => {
+  resetInquiryAudit("结论已变化；请重新用当前实验审计。");
 });
 
 $("#run-assert").addEventListener("click", async () => {

@@ -35,9 +35,27 @@ _STATIC = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/favicon.ico": ("favicon.svg", "image/svg+xml"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/inquiry.js": ("inquiry.js", "text/javascript; charset=utf-8"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/enhancements.css": ("enhancements.css", "text/css; charset=utf-8"),
 }
+
+_BELL_INQUIRY_CONTROL = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+cx q[0],q[1];
+measure q -> c;
+"""
+
+_BELL_INQUIRY_VARIANT = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+measure q -> c;
+"""
 
 
 class LoomQWebHandler(BaseHTTPRequestHandler):
@@ -128,6 +146,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
                 return
             if path == "/api/prompt-contract":
                 self._prompt_contract(payload)
+                return
+            if path == "/api/inquiry":
+                self._inquiry(payload)
                 return
             if path == "/api/agent":
                 self._agent(payload)
@@ -331,6 +352,176 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             {
                 "contract": contract,
                 "verification": verify_prompt_contract(contract, prompt),
+            },
+        )
+
+    def _inquiry(self, payload: Dict[str, Any]) -> None:
+        mission = payload.get("mission")
+        prediction = payload.get("prediction")
+        conclusion = payload.get("conclusion")
+        shots = payload.get("shots", 128)
+        if mission != "bell-gates":
+            raise ValueError("mission 目前必须是 bell-gates")
+        if prediction not in {"h-opens-branches", "cx-opens-branches", "not-sure"}:
+            raise ValueError("prediction 不是该探究任务提供的选项")
+        if conclusion not in {
+            "h-opens-branches-cx-correlates",
+            "cx-opens-branches",
+            "proves-nonlocality",
+        }:
+            raise ValueError("conclusion 不是该探究任务提供的选项")
+        if not isinstance(shots, int) or isinstance(shots, bool) or shots < 16 or shots > 100_000:
+            raise ValueError("shots 必须是 16–100000 的整数")
+
+        control_result = adapter.run(_BELL_INQUIRY_CONTROL, "spinq", shots)
+        variant_result = adapter.run(_BELL_INQUIRY_VARIANT, "spinq", shots)
+        comparison = diagnose_mutation(_BELL_INQUIRY_CONTROL, _BELL_INQUIRY_VARIANT)
+
+        def probabilities(result: Dict[str, Any]) -> Dict[str, float]:
+            """Normalize the observed counts recorded in this inquiry passport."""
+            return {
+                state: count / result["shots"]
+                for state, count in result["counts"].items()
+            }
+
+        control_probabilities = probabilities(control_result)
+        variant_probabilities = probabilities(variant_result)
+        control_states = sorted(
+            state for state, value in control_probabilities.items() if value > 0
+        )
+        variant_states = sorted(
+            state for state, value in variant_probabilities.items() if value > 0
+        )
+        evidence_matches_mission = (
+            control_states == ["00", "11"]
+            and variant_states == ["00", "01"]
+            and comparison.get("first_divergent_gate") == 1
+            and (comparison.get("reference_operation") or {}).get("gate") == "cx"
+        )
+        observed_control = "、".join(control_states) or "无"
+        observed_variant = "、".join(variant_states) or "无"
+        observed_change = (
+            f"本次对照观察到 {observed_control}；删掉 CX 后观察到 {observed_variant}。"
+        )
+        prediction_reviews = {
+            "h-opens-branches": {
+                "status": "matched" if evidence_matches_mission else "inconclusive",
+                "reason": observed_change
+                + (
+                    " 结果支持 H 先产生两种 Z 基测量结果。"
+                    if evidence_matches_mission
+                    else " 本次有限采样不足以核验预测。"
+                ),
+            },
+            "cx-opens-branches": {
+                "status": "revised" if evidence_matches_mission else "inconclusive",
+                "reason": observed_change
+                + (
+                    " 禁用 CX 后仍观察到 q0 的两种结果，因此需修正原预测。"
+                    if evidence_matches_mission
+                    else " 本次有限采样不足以修正预测。"
+                ),
+            },
+            "not-sure": {
+                "status": "observed" if evidence_matches_mission else "inconclusive",
+                "reason": observed_change
+                + (
+                    " 该差异与 g2 的 CX 操作一致。"
+                    if evidence_matches_mission
+                    else " 本次有限采样未呈现任务要求的完整证据形状。"
+                ),
+            },
+        }
+        conclusion_audits = {
+            "h-opens-branches-cx-correlates": {
+                "status": "supported",
+                "claim": "对 |00⟩ 输入，H 使 q0 的 Z 基测量出现 0/1 两种结果；CX 将 q0 的值关联到 q1。",
+                "reason": observed_change
+                + " 对照只禁用了 CX，因此观测差异定位到 g2。",
+            },
+            "cx-opens-branches": {
+                "status": "unsupported",
+                "claim": "CX 使 q0 的 Z 基测量首次出现 0/1 两种结果。",
+                "reason": observed_change
+                + " 禁用 CX 后 q0 仍取到 0/1，因此该结论不受实验支持。",
+            },
+            "proves-nonlocality": {
+                "status": "unsupported",
+                "claim": "这次 Z 基实验完整证明了 Bell 非定域性。",
+                "reason": "当前实验只比较计算基测量相关性；完整的非定域性检验需要额外测量设置与统计判据。",
+            },
+        }
+        conclusion_evidence = [
+            {"experiment": "control", "observed_states": control_states},
+            {"experiment": "variant", "observed_states": variant_states},
+            {
+                "first_divergent_gate": None
+                if comparison.get("first_divergent_gate") is None
+                else f"g{comparison['first_divergent_gate'] + 1}",
+                "reference_operation": (
+                    comparison.get("reference_operation") or {}
+                ).get("gate"),
+            },
+        ]
+        audited_conclusions = {}
+        for audit_id, audit in conclusion_audits.items():
+            if not evidence_matches_mission and audit_id != "proves-nonlocality":
+                audit = {
+                    "status": "inconclusive",
+                    "claim": audit["claim"],
+                    "reason": observed_change
+                    + " 本次有限采样未满足任务的预期证据形状，系统拒绝替学习者下结论。",
+                }
+            audited_conclusions[audit_id] = {
+                **audit,
+                "evidence": conclusion_evidence,
+            }
+        conclusion_audit = audited_conclusions[conclusion]
+        self._send_json(
+            HTTPStatus.OK,
+            {
+                "schema_version": "loomq-inquiry-passport-v1",
+                "mission": {
+                    "id": "bell-gates",
+                    "title": "H 和 CX 分别做了什么？",
+                    "question": "删掉 CX 后，Bell 电路的测量分布会怎样变化？",
+                },
+                "learner": {"prediction": prediction, "conclusion": conclusion},
+                "prediction_review": prediction_reviews[prediction],
+                "experiment": {
+                    "control": {
+                        "qasm": _BELL_INQUIRY_CONTROL,
+                        "result": control_result,
+                        "probabilities": control_probabilities,
+                    },
+                    "variant": {
+                        "qasm": _BELL_INQUIRY_VARIANT,
+                        "result": variant_result,
+                        "probabilities": variant_probabilities,
+                    },
+                    "changed_variable": {
+                        "action": "disable",
+                        "witness_id": "g2",
+                        "operation": "cx q[0],q[1]",
+                    },
+                },
+                "comparison": comparison,
+                "conclusion_audit": conclusion_audit,
+                "conclusion_audits": audited_conclusions,
+                "scope_caveats": [
+                    "该实验展示计算基测量相关性，不能单独证明 Bell 非定域性",
+                    "结果来自本地理想模拟和有限 shots，不诊断真实硬件噪声来源",
+                    "这里的“分支”仅指本地理想模拟中概率非零的计算基测量结果",
+                ],
+                "replay": {
+                    "endpoint": "/api/inquiry",
+                    "request": {
+                        "mission": mission,
+                        "prediction": prediction,
+                        "conclusion": conclusion,
+                        "shots": shots,
+                    },
+                },
             },
         )
 

@@ -10,6 +10,16 @@
 
 每个状态都由对应 API 的语义检查产生。点击按钮或收到 HTTP 200 不足以把状态改成完成；输入变化也会清除受影响的旧状态。
 
+## 3 分钟零基础用户路径
+
+1. 在 `Quantum World · 第一个探究任务` 选择“CX 才建立最初的两个分支”。
+2. 运行 A/B 实验。实验 A 保留 H+CX，实验 B 保留 H、禁用 CX；两组使用相同 shots。
+3. 页面应显示 A 的主导态为 `00/11`、B 为 `00/01`，并将首次状态分歧定位到 `g2 · CX`。
+4. 继续选择结论“CX 建立了最初的两个分支”，点击结论审计。页面必须指出该结论不受实验支持，同时保留“单次 Z 基实验不能完整证明 Bell 非定域性”的边界。
+5. 下载 `loomq-inquiry-bell-gates.json`。护照包含问题、预测、两份 QASM、A/B 结果、首门分歧、结论审计和重放入口。
+
+这条路径不要求用户先读 QASM 或 assertions JSON。它使用 `/api/inquiry` 编排现有模拟与精确比较能力，不调用模型充当裁判。
+
 ## 90 秒页面验收
 
 1. `运行与 ProofTrace`：默认 Bell 电路必须通过等价性检查，SpinQ、OriginQ、Braket 三种目标 IR 都要独立回读成功。
@@ -27,7 +37,7 @@ Agent 生成是可选的第 7 步。配置 `LOOMQ_LLM_*` 后再运行它；模�
 |---|---|---|
 | 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 完整归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/compare/hybrid/witness 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
 | ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
-| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 29 项 Web 集成测试覆盖六步评委路径、Prompt Contract、`/api/causal-audit`、首门分歧、统计断言、Hybrid trace/path、ProofTrace、安全头与移动端防溢出样式 |
+| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web tests.test_inquiry_frontend -v` | Web 集成与前端状态模型覆盖 Quantum World 探究护照、错误结论纠正、六步评委路径、Prompt Contract、`/api/causal-audit`、首门分歧、统计断言、Hybrid trace/path、ProofTrace、安全头与移动端防溢出样式 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |
 | L1 三目标 | `python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket` | 统一 Circuit IR、12 门 × 3 target 归档测试 |
 | L1 语义回读 | `cd starter_kit && python3 -m unittest tests.test_native_ir_verifier -v` | SpinQ QASM 2、OriginIR、Braket QASM 3 独立 parser；篡改门负例 |
@@ -46,7 +56,7 @@ Agent 生成是可选的第 7 步。配置 `LOOMQ_LLM_*` 后再运行它；模�
 
 ## 建议体验的三个任务
 
-1. 保留默认 Bell、候选反例、断言与 Hybrid 程序，点击“生成统一审计链”；核对 `g2` 首门分歧、`m1/m2` 断言依赖、`m2` 分支来源，并下载可重算 JSON。
+1. 完成 Quantum World 的 Bell A/B 探究：先做错误预测，运行实验，再让证据纠正结论并下载可重放护照。
 2. 点击 Learn，运行 Bell，读取逐门概率/相位与 ProofTrace 三目标证书；随后进入 Counterfactual Circuit Lab 单独查看 `CX` 对 `X` 与 TV 距离 `0.5`。
 3. 点击 Repair 验证错误 QASM 的确定性恢复，再用 Backend Match 询问“免费、零排队、至少 20 比特的模拟器”，核对规范 capability ID。
 
