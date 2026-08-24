@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Let a judge reach five working, verifiable LoomQ capabilities from the first screen in under 90 seconds without hiding the beginner workflow.
+**Goal:** Let a judge reach six working, verifiable LoomQ capabilities from the first screen in under 90 seconds without hiding the beginner workflow.
 
-**Architecture:** Add a sticky evidence rail to the existing single-page lab. Each rail item points to a real API-backed action and changes state only after that action succeeds. Add a read-only Prompt Contract endpoint and panel so the L2 interpretation is visible before a model response. Keep the current workbench, ProofTrace, counterfactual, Witness Chain, assertion, and Hybrid panels as the underlying content.
+**Architecture:** Add a sticky evidence rail to the existing single-page lab. Each rail item points to a real API-backed action and changes state only after semantic response validation succeeds. Add a read-only Prompt Contract endpoint and panel so the L2 interpretation is visible before a model response. Keep the current workbench, ProofTrace, counterfactual, statistical assertion, Witness Chain, and Hybrid panels as the underlying content.
 
 **Tech Stack:** Python 3.10 standard library, `unittest`, vanilla HTML/CSS/JavaScript, existing LoomQ Web server and Browser QA.
 
@@ -12,7 +12,7 @@
 
 - Start from the accepted mid-circuit Hybrid certificate integration commit, then replay Prompt Contract commits `149fbe8c9b5a4a6c591125c4de37a26950889de0` and `6c8d152cd69e6b57b20e1810da0270c1751b2e8c`.
 - Accept only the audited `loomq.hybrid_paths` implementation for mid-circuit semantics. Remove the superseded terminal-state certificate module and do not preserve its projected-bit response shape.
-- Make `/api/hybrid-path-certificate` return `{certificate, verification}` where `verification` is produced by server-side semantic recomputation against the submitted source. A client-side probability sum is not certificate verification.
+- Consume canonical `/api/hybrid-paths` with `{certificate, verification}`, where `verification` is produced by server-side semantic recomputation against the submitted source. If the compatibility alias `/api/hybrid-path-certificate` remains, require the identical response. A client-side probability sum is not certificate verification.
 - Do not copy a mascot, XP system, quiz, or full-screen intro from another submission.
 - A tour step may show `完成` only after its corresponding local API returns a successful, schema-valid response.
 - Do not show static provider status, queue state, job ID, or hardware availability.
@@ -101,9 +101,9 @@ Commit the endpoint and test with a Lore message that records the no-model-call 
 - Test: `starter_kit/tests/test_web.py`
 
 **Interfaces:**
-- Consumes: `/api/prompt-contract`, `/api/run`, `/api/compare`, `/api/causal-audit`, and `/api/hybrid-path-certificate`.
-- Produces: anchors `#workspace`, `#counterfactual-panel`, `#witness-panel`, `#hybrid-path-panel`, and `#prompt-contract-panel`.
-- Produces: `markTourStep(step: "run" | "compare" | "witness" | "hybrid" | "contract", detail: string) -> void`.
+- Consumes: `/api/prompt-contract`, `/api/run`, `/api/compare`, `/api/assert`, `/api/causal-audit`, and `/api/hybrid-paths`.
+- Produces: anchors `#workspace`, `#counterfactual-panel`, `#assert-panel`, `#witness-panel`, `#hybrid-path-panel`, and `#prompt-contract-panel`.
+- Produces: `markTourStep(step: "run" | "compare" | "assert" | "witness" | "hybrid" | "contract", detail: string) -> void`.
 
 - [ ] **Step 1: Add a failing home-page contract test**
 
@@ -113,6 +113,7 @@ Extend `test_home_exposes_learn_repair_backend_and_accessible_results` with thes
 self.assertIn('aria-label="90 秒评委导览"', page)
 self.assertIn('href="#workspace"', page)
 self.assertIn('href="#counterfactual-panel"', page)
+self.assertIn('href="#assert-panel"', page)
 self.assertIn('href="#witness-panel"', page)
 self.assertIn('href="#hybrid-path-panel"', page)
 self.assertIn('href="#prompt-contract-panel"', page)
@@ -133,11 +134,12 @@ Expected: missing evidence-rail and Prompt Contract controls.
 
 - [ ] **Step 3: Add the evidence rail**
 
-Place a `<nav id="judge-tour" aria-label="90 秒评委导览">` after the hero. Add five anchor links. Each link contains a stable status span whose initial text is `未运行`:
+Place a `<nav id="judge-tour" aria-label="90 秒评委导览">` after the hero. Add six anchor links. Each link contains a stable status span whose initial text is `未运行`:
 
 ```html
 <a href="#workspace" data-tour-step="run">运行与 ProofTrace <span id="tour-run-status">未运行</span></a>
 <a href="#counterfactual-panel" data-tour-step="compare">首个因果分歧 <span id="tour-compare-status">未运行</span></a>
+<a href="#assert-panel" data-tour-step="assert">统计断言 <span id="tour-assert-status">未运行</span></a>
 <a href="#witness-panel" data-tour-step="witness">Witness Chain <span id="tour-witness-status">未运行</span></a>
 <a href="#hybrid-path-panel" data-tour-step="hybrid">Mid-circuit 路径证书 <span id="tour-hybrid-status">未运行</span></a>
 <a href="#prompt-contract-panel" data-tour-step="contract">L2 Prompt Contract <span id="tour-contract-status">未运行</span></a>
@@ -171,8 +173,9 @@ Call it only after the corresponding semantic evidence gate succeeds:
 
 - `/api/run`: require `proof.equivalence.verified === true`, exactly the three declared portability targets, and `roundtrip_verified === true` for every target before `markTourStep("run", "三后端回读")`.
 - `/api/compare`: require a non-null `first_divergence` for the default counterexample before `markTourStep("compare", "首门已定位")`; an HTTP 200 response alone is insufficient.
+- `/api/assert`: require `mode === "exact-local"`, a non-empty assertion list, recognized `pass | fail | inconclusive` statuses, `evidence_mode === "exact-local"` for each item, and the attribution caveat before `markTourStep("assert", statusSummary)`. A failing scientific assertion is still valid evidence; malformed or unscoped output is not.
 - `/api/causal-audit`: require `verification.valid === true` before `markTourStep("witness", "本地重算通过")`.
-- `/api/hybrid-path-certificate`: require the response schema `{certificate, verification}`, `verification.valid === true`, and certificate schema `loomq-hybrid-path-certificate-v1` before `markTourStep("hybrid", "语义重算通过")`. Render exhaustive declared-clbit outcomes and dead paths from `certificate`; do not consume the removed projected-bit schema.
+- `/api/hybrid-paths`: require the response schema `{certificate, verification}`, `verification.valid === true`, and certificate schema `loomq-hybrid-path-certificate-v1` before `markTourStep("hybrid", "语义重算通过")`. Render exhaustive declared-clbit outcomes and dead paths from `certificate`; do not consume the removed projected-bit schema.
 - `/api/prompt-contract`: require `verification.valid === true`, contract schema `loomq-prompt-contract-v1`, and `integrity.is_signature === false` before `markTourStep("contract", contract.task_kind)`.
 
 Errors leave the step incomplete and continue through the existing error notice.
@@ -203,8 +206,8 @@ Commit the rail, panel, styles, and tests. Record that progress reflects success
 - Modify: `starter_kit/README.md`
 
 **Interfaces:**
-- Consumes: the five evidence-rail anchors and their real actions.
-- Produces: one reproducible sequence with no credentials required for its first four steps.
+- Consumes: the six evidence-rail anchors and their real actions.
+- Produces: one reproducible sequence requiring no credentials for any of its six steps.
 
 - [ ] **Step 1: Write the judge sequence**
 
@@ -212,11 +215,12 @@ Add a `90 秒页面验收` section to `JUDGE_GUIDE.md` with this order:
 
 1. Run the default Bell circuit and inspect ProofTrace portability plus the state trace.
 2. Run the default Bell counterexample and read the first divergent gate.
-3. Generate Witness Chain and confirm local rebuild verification.
-4. Generate the default mid-circuit Hybrid path certificate and inspect reachable and unreachable paths.
-5. Inspect the default Prompt Contract and confirm that it records a backend task with OriginQ, at least 20 qubits, simulator, free, and no-account constraints, then passes deterministic rebuild verification.
+3. Run the default exact-local support and parity assertions and read their evidence modes and statuses.
+4. Generate Witness Chain and confirm local rebuild verification.
+5. Generate the default mid-circuit Hybrid path certificate and inspect reachable and unreachable paths.
+6. Inspect the default Prompt Contract and confirm that it records a backend task with OriginQ, at least 20 qubits, simulator, free, and no-account constraints, then passes deterministic rebuild verification.
 
-State that Prompt Contract inspection needs no API key and does not itself claim a uniquely compatible backend. Keep Agent generation and its separate backend-compatibility validator as an optional sixth step for environments with `LOOMQ_LLM_*` configured.
+State that all six steps need no API key, and that Prompt Contract inspection does not itself claim a uniquely compatible backend. Keep Agent generation and its separate backend-compatibility validator as an optional seventh step for environments with `LOOMQ_LLM_*` configured.
 
 - [ ] **Step 2: Update Web QA facts**
 
@@ -264,7 +268,7 @@ Expected: every required verifier phase passes; root PyQuafu skips, if any, rema
 
 - [ ] **Step 2: Run desktop Browser QA**
 
-At 1440×900, execute all five evidence-rail actions. Verify that each successful API changes exactly one rail item to `完成`, the target panel receives focus or scroll position, and console/page/network errors remain empty.
+At 1440×900, execute all six evidence-rail actions. Verify that each semantically valid API changes exactly one rail item to `完成`, the target panel receives focus or scroll position, and console/page/network errors remain empty.
 
 - [ ] **Step 3: Run mobile Browser QA**
 
@@ -286,7 +290,7 @@ Create a new official Final Submission Issue through the repository form. Comple
 
 ## Self-Review
 
-- Spec coverage: the plan covers discoverability, semantic-evidence-backed progress, Prompt Contract inspection, server-recomputed mid-circuit evidence, documentation, responsive QA, and official archive acceptance.
+- Spec coverage: the plan covers discoverability, semantic-evidence-backed progress, exact/statistical assertion visibility, Prompt Contract inspection, server-recomputed mid-circuit evidence, documentation, responsive QA, and official archive acceptance.
 - Placeholder scan: no deferred implementation placeholders or unspecified error handling remain.
 - Type consistency: tour step names, DOM IDs, routes, and response fields match across tasks.
 - Scope: all Web edits wait for the Hybrid integration commit; this plan does not modify the concurrently owned Hybrid worktree.
