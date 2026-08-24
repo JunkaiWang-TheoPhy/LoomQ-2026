@@ -4,7 +4,7 @@
 
 **Goal:** Let a judge reach six working, verifiable LoomQ capabilities from the first screen in under 90 seconds without hiding the beginner workflow.
 
-**Architecture:** Add a sticky evidence rail to the existing single-page lab. Each rail item points to a real API-backed action and changes state only after semantic response validation succeeds. Add a read-only Prompt Contract endpoint and panel so the L2 interpretation is visible before a model response. Keep the current workbench, ProofTrace, counterfactual, statistical assertion, Witness Chain, and Hybrid panels as the underlying content.
+**Architecture:** Extend the existing evidence-first `#evidence-map` with a compact sticky status rail rather than creating a second first-screen navigator. Each rail item points to a real API-backed action and changes state only after semantic response validation succeeds. Add a read-only Prompt Contract endpoint and panel so the L2 interpretation is visible before a model response. Keep the current workbench, ProofTrace, counterfactual, statistical assertion, Witness Chain, and Hybrid panels as the underlying content.
 
 **Tech Stack:** Python 3.10 standard library, `unittest`, vanilla HTML/CSS/JavaScript, existing LoomQ Web server and Browser QA.
 
@@ -134,7 +134,7 @@ Expected: missing evidence-rail and Prompt Contract controls.
 
 - [ ] **Step 3: Add the evidence rail**
 
-Place a `<nav id="judge-tour" aria-label="90 秒评委导览">` after the hero. Add six anchor links. Each link contains a stable status span whose initial text is `未运行`:
+Place a `<nav id="judge-tour" aria-label="90 秒评委导览">` inside the existing `#evidence-map`, after its header/three quick choices and before the question checklist. Preserve those natural-language choices; the rail adds live evidence state instead of replacing or duplicating them. Add six anchor links. Each link contains a stable status span whose initial text is `未运行`:
 
 ```html
 <a href="#workspace" data-tour-step="run">运行与 ProofTrace <span id="tour-run-status">未运行</span></a>
