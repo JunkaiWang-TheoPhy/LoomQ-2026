@@ -50,6 +50,6 @@ Agent 生成是可选的第 7 步。配置 `LOOMQ_LLM_*` 后再运行它；模�
 2. 点击 Learn，运行 Bell，读取逐门概率/相位与 ProofTrace 三目标证书；随后进入 Counterfactual Circuit Lab 单独查看 `CX` 对 `X` 与 TV 距离 `0.5`。
 3. 点击 Repair 验证错误 QASM 的确定性恢复，再用 Backend Match 询问“免费、零排队、至少 20 比特的模拟器”，核对规范 capability ID。
 
-与十四个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只记录 accepted archive 中可复核的事实；私有 12 例 DeepSeek 评测和未公开提交仍然未知。
+与十五个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只记录 accepted archive 中可复核的事实；私有 12 例 DeepSeek 评测和未公开提交仍然未知。
 
 Web 不接收或保存模型 Key；启动进程只从 `LOOMQ_LLM_*` 读取。未配置模型时，L1 本地实验仍可完整使用。
