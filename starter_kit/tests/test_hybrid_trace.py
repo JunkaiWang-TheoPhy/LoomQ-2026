@@ -56,6 +56,15 @@ addi x3, x3, -2
 LOOMQ_END_2:
 """
 
+OVERFLOW_CLASSICAL_BITS = """OPENQASM 2.0; include "qelib1.inc";
+qreg q[1]; creg c[33];
+measure q[0] -> c[0];
+measure q[0] -> c[32];
+classical {
+  if (c[0] == 1) { r1 = 9; } else { r1 = 4; }
+}
+"""
+
 
 class HybridTraceTests(unittest.TestCase):
     def test_hybrid_trace_replays_true_and_false_paths(self):
@@ -139,6 +148,50 @@ class HybridTraceTests(unittest.TestCase):
             [item["decoded_operation"] for item in report["quantum_machine_trace"]],
             ["h q[0]", "cx q[0],q[1]", "measure q[0] -> c[0]", "measure q[1] -> c[1]"],
         )
+
+    def test_hybrid_trace_reports_partial_custom_0_coverage_for_large_creg(self):
+        bits = [1] + [0] * 31 + [1]
+
+        report = adapter.trace_hybrid(OVERFLOW_CLASSICAL_BITS, bits)
+
+        self.assertEqual(report["final_registers"]["x1"], 9)
+        self.assertEqual(report["branch_path"], "if1:T")
+        self.assertEqual(
+            report["loaded_measurement_inputs"][0],
+            {"measurement": "c[0]", "register": "x10", "value": 1},
+        )
+        self.assertEqual(
+            report["loaded_measurement_inputs"][-1],
+            {"measurement": "c[21]", "register": "x31", "value": 0},
+        )
+        self.assertEqual(
+            report["omitted_measurement_inputs"][0],
+            {"measurement": "c[22]", "reason": "no representable RISC-V replay register"},
+        )
+        self.assertEqual(
+            report["omitted_measurement_inputs"][-1],
+            {"measurement": "c[32]", "reason": "no representable RISC-V replay register"},
+        )
+        self.assertEqual(
+            [item["decoded_operation"] for item in report["quantum_machine_trace"]],
+            ["measure q[0] -> c[0]"],
+        )
+        self.assertEqual(
+            report["quantum_machine_coverage"],
+            {
+                "total_operations": 2,
+                "encoded_operations": 1,
+                "fully_encoded": False,
+                "omitted_operations": [
+                    {
+                        "index": 1,
+                        "operation": "measure q[0] -> c[32]",
+                        "reason": "classical bit exceeds custom-0 5-bit operand field",
+                    }
+                ],
+            },
+        )
+        self.assertEqual(adapter.trace_hybrid(OVERFLOW_CLASSICAL_BITS, bits), report)
 
 
 if __name__ == "__main__":

@@ -3,16 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Tuple
 
 try:
     from .hybrid import _Compiler, _quantum_operations, parse_hybrid
-    from .qasm import Gate, Measurement
+    from .qasm import Circuit, Gate, Measurement
     from .quantum_riscv import CUSTOM_0_OPCODE, decode_program, encode_circuit
     from ..riscv_emulator import TinyRISCVEmulator
 except ImportError:
     from loomq.hybrid import _Compiler, _quantum_operations, parse_hybrid
-    from loomq.qasm import Gate, Measurement
+    from loomq.qasm import Circuit, Gate, Measurement
     from loomq.quantum_riscv import CUSTOM_0_OPCODE, decode_program, encode_circuit
     from riscv_emulator import TinyRISCVEmulator
 
@@ -20,6 +20,7 @@ except ImportError:
 TRACE_SCHEMA_VERSION = "loomq-hybrid-trace-v1"
 _MEASUREMENT_REGISTER_BASE = 10
 _MEASUREMENT_REGISTER_LIMIT = 31
+_CUSTOM_OPERAND_LIMIT = 32
 
 
 def _validate_measurement_bits(measurement_bits: Sequence[int], expected: int) -> List[int]:
@@ -58,6 +59,94 @@ def _register_measurements(indexes: Set[int]) -> List[str]:
     return [f"c[{index}]" for index in sorted(indexes)]
 
 
+def _machine_encoding_reason(operation: Gate | Measurement) -> str | None:
+    if isinstance(operation, Measurement):
+        if operation.qubit >= _CUSTOM_OPERAND_LIMIT:
+            return "quantum bit exceeds custom-0 5-bit operand field"
+        if operation.clbit >= _CUSTOM_OPERAND_LIMIT:
+            return "classical bit exceeds custom-0 5-bit operand field"
+        return None
+    if any(qubit >= _CUSTOM_OPERAND_LIMIT for qubit in operation.qubits):
+        return "quantum bit exceeds custom-0 5-bit operand field"
+    return None
+
+
+def _build_quantum_machine_trace(
+    circuit: Circuit,
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    representable_operations = []
+    omitted_operations = []
+    for index, operation in enumerate(circuit.operations):
+        reason = _machine_encoding_reason(operation)
+        if reason is not None:
+            omitted_operations.append(
+                {
+                    "index": index,
+                    "operation": _format_decoded_operation(operation),
+                    "reason": reason,
+                }
+            )
+            continue
+        representable_operations.append((index, operation))
+
+    if representable_operations:
+        encoded_program = encode_circuit(
+            Circuit(
+                min(circuit.num_qubits, _CUSTOM_OPERAND_LIMIT),
+                min(circuit.num_clbits, _CUSTOM_OPERAND_LIMIT),
+                [operation for _, operation in representable_operations],
+            )
+        )
+        decoded_program = decode_program(encoded_program)
+        quantum_machine_trace = [
+            {
+                "index": original_index,
+                "word": f"0x{word:08x}",
+                "opcode": f"0x{CUSTOM_0_OPCODE:02x}",
+                "decoded_operation": _format_decoded_operation(operation),
+            }
+            for (original_index, _), word, operation in zip(
+                representable_operations,
+                encoded_program.words,
+                decoded_program.operations,
+            )
+        ]
+    else:
+        quantum_machine_trace = []
+
+    return quantum_machine_trace, {
+        "total_operations": len(circuit.operations),
+        "encoded_operations": len(representable_operations),
+        "fully_encoded": len(omitted_operations) == 0,
+        "omitted_operations": omitted_operations,
+    }
+
+
+def _measurement_input_loads(
+    measurement_bits: Sequence[int],
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, str]]]:
+    loaded_inputs = []
+    omitted_inputs = []
+    for index, bit in enumerate(measurement_bits):
+        register = _MEASUREMENT_REGISTER_BASE + index
+        if register > _MEASUREMENT_REGISTER_LIMIT:
+            omitted_inputs.append(
+                {
+                    "measurement": f"c[{index}]",
+                    "reason": "no representable RISC-V replay register",
+                }
+            )
+            continue
+        loaded_inputs.append(
+            {
+                "measurement": f"c[{index}]",
+                "register": f"x{register}",
+                "value": bit,
+            }
+        )
+    return loaded_inputs, omitted_inputs
+
+
 def trace_hybrid(source: str, measurement_bits: Sequence[int]) -> Dict[str, Any]:
     circuit, statements = parse_hybrid(source)
     bits = _validate_measurement_bits(measurement_bits, circuit.num_clbits)
@@ -65,28 +154,15 @@ def trace_hybrid(source: str, measurement_bits: Sequence[int]) -> Dict[str, Any]
     compiler = _Compiler(statements)
     assembly = compiler.compile(statements)
     quantum_operations = _quantum_operations(circuit)
-
-    encoded_program = encode_circuit(circuit)
-    decoded_program = decode_program(encoded_program)
-    quantum_machine_trace = [
-        {
-            "index": index,
-            "word": f"0x{word:08x}",
-            "opcode": f"0x{CUSTOM_0_OPCODE:02x}",
-            "decoded_operation": _format_decoded_operation(operation),
-        }
-        for index, (word, operation) in enumerate(
-            zip(encoded_program.words, decoded_program.operations)
-        )
-    ]
+    quantum_machine_trace, quantum_machine_coverage = _build_quantum_machine_trace(
+        circuit
+    )
+    loaded_measurement_inputs, omitted_measurement_inputs = _measurement_input_loads(bits)
 
     emulator = TinyRISCVEmulator()
     emulator.load_program(assembly)
-    for index, bit in enumerate(bits):
-        register = _MEASUREMENT_REGISTER_BASE + index
-        if register > _MEASUREMENT_REGISTER_LIMIT:
-            break
-        emulator.set_register(f"x{register}", bit)
+    for item in loaded_measurement_inputs:
+        emulator.set_register(item["register"], item["value"])
     trace = emulator.execute_with_trace()
     trace = emulator.replay_trace(trace)
 
@@ -156,8 +232,11 @@ def trace_hybrid(source: str, measurement_bits: Sequence[int]) -> Dict[str, Any]
     return {
         "schema_version": TRACE_SCHEMA_VERSION,
         "measurement_inputs": bits,
+        "loaded_measurement_inputs": loaded_measurement_inputs,
+        "omitted_measurement_inputs": omitted_measurement_inputs,
         "quantum_operations": quantum_operations,
         "quantum_machine_trace": quantum_machine_trace,
+        "quantum_machine_coverage": quantum_machine_coverage,
         "assembly": assembly,
         "instruction_events": trace["events"],
         "branch_events": branch_events,
