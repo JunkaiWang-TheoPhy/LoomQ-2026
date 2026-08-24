@@ -25,6 +25,9 @@ GATE_ARITY = {
     "ccx": 3,
 }
 PARAMETER_GATES = {"rz", "ry", "cu1"}
+MAX_QASM_SOURCE_CHARS = 1_000_000
+MAX_REGISTER_BITS = 256
+MAX_OPERATIONS = 100_000
 
 
 class QASMError(ValueError):
@@ -175,6 +178,8 @@ def parse_qasm(source: str) -> Circuit:
     """Parse and validate the contest's complete L1 input subset."""
     if not isinstance(source, str) or not source.strip():
         raise QASMError("QASM source must be a non-empty string")
+    if len(source) > MAX_QASM_SOURCE_CHARS:
+        raise QASMError(f"QASM source is limited to {MAX_QASM_SOURCE_CHARS} characters")
 
     statements = list(_statements(source))
     if not statements or not re.fullmatch(
@@ -210,8 +215,16 @@ def parse_qasm(source: str) -> Circuit:
             registers[name] = _Register(offset, size)
             if kind == "qreg":
                 qubit_count += size
+                if qubit_count > MAX_REGISTER_BITS:
+                    raise QASMError(
+                        f"LoomQ supports at most {MAX_REGISTER_BITS} quantum bits"
+                    )
             else:
                 clbit_count += size
+                if clbit_count > MAX_REGISTER_BITS:
+                    raise QASMError(
+                        f"LoomQ supports at most {MAX_REGISTER_BITS} classical bits"
+                    )
             continue
 
         measurement = _MEASURE.fullmatch(normalized)
@@ -221,6 +234,8 @@ def parse_qasm(source: str) -> Circuit:
             if len(qubits) != len(clbits):
                 raise QASMError("measurement register sizes must match")
             operations.extend(Measurement(q, c) for q, c in zip(qubits, clbits))
+            if len(operations) > MAX_OPERATIONS:
+                raise QASMError(f"QASM is limited to {MAX_OPERATIONS} operations")
             continue
 
         gate_match = _GATE.fullmatch(normalized)
@@ -242,6 +257,8 @@ def parse_qasm(source: str) -> Circuit:
             if len(set(qubits)) != len(qubits):
                 raise QASMError(f"gate {name} cannot reuse a qubit operand")
             operations.append(Gate(name, qubits, parameter))
+            if len(operations) > MAX_OPERATIONS:
+                raise QASMError(f"QASM is limited to {MAX_OPERATIONS} operations")
 
     if not saw_version:
         raise QASMError("missing OPENQASM 2.0 declaration")

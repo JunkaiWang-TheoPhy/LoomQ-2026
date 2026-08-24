@@ -13,6 +13,12 @@ class HybridError(ValueError):
     """Raised for programs outside the published Hybrid-QASM grammar."""
 
 
+MAX_HYBRID_SOURCE_CHARS = 1_000_000
+MAX_CLASSICAL_TOKENS = 20_000
+MAX_CLASSICAL_STATEMENTS = 4_096
+MAX_BRANCH_NESTING = 64
+
+
 @dataclass(frozen=True)
 class Number:
     value: int
@@ -94,8 +100,14 @@ def _tokenize(source: str) -> List[Token]:
 class _Parser:
     def __init__(self, source: str, classical_bits: int):
         self.tokens = _tokenize(source)
+        if len(self.tokens) > MAX_CLASSICAL_TOKENS + 1:
+            raise HybridError(
+                f"classical block is limited to {MAX_CLASSICAL_TOKENS} tokens"
+            )
         self.position = 0
         self.classical_bits = classical_bits
+        self.statement_count = 0
+        self.branch_depth = 0
 
     @property
     def current(self) -> Token:
@@ -136,6 +148,11 @@ class _Parser:
         return statements
 
     def statement(self) -> Statement:
+        self.statement_count += 1
+        if self.statement_count > MAX_CLASSICAL_STATEMENTS:
+            raise HybridError(
+                f"classical block is limited to {MAX_CLASSICAL_STATEMENTS} statements"
+            )
         if self.current.kind == "IDENT" and self.current.value == "if":
             return self.branch()
         return self.assignment()
@@ -150,6 +167,9 @@ class _Parser:
         return Assignment(int(target[1:]), expression)
 
     def branch(self) -> Branch:
+        if self.branch_depth >= MAX_BRANCH_NESTING:
+            raise HybridError(f"classical branch nesting exceeds {MAX_BRANCH_NESTING}")
+        self.branch_depth += 1
         self.expect("IDENT", "if")
         self.expect("LPAREN")
         left = self.expression()
@@ -168,6 +188,7 @@ class _Parser:
             self.expect("LBRACE")
             when_false = self.statements("RBRACE")
             self.expect("RBRACE")
+        self.branch_depth -= 1
         return Branch(operator.value, left, right, when_true, when_false)
 
     def expression(self) -> Expression:
@@ -434,6 +455,12 @@ def _quantum_operations(circuit: Circuit) -> List[str]:
 
 
 def compile_hybrid(source: str) -> Tuple[List[str], str]:
+    if not isinstance(source, str) or not source.strip():
+        raise HybridError("Hybrid-QASM source must be a non-empty string")
+    if len(source) > MAX_HYBRID_SOURCE_CHARS:
+        raise HybridError(
+            f"Hybrid-QASM source is limited to {MAX_HYBRID_SOURCE_CHARS} characters"
+        )
     quantum_source, classical_source = _split_classical(source)
     circuit = parse_qasm(quantum_source)
     quantum = _quantum_operations(circuit)

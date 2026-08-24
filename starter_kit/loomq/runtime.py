@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict
 
 from .qasm import Circuit, Gate
-from .simulator import probabilities
+from .simulator import MAX_SIMULATOR_QUBITS, probabilities
 
 
 BACKEND_NAMES = {
@@ -16,6 +16,7 @@ BACKEND_NAMES = {
     "originq": "originq_local_statevector",
     "braket": "braket_local_simulator",
 }
+LOCAL_TARGET_QUBITS = {"spinq": 24, "originq": 30, "braket": 25}
 
 
 def _integer_counts(distribution: Dict[str, float], shots: int) -> Dict[str, int]:
@@ -33,6 +34,11 @@ def execute(circuit: Circuit, target: str, shots: int) -> Dict[str, object]:
         raise ValueError(f"unsupported target: {target}")
     if not isinstance(shots, int) or isinstance(shots, bool) or shots <= 0:
         raise ValueError("shots must be a positive integer")
+    if circuit.num_qubits > LOCAL_TARGET_QUBITS[target]:
+        raise ValueError(
+            f"{target} local execution supports at most "
+            f"{LOCAL_TARGET_QUBITS[target]} qubits"
+        )
 
     distribution = probabilities(circuit)
     gate_count = sum(isinstance(operation, Gate) for operation in circuit.operations)
@@ -44,7 +50,11 @@ def execute(circuit: Circuit, target: str, shots: int) -> Dict[str, object]:
         "bit_order": "little",
         "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "meta": {
-            "engine": "loomq-statevector",
+            "engine": (
+                "loomq-statevector"
+                if circuit.num_qubits <= MAX_SIMULATOR_QUBITS
+                else "loomq-sparse-statevector"
+            ),
             "transpiled_gates": gate_count,
             "depth": gate_count,
         },

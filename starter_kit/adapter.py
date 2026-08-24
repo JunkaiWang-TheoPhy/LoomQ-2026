@@ -12,6 +12,7 @@ try:
     from .loomq.agent import chat
     from .loomq.emitters import emit
     from .loomq.hybrid import compile_hybrid as compile_hybrid_program
+    from .loomq.native_ir import verify_native_ir
     from .loomq.qasm import parse_qasm
     from .loomq.runtime import execute
 except ImportError:  # Direct execution from starter_kit/.
@@ -19,6 +20,7 @@ except ImportError:  # Direct execution from starter_kit/.
     from loomq.agent import chat
     from loomq.emitters import emit
     from loomq.hybrid import compile_hybrid as compile_hybrid_program
+    from loomq.native_ir import verify_native_ir
     from loomq.qasm import parse_qasm
     from loomq.runtime import execute
 
@@ -28,7 +30,10 @@ SUPPORTED_TARGETS = ("spinq", "originq", "braket")
 
 def transpile(qasm_str: str, target: str) -> str:
     """Translate OpenQASM 2.0 into the target backend's native representation."""
-    return emit(parse_qasm(qasm_str), target)
+    circuit = parse_qasm(qasm_str)
+    native_ir = emit(circuit, target)
+    verify_native_ir(circuit, native_ir, target)
+    return native_ir
 
 
 def run(qasm_str: str, target: str, shots: int) -> Dict[str, Any]:

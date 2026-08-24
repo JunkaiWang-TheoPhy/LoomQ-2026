@@ -47,6 +47,67 @@ s q[0];
 s q[0];
 h q[0];
 measure q -> c;`,
+  deutsch: `OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[3];
+creg c[2];
+x q[2];
+h q[0];
+h q[1];
+h q[2];
+cx q[0],q[2];
+cx q[1],q[2];
+h q[0];
+h q[1];
+measure q[0] -> c[0];
+measure q[1] -> c[1];`,
+  grover: `OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[3];
+creg c[3];
+h q[0]; h q[1]; h q[2];
+h q[2]; ccx q[0],q[1],q[2]; h q[2];
+h q[0]; h q[1]; h q[2];
+x q[0]; x q[1]; x q[2];
+h q[2]; ccx q[0],q[1],q[2]; h q[2];
+x q[0]; x q[1]; x q[2];
+h q[0]; h q[1]; h q[2];
+h q[2]; ccx q[0],q[1],q[2]; h q[2];
+h q[0]; h q[1]; h q[2];
+x q[0]; x q[1]; x q[2];
+h q[2]; ccx q[0],q[1],q[2]; h q[2];
+x q[0]; x q[1]; x q[2];
+h q[0]; h q[1]; h q[2];
+measure q -> c;`,
+  qft: `OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[4];
+creg c[4];
+x q[0];
+h q[3];
+cu1(pi/2) q[2],q[3];
+cu1(pi/4) q[1],q[3];
+cu1(pi/8) q[0],q[3];
+h q[2];
+cu1(pi/2) q[1],q[2];
+cu1(pi/4) q[0],q[2];
+h q[1];
+cu1(pi/2) q[0],q[1];
+h q[0];
+swap q[0],q[3];
+swap q[1],q[2];
+measure q -> c;`,
+};
+
+const exampleLessons = {
+  bell: "Bell：H 创建两条等幅路径，CX 把第二比特与第一比特关联；Z 基只证明经典相关性，不单独证明真机纠缠。",
+  ghz: "GHZ：一次 H 后串联 CX，把两条路径扩展为 |000⟩ 与 |111⟩；任一比特单独看仍是 50/50。",
+  w: "W：三个单激发态 |001⟩、|010⟩、|100⟩ 各占三分之一；它与只含全 0/全 1 的 GHZ 分布不同。",
+  uniform: "均匀叠加：每个比特各施加一次 H，三个比特产生 8 条等概率路径。",
+  interference: "相位干涉：两次 S 让 |1⟩ 路径累积 π 相位；末尾 H 把相位差转换为确定的 |1⟩ 概率。",
+  deutsch: "Deutsch–Jozsa：平衡 oracle 把函数差异写入相位；末尾两个 H 让输入寄存器确定测得 11。",
+  grover: "Grover：oracle 标记 |111⟩，两次均值反射把它从 1/8 放大到 94.53125%，其余七态各 0.78125%。",
+  qft: "QFT：测量仍是 16 个等概率结果，但逐门状态中的复振幅相位按 π/8 递进；只看柱状图会漏掉算法信息。",
 };
 
 const taskPrompts = {
@@ -77,10 +138,11 @@ function renderCircuit() {
   const source = qasm.value;
   const count = Number((source.match(/qreg\s+\w+\[(\d+)\]/) || [])[1] || 0);
   const gates = Array.from({ length: count }, () => []);
-  for (const line of source.split("\n")) {
-    const match = line.trim().match(/^(h|x|s|sdg|t|tdg|rz|ry|cx|cu1|swap|ccx)\b[^;]*?((?:q\[\d+\][^;]*)+);/);
+  for (const rawStatement of source.split(";")) {
+    const statement = rawStatement.trim();
+    const match = statement.match(/^(h|x|s|sdg|t|tdg|rz|ry|cx|cu1|swap|ccx)\b/i);
     if (!match) continue;
-    const used = [...match[2].matchAll(/q\[(\d+)\]/g)].map((item) => Number(item[1]));
+    const used = [...statement.matchAll(/q\[(\d+)\]/g)].map((item) => Number(item[1]));
     used.forEach((index) => gates[index]?.push(match[1].toUpperCase()));
   }
   const circuit = $("#circuit");
@@ -99,6 +161,7 @@ function renderCircuit() {
 
 function selectExample(name) {
   qasm.value = examples[name];
+  $("#lesson").textContent = exampleLessons[name];
   document.querySelectorAll(".chip").forEach((button) => {
     button.classList.toggle("active", button.dataset.example === name);
   });
@@ -175,6 +238,7 @@ function renderResults(data) {
   const leaders = entries.slice(0, 2).map(([state]) => `|${state}⟩`).join(" 与 ");
   $("#explanation").textContent = `共测量 ${data.result.shots} 次。主导结果为 ${leaders}；位串从左到右对应高位到低位。`;
   const traceSteps = $("#trace-steps");
+  $("#state-trace").open = data.trace.length <= 15;
   traceSteps.replaceChildren();
   if (data.trace_notice) {
     traceSteps.append(element("li", "trace-step", `状态轨迹未展开：${data.trace_notice}；电路运行结果仍然有效。`));

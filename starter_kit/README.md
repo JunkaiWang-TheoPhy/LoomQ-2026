@@ -14,8 +14,10 @@
 - Bonus 使用真实 32 位 RISC-V `custom-0` 机器字编码全部 12 门和测量，扩展模拟器完成编码、解码与执行闭环；
 - 固定种子离线活动以独立断言执行 40,000 项检查，覆盖 L1、三目标、L3 差分、量子 RISC-V 往返和拒绝路径；
 - 零依赖 Web 实验台与命令行入口共同提供 Learn、Build、Repair、Backend Match、电路预览、三后端转译、运行、逐门概率/振幅/相位轨迹和受验证的多轮 Agent 对话。
+- Deutsch–Jozsa、两轮 Grover 与 QFT-4 可运行展品同时进入 Web 和三 target 回归；每次转译还会由独立 native-IR 解析器回读并验证语义等价。
+- 对 QASM、状态向量和 Hybrid-QASM 设置显式资源上限，恶意超大寄存器或 65 层嵌套会在分配/编译前得到可解释拒绝。
 
-架构与边界见 [`ARCHITECTURE.md`](ARCHITECTURE.md)。
+架构与边界见 [`ARCHITECTURE.md`](ARCHITECTURE.md)，固定强对手逐项覆盖见 [`COMPETITIVE_COVERAGE.md`](COMPETITIVE_COVERAGE.md)。
 
 ### 零基础首次运行
 
@@ -25,7 +27,7 @@
 python3 -m starter_kit.loomq.web
 ```
 
-打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ、W、均匀叠加或相位干涉示例，然后点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释和目标平台原生指令；服务默认只监听本机地址。
+打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例，然后点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释和目标平台原生指令；长轨迹默认折叠，服务只监听本机地址。
 
 也可以使用 CLI：
 
@@ -133,7 +135,7 @@ starter_kit/
 ├── evidence/
 │   ├── README.md
 │   └── files/                # 可选附件
-├── tests/                    # 随正式提交归档的 78 项回归测试
+├── tests/                    # 随正式提交归档的 96 项回归测试
 ├── scripts/                  # 压力活动、交叉验证与真机证据验证器
 ├── web/                      # 零依赖响应式 Web UI
 ├── circuits/

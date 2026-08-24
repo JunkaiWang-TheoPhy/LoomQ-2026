@@ -5,6 +5,8 @@
 """
 
 import json
+import re
+from datetime import datetime, timezone
 
 try:
     import pyqpanda as pq
@@ -12,18 +14,25 @@ except ImportError:
     # 允许没有安装 pyqpanda 时仅做语法和结构提示
     pq = None
 
+
+def _normalize_counts(raw_counts: dict, num_bits: int) -> dict:
+    """Normalize SDK count keys without treating binary strings as decimal."""
+    formatted_counts = {}
+    for key, value in raw_counts.items():
+        if isinstance(key, int):
+            normalized = format(key, f"0{num_bits}b")
+        elif isinstance(key, str) and re.fullmatch(r"[01]+", key):
+            normalized = key.zfill(num_bits)
+        elif isinstance(key, str) and key.isdigit():
+            normalized = format(int(key), f"0{num_bits}b")
+        else:
+            normalized = str(key)
+        formatted_counts[normalized] = formatted_counts.get(normalized, 0) + value
+    return formatted_counts
+
 def run_on_originq_simulator(qasm_str: str, shots: int = 1024) -> dict:
     if pq is None:
-        print("[Warning] 未检测到 pyqpanda 模块，无法真正运行本源量子示例。将返回 Mock 数据。")
-        return {
-            "backend": "originq_cpu_simulator_mock",
-            "job_id": "mock-job-123",
-            "shots": shots,
-            "counts": {"00": 510, "11": 514},
-            "bit_order": "little",
-            "timestamp": "2026-07-06T10:00:00Z",
-            "meta": {"info": "Mock data since pyqpanda is not installed"}
-        }
+        raise RuntimeError("pyqpanda 未安装；请安装可选厂商 SDK 后运行本示例")
 
     # 1. 初始化量子虚拟机器 (QVM)
     machine = pq.CPUQVM()
@@ -50,32 +59,26 @@ def run_on_originq_simulator(qasm_str: str, shots: int = 1024) -> dict:
     # 4. 统计结果
     # pyqpanda 返回的 counts 是以十进制或二进制字符串作为 key
     # 我们确保将其标准化为二进制 key，如 "00", "11"
-    raw_counts = result
-    formatted_counts = {}
-    
     # 获取比特总数，以便将十进制格式化为对应长度的二进制串
     num_bits = len(creg)
-    for key, val in raw_counts.items():
-        # 如果 key 本身是十进制整数，转为二进制字符串
-        if isinstance(key, int) or key.isdigit():
-            bin_str = bin(int(key))[2:].zfill(num_bits)
-            formatted_counts[bin_str] = val
-        else:
-            formatted_counts[key] = val
+    formatted_counts = _normalize_counts(result, num_bits)
 
     # 5. 释放量子虚拟机器资源
     machine.finalize()
 
     return {
         "backend": "originq_cpu_simulator",
-        "job_id": "originq-sim-job-local",
+        "job_id": None,
         "shots": shots,
         "counts": formatted_counts,
         "bit_order": "little",
-        "timestamp": "2026-07-06T10:00:00Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "meta": {
             "qubits_count": num_bits,
-            "depth": "N/A (Local Simulator)"
+            "depth": "N/A (Local Simulator)",
+            "execution": "local-simulator",
+            "job_id_source": "unavailable",
+            "timestamp_source": "local-observation",
         }
     }
 

@@ -21,7 +21,8 @@ OpenQASM 2.0
   ├─ emitters.py ── SpinQ OpenQASM 2.0
   ├─ emitters.py ── OriginIR
   ├─ emitters.py ── Braket OpenQASM 3.0
-  ├─ simulator.py ── 状态向量执行、逐门轨迹与统一 little-endian counts
+  ├─ native_ir.py ── 三目标独立回读与语义等价检查
+  ├─ simulator.py ── 稠密/有界稀疏状态向量执行、逐门轨迹与统一 little-endian counts
   └─ quantum_riscv.py ── 32 位 custom-0 编码／解码 ── 扩展模拟器执行
 
 Web / CLI
@@ -32,7 +33,8 @@ Web / CLI
 
 - `loomq/qasm.py`：解析赛题规定的 12 门子集，展开寄存器级操作，拒绝越界、未知门和不匹配的寄存器。
 - `loomq/emitters.py`：只负责从统一 IR 生成三种目标文本，避免三套互不一致的字符串替换逻辑。
-- `loomq/simulator.py`：实现 12 种门的状态向量语义、经典测量映射，以及最多 8 比特的逐门概率/振幅/相位轨迹。
+- `loomq/native_ir.py`：用与 emitter 分离的解析器回读 SpinQ QASM 2、OriginIR 和 Braket QASM 3；公开 `transpile()` 返回前必须与源 `Circuit` 完全相等。
+- `loomq/simulator.py`：实现 12 种门的状态向量语义和经典测量映射；20 比特内使用稠密状态向量，21–30 比特使用最多 1,000,000 个非零基态的有界稀疏表示，逐门概率/振幅/相位轨迹最多 8 比特。
 - `loomq/runtime.py`：把精确概率按最大余数法转换为整数 shots，并产生统一结果 Schema。
 - `loomq/agent.py`：把官方后端能力表注入模型上下文；本地验证 Bell/GHZ/W、计算基态、均匀叠加目标分布和后端约束，失败时携带具体诊断重试一次；多轮历史严格交替并限制为 8 条消息。
 - `scripts/l2_stress_campaign.py`：通过公开 `adapter.agent_chat()` 执行固定的 500 例真实模型语料，支持断点续跑、脱敏记录和逐层 SHA-256 完整性复核。
@@ -42,6 +44,7 @@ Web / CLI
 - `riscv_emulator.py`：保持官方 L3 文本汇编路径，同时增加量子机器码加载、解码和执行入口。
 - `loomq_cli.py`：面向零基础用户提供转译、执行、文本柱状图、逐门状态轨迹、自然语言 Agent 和一键生成运行。
 - `loomq/web.py` 与 `web/`：标准库 HTTP API、响应式实验台、电路预览、概率图、逐门状态故事、多轮对话和原生 IR 展示；默认仅监听 `127.0.0.1`。
+- `circuits/`：除 Bell/GHZ 外归档 Deutsch–Jozsa、Grover-3 与 QFT-4；相同源码跨三 target 转译和运行。
 
 ## 为什么基础评分路径不依赖平台 SDK
 
@@ -54,11 +57,12 @@ Web / CLI
 - 公开 Bell/GHZ 电路覆盖跨比特纠缠；归档内测试逐门、逐目标交叉覆盖全部 12 门 × 3 target。
 - 固定种子的随机三比特电路与 PyQuafu 状态向量交叉验证。
 - L3 使用 1,000 个固定种子随机经典程序、每个程序穷举 4 种测量输入，并与独立 Python 参考语义比较。
-- L2 每个 case 至少进行一次真实模型服务调用，模型地址、Key 和名称只从 `LOOMQ_LLM_*` 读取。
+- L2 campaign 在获得授权的 `LOOMQ_LLM_*` 配置时为每个 case 发起至少一次真实模型服务调用；当前归档只证明 runner、固定语料与验证链，不把无凭据 fixture 申报为真实 DeepSeek 成绩。
 - 模型生成的 QASM 先由确定性解析器与状态向量目标检查，后端 ID 再与官方 JSON 能力表复核。
 - L2 压力 campaign 的 500 条 prompt 在归档测试中检查唯一性和分类配额；证据验证器会重新生成语料并核对 prompt、记录及 JSONL 摘要。
 - Bonus 的 Bell 证明真实经历 `Circuit → 机器字 → 小端字节 → 解码 → 扩展模拟器 → counts`。
-- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录执行 78 项归档测试，并复核 Web→多轮模型协议→确定性校验、逐门状态轨迹、L2 语料、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
+- `verify_submission.py` 会从提取后的 `starter_kit/` 根目录执行 96 项归档测试，并复核 Web→多轮模型协议→确定性校验、算法展品、三 native IR 回读、资源拒绝边界、SDK 示例诚信、逐门状态轨迹、L2 语料、40,000 项离线活动摘要、PyQuafu 摘要与真机 evidence manifest，避免依赖仓库外层测试。
 - 可选的 PyQuafu 0.4.5 独立 oracle 使用固定 40 电路覆盖全部 12 门，对三个 target 完成 120 项状态向量与 counts 交叉检查；第三方包隔离在核心环境之外。
 - 离线活动的每个计数对应具体断言：概率归一化、目标 IR/Schema、机器码语义往返、四输入差分执行或恶意输入拒绝；不是仅循环不检查结果的数量指标。
 - 真机证据验证器从 provider MessagePack、counts JSON 与 QASM 重算统计结果，并用 SHA-256 manifest 锁定原始材料、派生分析和桌面/移动端截图。
+- 资源合同在解析或分配前拒绝超过 1,000,000 字符、256 个声明 bit、100,000 个 QASM 操作、超过目标能力表的本地 qubit（SpinQ 24 / OriginQ 30 / Braket 25）、超过 1,000,000 个稀疏基态，以及超过 20,000 token、4,096 statement 或 64 层分支的 classical block；直接申请稠密状态向量仍限制为 20 qubit。

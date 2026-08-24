@@ -19,7 +19,7 @@
 | 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
 |---|---:|---|
 | L1 真机 | 10/10 分上限 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
-| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、14 项 Web 测试 |
+| L2 交互体验 | 10/10 分上限 | 下方 3 个用户任务、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图、14 项 Web 测试 |
 | 工程与产品复核 | 5/5 分上限 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
 | 自定义量子 RISC-V | 8/8 分上限 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
 | 新手引导与视觉叙事 | 4/4 分上限 | Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
@@ -101,6 +101,8 @@ evidence/files/spinq-screenshot.png
 ### 独立数值 Oracle
 
 PyQuafu 0.4.5 的固定种子验证覆盖 40 个唯一电路、全部 12 门和三个 target，共 120/120 项通过；最大状态向量振幅误差为 `1.1802326323952682e-15`。协议、counts 浮点余数 tie 边界和复现命令见 `starter_kit/PYQUAFU_CROSS_VALIDATION.md`，摘要见 `starter_kit/evidence/files/pyquafu-cross-validation-summary.json`。它是软件交叉验证，不申报为第四个真机平台。
+
+此外，公开 `transpile()` 不直接信任自己的 emitter：`loomq/native_ir.py` 会把三种输出重新解析成 `Circuit` 并做完全相等检查。Deutsch–Jozsa、Grover 与 QFT 三个展品均跨三 target 回读和运行；恶意资源输入由 `tests.test_resource_boundaries` 验证在分配前拒绝。
 
 ### 40,000 项离线活动
 

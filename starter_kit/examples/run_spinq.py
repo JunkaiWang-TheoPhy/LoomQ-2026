@@ -8,6 +8,7 @@
 import json
 import os
 import tempfile
+from datetime import datetime, timezone
 
 try:
     import spinqit as sq
@@ -18,16 +19,7 @@ except ImportError:
 
 def run_on_spinq_simulator(qasm_str: str, shots: int = 1024) -> dict:
     if sq is None:
-        print("[Warning] 未检测到 spinqit 模块，无法真正运行量旋示例。将返回 Mock 数据。")
-        return {
-            "backend": "spinq_taurus_simulator_mock",
-            "job_id": "mock-job-spinq-456",
-            "shots": shots,
-            "counts": {"00": 505, "11": 519},
-            "bit_order": "little",
-            "timestamp": "2026-07-06T10:00:00Z",
-            "meta": {"info": "Mock data since spinqit is not installed"}
-        }
+        raise RuntimeError("spinqit 未安装；请安装可选厂商 SDK 后运行本示例")
 
     # 1. 将 QASM 2.0 字符串写入临时文件（QASMCompiler 接受文件路径）
     tmp = tempfile.NamedTemporaryFile(
@@ -51,20 +43,20 @@ def run_on_spinq_simulator(qasm_str: str, shots: int = 1024) -> dict:
     result = engine.execute(ir, config)
     # spinqit 0.2.x 的 counts 直接返回二进制字符串 key 格式 {'00': ..., '11': ...}
     counts = result.counts
+    provider_job_id = getattr(result, "job_id", None) or getattr(result, "task_id", None)
 
     return {
         "backend": "spinq_basic_simulator",
-        "job_id": (
-            getattr(result, "job_id", None)
-            or getattr(result, "task_id", None)
-            or f"spinq-local-{hash(qasm_str) & 0xFFFF:04x}"
-        ),
+        "job_id": str(provider_job_id) if provider_job_id is not None else None,
         "shots": shots,
         "counts": {str(key): value for key, value in counts.items()},
         "bit_order": "little",
-        "timestamp": "2026-07-06T10:00:00Z",
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "meta": {
             "qubits_count": ir.qnum,
+            "execution": "local-simulator",
+            "job_id_source": "provider" if provider_job_id is not None else "unavailable",
+            "timestamp_source": "local-observation",
         }
     }
 

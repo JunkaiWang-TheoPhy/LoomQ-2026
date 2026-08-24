@@ -100,10 +100,13 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="result-table"', page)
         self.assertIn('role="alert"', page)
         self.assertIn('aria-describedby="prompt-help"', page)
-        self.assertIn('id="state-trace"', page)
+        self.assertIn('<details id="state-trace"', page)
         self.assertIn('aria-label="逐门量子状态"', page)
         self.assertIn('data-example="w"', page)
         self.assertIn('data-example="interference"', page)
+        self.assertIn('data-example="deutsch"', page)
+        self.assertIn('data-example="grover"', page)
+        self.assertIn('data-example="qft"', page)
         self.assertIn('id="clear-conversation"', page)
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
@@ -114,6 +117,7 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("javascript", headers["Content-Type"])
         self.assertIn("state.amplitude_real", script)
         self.assertIn("state.amplitude_imag", script)
+        self.assertIn("data.trace.length <= 15", script)
         self.assertIn("agentHistory.splice(0)", script)
 
     def test_run_endpoint_returns_counts_native_ir_and_probability(self):

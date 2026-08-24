@@ -58,6 +58,9 @@
             <button class="chip" data-example="w">W 三比特</button>
             <button class="chip" data-example="uniform">均匀叠加</button>
             <button class="chip" data-example="interference">相位干涉</button>
+            <button class="chip" data-example="deutsch">Deutsch–Jozsa</button>
+            <button class="chip" data-example="grover">Grover 搜索</button>
+            <button class="chip" data-example="qft">QFT 四比特</button>
           </div>
         </div>
 
@@ -102,13 +105,13 @@
             <tbody id="result-rows"></tbody>
           </table>
           <p id="explanation" class="explanation"></p>
-          <section id="state-trace" class="state-trace" aria-label="逐门量子状态">
-            <div class="trace-heading">
+          <details id="state-trace" class="state-trace" aria-label="逐门量子状态" open>
+            <summary class="trace-heading">
               <strong>逐门状态故事</strong>
               <span>振幅包含概率看不到的相位</span>
-            </div>
+            </summary>
             <ol id="trace-steps"></ol>
-          </section>
+          </details>
           <details>
             <summary>查看目标平台原生指令</summary>
             <pre id="native"></pre>
