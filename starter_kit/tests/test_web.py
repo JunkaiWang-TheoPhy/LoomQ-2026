@@ -294,6 +294,37 @@ class WebLabTests(unittest.TestCase):
                 self.assertIn(content_type, headers["Content-Type"])
                 self.assertTrue(body)
 
+    def test_pixel_quantum_game_is_a_separate_playable_route(self):
+        status, headers, body = self.request("/pixel.html")
+
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", headers["Content-Type"])
+        page = body.decode()
+        self.assertIn("Quantum Atlas · 像素调查局", page)
+        self.assertIn('id="pixel-canvas"', page)
+        self.assertIn('id="pixel-dialogue"', page)
+        self.assertIn("像素风", page)
+        self.assertIn("方向键 / WASD", page)
+
+    def test_pixel_quantum_game_assets_are_served_locally(self):
+        for path, content_type in (
+            ("/pixel.css", "text/css"),
+            ("/pixel.js", "javascript"),
+            ("/pixel-adventure-engine.js", "javascript"),
+        ):
+            with self.subTest(path=path):
+                status, headers, body = self.request(path)
+                self.assertEqual(status, 200)
+                self.assertIn(content_type, headers["Content-Type"])
+                self.assertTrue(body)
+
+    def test_pixel_game_uses_a_local_top_down_map_asset(self):
+        status, headers, body = self.request("/assets/pixel-map.png")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "image/png")
+        self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
 

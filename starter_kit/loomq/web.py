@@ -41,6 +41,10 @@ _STATIC = {
     "/game.js": ("game.js", "text/javascript; charset=utf-8"),
     "/atlas-game-engine.js": ("atlas_game_engine.js", "text/javascript; charset=utf-8"),
     "/atlas-adventure-engine.js": ("atlas_adventure_engine.js", "text/javascript; charset=utf-8"),
+    "/pixel.html": ("pixel.html", "text/html; charset=utf-8"),
+    "/pixel.css": ("pixel.css", "text/css; charset=utf-8"),
+    "/pixel.js": ("pixel.js", "text/javascript; charset=utf-8"),
+    "/pixel-adventure-engine.js": ("pixel_adventure_engine.js", "text/javascript; charset=utf-8"),
     "/assets/quantum-world-journey.png": (
         "assets/quantum-world-journey.png",
         "image/png",
@@ -49,6 +53,7 @@ _STATIC = {
         "assets/quantum-atlas-map.png",
         "image/png",
     ),
+    "/assets/pixel-map.png": ("assets/pixel-map.png", "image/png"),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/enhancements.css": ("enhancements.css", "text/css; charset=utf-8"),
     "/game.css": ("game.css", "text/css; charset=utf-8"),

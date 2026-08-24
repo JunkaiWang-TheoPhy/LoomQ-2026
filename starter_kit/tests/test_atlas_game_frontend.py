@@ -10,6 +10,43 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class AtlasGameFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_pixel_adventure_uses_grid_collision_and_progressive_interaction(self):
+        """A pixel route without grid collision or gated interaction is just an animated page."""
+        script = """
+const pixel = require(process.argv[1]);
+let state = pixel.createPixelGame();
+const start = state.player;
+const moved = pixel.move(state, 1, 0);
+const blocked = pixel.move({...moved, player: {x: 7, y: 5}}, 1, 0);
+const shard = pixel.interact({...state, player: {x: 4, y: 7}}, {shards: []});
+const repeat = pixel.interact({...state, player: {x: 4, y: 7}}, {shards: ["state"]});
+const npcLocked = pixel.interact({...state, player: {x: 12, y: 7}}, {shards: ["state"]});
+const npcReady = pixel.interact({...state, player: {x: 12, y: 7}}, {shards: ["state", "repeat", "control"]});
+process.stdout.write(JSON.stringify({start, moved, blocked, shard, repeat, npcLocked, npcReady}));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "pixel_adventure_engine.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertGreater(result["moved"]["player"]["x"], result["start"]["x"])
+        self.assertEqual(result["blocked"]["player"]["x"], 7)
+        self.assertEqual(result["shard"]["event"], "shard")
+        self.assertEqual(result["shard"]["id"], "state")
+        self.assertEqual(result["repeat"]["event"], "none")
+        self.assertEqual(result["npcLocked"]["event"], "locked")
+        self.assertEqual(result["npcReady"]["event"], "npc")
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_adventure_world_moves_collides_and_unlocks_interactions(self):
         """A missing collision or quest gate would let players walk through the case."""
         script = """
