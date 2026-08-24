@@ -137,7 +137,7 @@ starter_kit/
 ├── evidence/
 │   ├── README.md
 │   └── files/                # 可选附件
-├── tests/                    # 随正式提交归档的 106 项回归测试
+├── tests/                    # 随正式提交归档的 144 项回归测试
 ├── scripts/                  # 压力活动、交叉验证与真机证据验证器
 ├── web/                      # 零依赖响应式 Web UI
 ├── circuits/

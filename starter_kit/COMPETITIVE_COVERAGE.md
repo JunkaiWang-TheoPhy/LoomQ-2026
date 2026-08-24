@@ -7,7 +7,7 @@
 - [EndlessTR #71](https://github.com/QAIDAO/LoomQ-2026/issues/71)，`10febabd97785055f239d8f24716fb053d9f95b7`
 - [WayneYu1212 #69](https://github.com/QAIDAO/LoomQ-2026/issues/69)，`02e94e68251592523ecc089b89795dee964b48df`
 - [Huxingyu #85](https://github.com/QAIDAO/LoomQ-2026/issues/85)，`d6cc9225571e3685bed4c8e04b35d7a9e34cf0ce`
-- [Duanice #89](https://github.com/QAIDAO/LoomQ-2026/issues/89)，`e306067c406f401809b8a8d7a6e68b58e92b6d04`
+- [Duanice #90](https://github.com/QAIDAO/LoomQ-2026/issues/90)，`a4d93e48d5d7310e1643a2073f25d5d8f9754174`
 - [UokyI #82](https://github.com/QAIDAO/LoomQ-2026/issues/82)，`cb803353034f1c2bc27e9a77fcbba2ecb7c1f95b`
 - [orange-city #77](https://github.com/QAIDAO/LoomQ-2026/issues/77)，`35d628d607fe9a89fef276e53f08177787366513`
 
@@ -31,7 +31,7 @@
 | L2 大规模 campaign | Wayne 真实模型压力材料 | 500 条唯一语料、可执行真实调用的 runner、断点恢复、逐记录哈希、脱敏摘要校验；另有 40,000 项无凭据断言 | 工具覆盖；真实模型结果仍需凭据 |
 | L1 随机/隐藏式压力 | mayloveless hidden-like、Wayne fuzz | 40,000 项固定离线活动 + PyQuafu 随机三比特 corpus + 全门全 target 回读 | 覆盖并加强 |
 | L3 差分验证 | mayloveless、Wayne 的随机/对抗 L3 | 1,000 程序 × 4 测量输入的独立参考差分；归档内另有 250 程序回归 | 覆盖 |
-| 量子 RISC-V Bonus | 四队均申报 | 真实 32 位 `custom-0` 机器字、序列化、严格解码、扩展模拟器和 Bell counts 闭环 | 覆盖 |
+| 量子 RISC-V Bonus | Huxingyu 与 Duanice #90 均展示可执行 `custom-0` 路径，其他多队亦有申报 | 真实 32 位 `custom-0` 机器字、无损参数表、序列化、严格解码、扩展模拟器、Bell counts 与 Hybrid 分支回放闭环 | 覆盖；优势落在精确参数与可审回放，不声称独占 |
 | 两平台真机 | 四队均有 OriginQ + SpinQ | 两个可追溯 job、原始 JSON/MessagePack、截图、QASM、统计重算和 SHA-256 manifest | 覆盖并加强证据完整性 |
 | 真机统计与科学边界 | Wayne 的 tomography/claims audit | OriginQ Wilson 区间、SpinQ 总变差距离、原始文件一致性、`SCIENTIFIC_CLAIMS_AUDIT.md` | 基础统计覆盖；额外层析缺新 job |
 | 一键无凭据复核 | Wayne shell/PowerShell、各队测试入口 | `python3 starter_kit/verify_submission.py` 依次验证归档测试、L1/L3/RISC-V、压力摘要、双真机 manifest | 覆盖 |
