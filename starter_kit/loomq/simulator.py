@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import cmath
 import math
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, Iterator, List, Sequence, Tuple
 
 from .qasm import Circuit, Gate, Measurement
 
@@ -101,23 +101,61 @@ def _apply_gate(state: StateVector, gate: Gate) -> None:
     raise ValueError(f"unsupported simulated gate: {gate.name}")
 
 
-def simulate_statevector(circuit: Circuit) -> StateVector:
-    """Return the final state before terminal measurements."""
+def _initial_state(num_qubits: int) -> StateVector:
+    state: StateVector = [0j] * (1 << num_qubits)
+    state[0] = 1 + 0j
+    return state
+
+
+def _iter_exact_state_steps(
+    circuit: Circuit,
+) -> Iterator[Tuple[Dict[str, object], StateVector]]:
     if circuit.num_qubits > MAX_SIMULATOR_QUBITS:
         raise ValueError(
             f"local statevector simulation supports at most {MAX_SIMULATOR_QUBITS} qubits"
         )
-    state: StateVector = [0j] * (1 << circuit.num_qubits)
-    state[0] = 1 + 0j
+
+    state = _initial_state(circuit.num_qubits)
+    yield {"kind": "initial", "label": "initial |0…0⟩"}, state.copy()
+
+    measurements: List[Measurement] = []
     measurement_seen = False
     for operation in circuit.operations:
         if isinstance(operation, Measurement):
             measurement_seen = True
+            measurements.append(operation)
             continue
         if measurement_seen:
             raise ValueError("mid-circuit measurement is outside the LoomQ L1 contract")
         _apply_gate(state, operation)
-    return state
+        yield (
+            {
+                "kind": "gate",
+                "gate": operation.name,
+                "qubits": list(operation.qubits),
+                "parameter": operation.parameter,
+            },
+            state.copy(),
+        )
+    if measurements:
+        yield (
+            {
+                "kind": "measure",
+                "mappings": [
+                    {"qubit": item.qubit, "clbit": item.clbit}
+                    for item in measurements
+                ],
+            },
+            state.copy(),
+        )
+
+
+def simulate_statevector(circuit: Circuit) -> StateVector:
+    """Return the final state before terminal measurements."""
+    final_state: StateVector | None = None
+    for _operation, state in _iter_exact_state_steps(circuit):
+        final_state = state
+    return final_state if final_state is not None else _initial_state(circuit.num_qubits)
 
 
 def _simulate_sparse(circuit: Circuit) -> SparseState:
@@ -254,11 +292,11 @@ def trace_statevector(
     if max_states <= 0:
         raise ValueError("max_states must be positive")
 
-    state: StateVector = [0j] * (1 << circuit.num_qubits)
-    state[0] = 1 + 0j
     events: List[Dict[str, object]] = []
 
-    def append(operation: Dict[str, object], explanation: str) -> None:
+    def append(
+        operation: Dict[str, object], explanation: str, state: Sequence[complex]
+    ) -> None:
         snapshot = _state_snapshot(state, circuit.num_qubits, max_states)
         events.append(
             {
@@ -269,40 +307,20 @@ def trace_statevector(
             }
         )
 
-    append(
-        {"kind": "initial", "label": "initial |0…0⟩"},
-        "所有量子比特从 |0⟩ 开始；位串左侧是高位，q[0] 在最右侧。",
-    )
-    measurements: List[Measurement] = []
-    measurement_seen = False
-    for operation in circuit.operations:
-        if isinstance(operation, Measurement):
-            measurement_seen = True
-            measurements.append(operation)
-            continue
-        if measurement_seen:
-            raise ValueError("mid-circuit measurement is outside the LoomQ L1 contract")
-        _apply_gate(state, operation)
-        append(
-            {
-                "kind": "gate",
-                "gate": operation.name,
-                "qubits": list(operation.qubits),
-                "parameter": operation.parameter,
-            },
-            _gate_explanation(operation),
-        )
-    if measurements:
-        append(
-            {
-                "kind": "measure",
-                "mappings": [
-                    {"qubit": item.qubit, "clbit": item.clbit}
-                    for item in measurements
-                ],
-            },
-            "测量把量子路径映射为经典位；这里展示的是测量前的精确概率，不是假造的单次结果。",
-        )
+    for operation, state in _iter_exact_state_steps(circuit):
+        if operation["kind"] == "initial":
+            explanation = "所有量子比特从 |0⟩ 开始；位串左侧是高位，q[0] 在最右侧。"
+        elif operation["kind"] == "gate":
+            explanation = _gate_explanation(
+                Gate(
+                    operation["gate"],
+                    tuple(operation["qubits"]),
+                    operation["parameter"],
+                )
+            )
+        else:
+            explanation = "测量把量子路径映射为经典位；这里展示的是测量前的精确概率，不是假造的单次结果。"
+        append(operation, explanation, state)
     return events
 
 
