@@ -58,6 +58,16 @@ Statement = Union[Assignment, Branch]
 
 
 @dataclass(frozen=True)
+class CompiledBranch:
+    branch_id: int
+    pc: int
+    machine_operation: str
+    source_operator: str
+    false_label: str
+    end_label: str
+
+
+@dataclass(frozen=True)
 class Token:
     kind: str
     value: str
@@ -259,6 +269,8 @@ class _Compiler:
     def __init__(self, statements: Sequence[Statement]):
         self.lines: List[str] = ["# LoomQ Hybrid-QASM classical control"]
         self.label_counter = 0
+        self.instruction_pc = 0
+        self.branches: List[CompiledBranch] = []
         self.temporary_stack: List[int] = []
         reserved = set()
         for statement in statements:
@@ -266,6 +278,13 @@ class _Compiler:
         self.temporary_registers = [
             register for register in range(31, 9, -1) if register not in reserved
         ]
+
+    def emit_instruction(self, instruction: str) -> None:
+        self.lines.append(instruction)
+        self.instruction_pc += 1
+
+    def emit_label(self, label: str) -> None:
+        self.lines.append(f"{label}:")
 
     def label(self, prefix: str) -> str:
         self.label_counter += 1
@@ -286,26 +305,26 @@ class _Compiler:
 
     def expression(self, expression: Expression, target: int) -> None:
         if isinstance(expression, Number):
-            self.lines.append(f"li x{target}, {expression.value}")
+            self.emit_instruction(f"li x{target}, {expression.value}")
             return
         if isinstance(expression, Reference):
             if expression.register != target:
-                self.lines.append(f"addi x{target}, x{expression.register}, 0")
+                self.emit_instruction(f"addi x{target}, x{expression.register}, 0")
             return
         self.expression(expression.left, target)
         right = self.acquire()
         self.expression(expression.right, right)
         instruction = "add" if expression.operator == "+" else "sub"
-        self.lines.append(f"{instruction} x{target}, x{target}, x{right}")
+        self.emit_instruction(f"{instruction} x{target}, x{target}, x{right}")
         self.release(right)
 
     def direct_expression(self, expression: Expression, target: int) -> None:
         """Compile an expression into a destination absent from the input expression."""
         if isinstance(expression, Number):
-            self.lines.append(f"li x{target}, {expression.value}")
+            self.emit_instruction(f"li x{target}, {expression.value}")
             return
         if isinstance(expression, Reference):
-            self.lines.append(f"addi x{target}, x{expression.register}, 0")
+            self.emit_instruction(f"addi x{target}, x{expression.register}, 0")
             return
         self.direct_expression(expression.left, target)
         if isinstance(expression.right, Number):
@@ -314,18 +333,18 @@ class _Compiler:
                 if expression.operator == "+"
                 else -expression.right.value
             )
-            self.lines.append(f"addi x{target}, x{target}, {immediate}")
+            self.emit_instruction(f"addi x{target}, x{target}, {immediate}")
             return
         if isinstance(expression.right, Reference):
             instruction = "add" if expression.operator == "+" else "sub"
-            self.lines.append(
+            self.emit_instruction(
                 f"{instruction} x{target}, x{target}, x{expression.right.register}"
             )
             return
         right = self.acquire()
         self.expression(expression.right, right)
         instruction = "add" if expression.operator == "+" else "sub"
-        self.lines.append(f"{instruction} x{target}, x{target}, x{right}")
+        self.emit_instruction(f"{instruction} x{target}, x{target}, x{right}")
         self.release(right)
 
     def statement(self, statement: Statement) -> None:
@@ -335,7 +354,7 @@ class _Compiler:
                 return
             temporary = self.acquire()
             self.expression(statement.expression, temporary)
-            self.lines.append(f"addi x{statement.target}, x{temporary}, 0")
+            self.emit_instruction(f"addi x{statement.target}, x{temporary}, 0")
             self.release(temporary)
             return
 
@@ -346,16 +365,27 @@ class _Compiler:
         right = self.acquire()
         self.expression(statement.right, right)
         branch_instruction = "bne" if statement.operator == "==" else "beq"
-        self.lines.append(f"{branch_instruction} x{left}, x{right}, {false_label}")
+        branch_pc = self.instruction_pc
+        self.emit_instruction(f"{branch_instruction} x{left}, x{right}, {false_label}")
+        self.branches.append(
+            CompiledBranch(
+                branch_id=len(self.branches) + 1,
+                pc=branch_pc,
+                machine_operation=branch_instruction,
+                source_operator=statement.operator,
+                false_label=false_label,
+                end_label=end_label,
+            )
+        )
         self.release(right)
         self.release(left)
         for child in statement.when_true:
             self.statement(child)
-        self.lines.append(f"j {end_label}")
-        self.lines.append(f"{false_label}:")
+        self.emit_instruction(f"j {end_label}")
+        self.emit_label(false_label)
         for child in statement.when_false:
             self.statement(child)
-        self.lines.append(f"{end_label}:")
+        self.emit_label(end_label)
 
     def compile(self, statements: Sequence[Statement]) -> str:
         for statement in statements:
@@ -454,16 +484,26 @@ def _quantum_operations(circuit: Circuit) -> List[str]:
     return operations
 
 
-def compile_hybrid(source: str) -> Tuple[List[str], str]:
+def _validate_hybrid_source(source: str) -> str:
     if not isinstance(source, str) or not source.strip():
         raise HybridError("Hybrid-QASM source must be a non-empty string")
     if len(source) > MAX_HYBRID_SOURCE_CHARS:
         raise HybridError(
             f"Hybrid-QASM source is limited to {MAX_HYBRID_SOURCE_CHARS} characters"
         )
-    quantum_source, classical_source = _split_classical(source)
+    return source
+
+
+def parse_hybrid(source: str) -> Tuple[Circuit, List[Statement]]:
+    validated = _validate_hybrid_source(source)
+    quantum_source, classical_source = _split_classical(validated)
     circuit = parse_qasm(quantum_source)
-    quantum = _quantum_operations(circuit)
     statements = _Parser(classical_source, circuit.num_clbits).parse()
+    return circuit, statements
+
+
+def compile_hybrid(source: str) -> Tuple[List[str], str]:
+    circuit, statements = parse_hybrid(source)
+    quantum = _quantum_operations(circuit)
     assembly = _Compiler(statements).compile(statements)
     return quantum, assembly

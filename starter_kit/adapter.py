@@ -12,6 +12,7 @@ try:
     from .loomq.agent import chat
     from .loomq.hybrid import compile_hybrid as compile_hybrid_program
     from .loomq.prooftrace import compile_target, compile_with_proof
+    from .loomq.hybrid_trace import trace_hybrid as trace_hybrid_program
     from .loomq.qasm import parse_qasm
     from .loomq.runtime import execute
 except ImportError:  # Direct execution from starter_kit/.
@@ -19,6 +20,7 @@ except ImportError:  # Direct execution from starter_kit/.
     from loomq.agent import chat
     from loomq.hybrid import compile_hybrid as compile_hybrid_program
     from loomq.prooftrace import compile_target, compile_with_proof
+    from loomq.hybrid_trace import trace_hybrid as trace_hybrid_program
     from loomq.qasm import parse_qasm
     from loomq.runtime import execute
 
@@ -55,3 +57,8 @@ def agent_chat(prompt: str, history: object = None) -> str:
 def compile_hybrid(hybrid_qasm_str: str) -> Tuple[List[str], str]:
     """Optional L3 entry point. Return quantum operations and RISC-V assembly."""
     return compile_hybrid_program(hybrid_qasm_str)
+
+
+def trace_hybrid(hybrid_qasm_str: str, measurement_bits: object) -> Dict[str, Any]:
+    """Optional L3 replay entry point preserving compile_hybrid's published tuple contract."""
+    return trace_hybrid_program(hybrid_qasm_str, measurement_bits)
