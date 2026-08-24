@@ -48,6 +48,26 @@
     };
   }
 
+  function journeyProgress(hasExperiment, auditStatus) {
+    const chapters = [
+      { id: "predict", state: "current" },
+      { id: "experiment", state: "upcoming" },
+      { id: "conclude", state: "upcoming" },
+    ];
+    let message = "第一幕：先留下你的预测。";
+    if (hasExperiment) {
+      chapters[0].state = "complete";
+      chapters[1].state = "complete";
+      chapters[2].state = "current";
+      message = "第三幕：根据同一次实验形成结论。";
+    }
+    if (hasExperiment && auditStatus) {
+      chapters[2].state = "complete";
+      message = "旅程完成：护照记录了预测、实验与证据边界。";
+    }
+    return { chapters, message };
+  }
+
   function viewModel(passport) {
     const controlBars = bars(passport.experiment.control.probabilities);
     const variantBars = bars(passport.experiment.variant.probabilities);
@@ -68,5 +88,12 @@
     };
   }
 
-  return { auditHeading, bars, requestPayload, withConclusion, viewModel };
+  return {
+    auditHeading,
+    bars,
+    journeyProgress,
+    requestPayload,
+    withConclusion,
+    viewModel,
+  };
 });
