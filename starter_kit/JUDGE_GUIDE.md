@@ -8,7 +8,7 @@
 
 | 区域 | 一条复核命令 | 主要证据 |
 |---|---|---|
-| 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 149 项归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/hybrid 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
+| 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 150 项归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/hybrid 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
 | ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
 | P1 断言与 P2 Hybrid 回放 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 19 项 Web 集成测试覆盖 `/api/assert`、`/api/hybrid-trace`、ProofTrace 面板保留、有限 shots 区间、branch path、寄存器增量、favicon 与移动端防溢出样式 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |
@@ -18,6 +18,7 @@
 | L1 独立数值 oracle | `python3 -m starter_kit.scripts.quafu_cross_validate --validate` | `PYQUAFU_CROSS_VALIDATION.md`；真实 PyQuafu 0.4.5 的 120/120 摘要 |
 | L1 两平台真机 | `python3 -m starter_kit.scripts.validate_hardware_evidence` | OriginQ、SpinQ job ID，provider 原始结果、截图、统计分析和 SHA-256 manifest |
 | L2 客观路径 | 正式环境执行 `python3 starter_kit/evaluator.py --level l2` | 环境注入模型、能力表 grounding、语法/门集/目标分布校验、一次诊断重试与安全 fallback |
+| L2 资格链 | `cd starter_kit && python3 -m unittest tests.test_l2_qualification -v` | 12 个私有集同形任务、20 次本地 HTTP Chat Completions 请求、逐例请求次数、8 组独立 counts 和 4 个规范后端 ID；协议 fixture 不申报真实 DeepSeek 成绩 |
 | L2 鲁棒性工具 | `python3 -m starter_kit.scripts.l2_stress_campaign --dry-run` | 500 个唯一生成/修复/推荐/对抗/稳定性 case；没有凭据时不伪造真实模型成绩 |
 | L2 体验 | `python3 -m starter_kit.loomq.web` | Learn / Build / Repair / Backend Match、ProofTrace 证书下载、P1 断言报告、P2 Hybrid 分支回放、逐门状态故事、受限多轮上下文、桌面/移动端验收、`WEB_QA.md` |
 | L3 | `python3 starter_kit/evaluator.py --level l3` | AST 编译器、独立参考语义与固定种子随机程序 |

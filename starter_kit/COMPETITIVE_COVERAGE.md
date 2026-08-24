@@ -29,7 +29,7 @@
 | 生成、修复、后端推荐 | 四队 Web Agent | Web 四条引导路径；能力表 grounding；QASM 语法、门集、目标态确定性复核与一次诊断重试 | 覆盖 |
 | 新手 Web 与可视化 | mayloveless React、EndlessTR 引导页、Wayne Web QA | 零依赖响应式 Web；概率柱图+表格；ProofTrace 证书、P1 断言、P2 Hybrid 回放、逐门故事；桌面/390px 浏览器验收；无障碍语义 | 功能覆盖；不复制框架栈 |
 | 对抗性资源边界 | mayloveless L3 resource audit、Wayne adversarial tests | QASM 1MB/256 bit/100k op；稠密状态向量 20 qubit；有界稀疏执行匹配 SpinQ 24 / OriginQ 30 / Braket 25；trace 8 qubit；L3 1MB/20k token/4096 statement/64 nesting | 覆盖并形成拒绝合同 |
-| L2 大规模 campaign | Wayne 真实模型压力材料 | 500 条唯一语料、可执行真实调用的 runner、断点恢复、逐记录哈希、脱敏摘要校验；另有 40,000 项无凭据断言 | 工具覆盖；真实模型结果仍需凭据 |
+| L2 大规模 campaign | Wayne 真实模型压力材料、talk2joan 14 题申报 | 500 条唯一语料、可执行真实调用的 runner、断点恢复、逐记录哈希、脱敏摘要校验；另有 12 例同形资格链的 20 次本地 HTTP 请求和 40,000 项无凭据断言 | 工具与协议资格覆盖；真实模型结果仍需凭据 |
 | L1 随机/隐藏式压力 | mayloveless hidden-like、Wayne fuzz | 40,000 项固定离线活动 + PyQuafu 随机三比特 corpus + 全门全 target 回读 | 覆盖并加强 |
 | L3 差分验证 | mayloveless、Wayne 的随机/对抗 L3 | 1,000 程序 × 4 测量输入的独立参考差分；归档内另有 250 程序回归 | 覆盖 |
 | 量子 RISC-V Bonus | Huxingyu 与 Duanice #94 均展示可执行 `custom-0` 路径；talk2joan 展示量子助记符模拟器与编码规格 | 真实 32 位 `custom-0` 机器字、无损参数表、序列化、严格解码、12 门独立固定字、字面 Bell 执行、100 条随机线路、3,000 项往返、扩展模拟器与 Hybrid 分支回放闭环 | 覆盖；优势落在精确参数、归档证据密度与可审回放，不声称独占 |

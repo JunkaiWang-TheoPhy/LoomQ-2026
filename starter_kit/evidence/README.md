@@ -98,6 +98,8 @@ evidence/files/spinq-screenshot.png
 
 归档内 `tests.test_web.WebLabTests.test_web_agent_end_to_end_covers_generation_repair_and_backend_tasks` 使用本地 OpenAI-compatible HTTP fixture 验证 Web API、模型协议、三类任务路由和确定性结果校验的完整网络链路；fixture 只证明工程链路，不记作真实模型成绩。
 
+`cd starter_kit && python3 -m unittest tests.test_l2_qualification -v` 进一步执行 12 个私有集同形任务：8 个生成/修复任务分别观察两次 HTTP Chat Completions 请求，并用独立 `adapter.run()` counts 判定 Bell、GHZ、W、均匀叠加和计算基态；4 个后端任务分别观察一次请求并核对规范能力 ID。总计 20 个协议请求，模型字段、零温度和关闭 thinking 均被断言。该测试证明正式调用资格、重试和确定性客观判定可以同链运行；fixture 仍不等于真实 DeepSeek，也不申报私有 12 例得分。
+
 ### 独立数值 Oracle
 
 PyQuafu 0.4.5 的固定种子验证覆盖 40 个唯一电路、全部 12 门和三个 target，共 120/120 项通过；最大状态向量振幅误差为 `1.1802326323952682e-15`。协议、counts 浮点余数 tie 边界和复现命令见 `starter_kit/PYQUAFU_CROSS_VALIDATION.md`，摘要见 `starter_kit/evidence/files/pyquafu-cross-validation-summary.json`。它是软件交叉验证，不申报为第四个真机平台。
