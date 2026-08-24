@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="LoomQ 零依赖量子计算实验台">
-  <title>LoomQ · 量子编织台</title>
+  <meta name="description" content="LoomQ 零依赖量子电路实验台">
+  <title>LoomQ · 量子电路实验台</title>
   <link rel="icon" href="/favicon.ico" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/enhancements.css">
@@ -14,7 +14,7 @@
   <header class="masthead">
     <a class="brand" href="#top" aria-label="LoomQ 首页">
       <span class="brand-mark" aria-hidden="true">LQ</span>
-      <span><strong>LoomQ</strong><small>量子编织台</small></span>
+      <span><strong>LoomQ</strong><small>量子电路实验台</small></span>
     </a>
     <p class="status"><span aria-hidden="true"></span> 本地运行 · 凭据不离开电脑</p>
   </header>
@@ -22,38 +22,65 @@
   <main id="top">
     <section class="hero" aria-labelledby="hero-title">
       <div>
-        <p class="eyebrow">QUANTUM CIRCUIT WORKBENCH</p>
+        <p class="eyebrow">先看证据，再自己跑一遍</p>
         <h1 id="hero-title">把量子电路，<br><em>看懂再运行。</em></h1>
-        <p class="intro">从 Bell 纠缠开始。选择示例、观察量子门，再把同一份电路转译到 SpinQ、本源或 Braket。</p>
-        <p class="hero-link-row"><a class="hero-evidence-link" href="#hybrid-panel">先看测量后的所有经典分支</a></p>
+        <p class="intro">先确认编译有没有改坏电路，再看测量后的每条路径，最后再决定要不要自己改 QASM。默认 Bell 例子和所有证据都已经放在这一页，每个量子比特的变化也能直接展开。</p>
       </div>
       <ol class="steps" aria-label="使用步骤">
-        <li><span>01</span><strong>选一个实验</strong><small>无需量子背景</small></li>
-        <li><span>02</span><strong>观察量子门</strong><small>每个量子比特是一条时间线</small></li>
-        <li><span>03</span><strong>运行并读图</strong><small>柱高就是测量概率</small></li>
+        <li><span>01</span><strong>先点证据入口</strong><small>一分钟确认编译、路径和 Agent 回退</small></li>
+        <li><span>02</span><strong>再跑默认示例</strong><small>同一份 Bell 电路会联通 ProofTrace、路径证书和 Witness Chain</small></li>
+        <li><span>03</span><strong>最后再自己改</strong><small>量子门时间线、概率图和对比实验都在同一页</small></li>
+      </ol>
+    </section>
+
+    <section id="evidence-map" class="evidence-map" aria-labelledby="evidence-map-title" tabindex="-1">
+      <div class="evidence-map-header">
+        <div>
+          <p class="eyebrow">90 秒评委路径</p>
+          <h2 id="evidence-map-title">先回答三个问题</h2>
+        </div>
+        <div class="judge-choices" aria-label="快速入口">
+          <a class="judge-choice" href="#evidence-map">1 分钟看证据</a>
+          <a class="judge-choice" href="#workspace">3 分钟跑示例</a>
+          <a class="judge-choice" href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/tree/main/starter_kit/evidence" target="_blank" rel="noreferrer">查看原始材料</a>
+        </div>
+      </div>
+      <ol class="question-checklist">
+        <li class="question-item">
+          <h3>编译有没有改坏电路?</h3>
+          <p>点击 <a href="#proof-panel">ProofTrace：这次转译改了什么</a>，会看到三种目标平台都能回读同一份电路，还有可下载的证书。</p>
+        </li>
+        <li class="question-item">
+          <h3>测量后程序会走哪条路?</h3>
+          <p>点击 <a href="#hybrid-panel">列出所有可能分支</a>，会看到每条路径的概率、可达/不可达结果和死路径。</p>
+        </li>
+        <li class="question-item">
+          <h3>不会 QASM 能不能用?</h3>
+          <p>点击修复一段错误 QASM，会看到 Agent 先给出可运行答案，再由同一页的本地规则校验。</p>
+        </li>
       </ol>
     </section>
 
     <section class="task-switcher" aria-labelledby="task-title">
       <div>
-        <p class="eyebrow">FOUR GUIDED PATHS</p>
+        <p class="eyebrow">四条上手路径</p>
         <h2 id="task-title">你现在想完成什么？</h2>
       </div>
       <div class="task-grid">
-        <button class="task-card" data-task="learn"><span>01 · LEARN</span><strong>第一次理解量子电路</strong><small>加载 Bell 态，并解释 H 与 CX 的作用</small></button>
+        <button class="task-card" data-task="learn"><span>01 · LEARN</span><strong>第一次理解量子电路</strong><small>加载 Bell 例子，先看每扇门怎样改变结果</small></button>
         <button class="task-card" data-task="build"><span>02 · BUILD</span><strong>编写并运行 QASM</strong><small>编辑电路、转译三种后端、查看概率</small></button>
-        <button class="task-card" data-task="repair"><span>03 · REPAIR</span><strong>修复一段错误 QASM</strong><small>把问题交给受确定性验证约束的 Agent</small></button>
-        <button class="task-card" data-task="backend"><span>04 · MATCH</span><strong>选择合适的后端</strong><small>按门集与任务目标比较 SpinQ、本源和 Braket</small></button>
+        <button class="task-card" data-task="repair"><span>03 · REPAIR</span><strong>修复一段错误 QASM</strong><small>把问题交给受确定性校验约束的 Agent</small></button>
+        <button class="task-card" data-task="backend"><span>04 · MATCH</span><strong>选择合适的后端</strong><small>按比特数、费用和排队比较 SpinQ、本源和 Braket</small></button>
       </div>
       <div id="lesson" class="lesson" tabindex="-1">
         <strong>Bell 态只需要两步：</strong>H 门让 q[0] 同时保留 0 和 1 的振幅；CX 再把 q[1] 与它关联。测量时主要得到 00 和 11，这证明模拟结果具有经典相关性；单靠 Z 基测量不能完整证明真机纠缠。
       </div>
     </section>
 
-    <section id="workspace" class="workspace" aria-label="量子实验区" tabindex="-1">
+    <section id="workspace" class="workspace" aria-label="量子电路实验台" tabindex="-1">
       <div class="editor-panel">
         <div class="panel-heading">
-          <div><span class="index">01</span><h2>电路织布机</h2></div>
+          <div><span class="index">01</span><h2>量子电路实验台</h2></div>
           <div class="examples" role="group" aria-label="示例电路">
             <button class="chip active" data-example="bell">Bell 纠缠</button>
             <button class="chip" data-example="ghz">GHZ 三比特</button>
@@ -109,7 +136,7 @@
           <p id="explanation" class="explanation"></p>
           <details id="proof-panel" class="proof-panel" open>
             <summary>
-              <strong>ProofTrace · 为什么可信</strong>
+              <strong>ProofTrace：这次转译改了什么</strong>
               <span id="proof-status">等待证明</span>
             </summary>
             <p id="proof-scope" class="proof-scope"></p>
@@ -143,8 +170,8 @@
     <section id="counterfactual-panel" class="counterfactual" aria-labelledby="counterfactual-title">
       <div class="counterfactual-heading">
         <div>
-          <p class="eyebrow">COUNTERFACTUAL CIRCUIT LAB</p>
-          <h2 id="counterfactual-title">少一扇门，量子态从哪里开始改变？</h2>
+          <p class="eyebrow">改一扇门试试看</p>
+          <h2 id="counterfactual-title">删掉一扇门，结果从哪一步开始变?</h2>
         </div>
         <p>上方当前电路是参考答案。修改候选电路后，LoomQ 会逐门比较精确状态，定位第一个因果分歧，而不只比较最后一张概率图。</p>
       </div>
@@ -177,8 +204,8 @@
     <section id="witness-panel" class="witness-panel" aria-labelledby="witness-title" tabindex="-1">
       <div class="witness-heading">
         <div>
-          <p class="eyebrow">WITNESS CHAIN · CAUSAL AUDIT</p>
-          <h2 id="witness-title">一条稳定证据坐标，串起源门、测量与经典分支</h2>
+          <p class="eyebrow">统一证据链</p>
+          <h2 id="witness-title">同一份电路的证据怎么对上号</h2>
         </div>
         <p>同一次审计把 ProofTrace 谱系、反事实首门分歧、断言读取位和 Hybrid 分支来源对齐到 g1 / m1 等稳定 witness ID。</p>
       </div>
@@ -194,8 +221,8 @@
     <section class="evidence-lab" aria-labelledby="evidence-title">
       <div class="evidence-header">
         <div>
-          <p class="eyebrow">P1 + P2 JUDGE EVIDENCE</p>
-          <h2 id="evidence-title">把断言报告与 Hybrid 分支证据放到同一页检查</h2>
+          <p class="eyebrow">先看结论，再展开技术细节</p>
+          <h2 id="evidence-title">断言与分支证据</h2>
         </div>
         <p class="evidence-copy">页面只报告本地精确结论、有限 shots 置信区间或 provider 概率对比；任何偏差都不归因具体噪声机制。</p>
       </div>
@@ -262,7 +289,7 @@
     </section>
 
     <section class="agent" aria-labelledby="agent-title">
-      <div><p class="eyebrow">OPTIONAL · DEEPSEEK</p><h2 id="agent-title">用自然语言描述下一块电路</h2><p>Agent 的回答会经过门集、语法与目标态分布三重确定性校验。</p></div>
+      <div><p class="eyebrow">需要时再用 Agent</p><h2 id="agent-title">用自然语言描述下一块电路</h2><p>Agent 的回答会经过门集、语法与目标态分布三重确定性校验。</p></div>
       <form id="agent-form">
         <label class="sr-only" for="prompt">自然语言需求</label>
         <input id="prompt" placeholder="例如：生成三比特 W 态并测量" autocomplete="off" maxlength="20000" aria-describedby="prompt-help">

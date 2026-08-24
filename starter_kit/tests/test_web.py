@@ -145,6 +145,40 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="run-compare"', page)
         self.assertIn("不归因具体噪声机制", page)
 
+    def test_home_places_evidence_navigator_before_feature_inventory(self):
+        _status, _headers, body = self.request("/")
+
+        page = body.decode()
+        self.assertIn('id="evidence-map"', page)
+        self.assertIn(">1 分钟看证据</a>", page)
+        self.assertIn('href="#evidence-map"', page)
+        self.assertIn(">3 分钟跑示例</a>", page)
+        self.assertIn('href="#workspace"', page)
+        self.assertIn(">查看原始材料</a>", page)
+        self.assertIn(
+            'href="https://github.com/JunkaiWang-TheoPhy/LoomQ-2026/tree/main/starter_kit/evidence"',
+            page,
+        )
+
+        self.assertLess(page.index('id="evidence-map"'), page.index('id="task-title"'))
+        self.assertLess(page.index("编译有没有改坏电路?"), page.index("测量后程序会走哪条路?"))
+        self.assertLess(page.index("测量后程序会走哪条路?"), page.index("不会 QASM 能不能用?"))
+        self.assertLess(page.index("编译有没有改坏电路?"), page.index('id="task-title"'))
+
+    def test_home_answers_three_judge_questions_with_click_and_expect_language(self):
+        _status, _headers, body = self.request("/")
+
+        page = body.decode()
+        self.assertIn("编译有没有改坏电路?", page)
+        self.assertIn("测量后程序会走哪条路?", page)
+        self.assertIn("不会 QASM 能不能用?", page)
+        self.assertIn("点击 <a href=\"#proof-panel\">ProofTrace", page)
+        self.assertIn("会看到三种目标平台", page)
+        self.assertIn("点击 <a href=\"#hybrid-panel\">列出所有可能分支", page)
+        self.assertIn("会看到每条路径的概率", page)
+        self.assertIn("点击修复一段错误 QASM", page)
+        self.assertIn("会看到 Agent 先给出可运行答案", page)
+
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
 

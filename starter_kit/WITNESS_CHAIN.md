@@ -37,4 +37,4 @@ print(verify_causal_audit(audit))
 - 首门分歧仍限于最多 8 比特、`|0…0⟩` 输入、忽略全局相位的本地精确比较。
 - 断言与 Hybrid provenance 仍只描述软件证据，不把真机偏差归因于具体物理噪声。
 
-该设计建立在 ProofTrace 的可证明重写和来源谱系之上。它不声称发明 proof-carrying compilation、counterfactual debugging 或 provenance；本项目的新增贡献，是让四种已有证据共享稳定 witness ID，并将其组合为可下载、可重算、失败关闭的量子软件审计工件。
+该设计建立在 ProofTrace 的可证明重写和来源谱系之上。它不声称发明 proof-carrying compilation、counterfactual debugging 或 provenance；这里实际提供的是一条可下载、可重算、失败关闭的统一审计链，让四种已有证据共享稳定 witness ID。

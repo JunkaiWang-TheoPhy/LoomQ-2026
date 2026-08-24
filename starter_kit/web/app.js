@@ -660,7 +660,7 @@ function renderResults(data) {
 $("#run").addEventListener("click", async () => {
   const button = $("#run");
   button.disabled = true;
-  button.textContent = "正在编织…";
+  button.textContent = "正在运行并整理证据…";
   try {
     const data = await api("/api/run", {
       qasm: qasm.value,
@@ -668,7 +668,7 @@ $("#run").addEventListener("click", async () => {
       shots: Number($("#shots").value),
     });
     renderResults(data);
-    tell("运行完成：结果已通过统一 Schema 输出");
+    tell("运行完成：先看 ProofTrace，再看路径和结果表");
   } catch (error) {
     tell(error.message);
   } finally {
