@@ -234,11 +234,18 @@
               <input id="hybrid-bits" type="text" value="[1, 0]" aria-describedby="hybrid-help">
             </label>
             <button id="run-hybrid" class="secondary" type="button">回放 Hybrid 分支</button>
+            <button id="run-hybrid-path" class="secondary" type="button">生成路径证书</button>
           </div>
           <p id="hybrid-help" class="hint">bit 顺序直接对应 c[0], c[1], …；branch path 使用 ifN:T / ifN:F 标记源码条件真假，而不是机器跳转真假。</p>
           <p id="hybrid-caveat" class="audit-note">等待 Hybrid 回放结果。</p>
           <ol id="hybrid-branches" class="audit-list"></ol>
           <ol id="hybrid-events" class="audit-list compact"></ol>
+          <details id="hybrid-path-panel" class="path-certificate">
+            <summary>查看 Hybrid 路径证书</summary>
+            <p id="hybrid-path-summary" class="audit-note">等待路径证书。</p>
+            <ol id="hybrid-path-probabilities" class="audit-list"></ol>
+            <ol id="hybrid-path-unreachable" class="audit-list compact"></ol>
+          </details>
           <details>
             <summary>查看 Hybrid 汇编与最终寄存器</summary>
             <pre id="hybrid-assembly"></pre>

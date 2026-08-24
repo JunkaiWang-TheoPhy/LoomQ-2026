@@ -344,6 +344,54 @@ function renderHybridReport(report) {
   $("#hybrid-registers").textContent = JSON.stringify(report.final_registers, null, 2);
 }
 
+function renderHybridPathCertificate(certificate) {
+  $("#hybrid-path-summary").textContent =
+    `引用测量位 ${certificate.projected_measurement_bits
+      .map((index) => `c[${index}]`)
+      .join("、") || "无"}；证书按精确状态矢量枚举投影 outcome。`;
+
+  const probabilities = $("#hybrid-path-probabilities");
+  probabilities.replaceChildren();
+  certificate.path_probabilities.forEach((item) => {
+    const row = element("li", "audit-item");
+    row.append(
+      element("strong", "", item.branch_path || "无条件分支"),
+      element(
+        "span",
+        "audit-meta",
+        `probability ${formatPercent(item.probability)} · outcomes ${item.measurement_outcomes.length}`,
+      ),
+    );
+    const outcomes = item.measurement_outcomes
+      .map((outcome) => `${JSON.stringify(outcome.measurement_bits)} · ${formatPercent(outcome.probability)}`)
+      .join(" ｜ ");
+    row.append(element("p", "audit-note-inline", outcomes || "无投影 outcome"));
+    const registers = item.terminal_registers
+      .map((entry) => `${JSON.stringify(entry.registers)} · ${formatPercent(entry.probability)}`)
+      .join(" ｜ ");
+    row.append(element("small", "audit-note-inline", registers || "无终态寄存器差异"));
+    probabilities.append(row);
+  });
+  if (!certificate.path_probabilities.length) {
+    probabilities.append(element("li", "audit-item", "没有可达路径。"));
+  }
+
+  const unreachable = $("#hybrid-path-unreachable");
+  unreachable.replaceChildren();
+  certificate.unreachable_outcomes.forEach((item) => {
+    unreachable.append(
+      element(
+        "li",
+        "audit-item",
+        `${JSON.stringify(item.measurement_bits)} · ${item.branch_path || "无条件分支"} · ${formatPercent(item.probability)}`,
+      ),
+    );
+  });
+  if (!certificate.unreachable_outcomes.length) {
+    unreachable.append(element("li", "audit-item", "没有零概率投影。"));
+  }
+}
+
 function renderWitnessAudit(audit) {
   const verification = audit.verification;
   $("#witness-status").textContent = verification.valid ? "本地重算通过" : "验证失败";
@@ -589,6 +637,24 @@ $("#run-hybrid").addEventListener("click", async () => {
   } finally {
     button.disabled = false;
     button.textContent = "回放 Hybrid 分支";
+  }
+});
+
+$("#run-hybrid-path").addEventListener("click", async () => {
+  const button = $("#run-hybrid-path");
+  button.disabled = true;
+  button.textContent = "证书生成中…";
+  try {
+    const data = await api("/api/hybrid-path-certificate", {
+      source: $("#hybrid-source").value,
+    });
+    renderHybridPathCertificate(data);
+    tell("Hybrid 路径证书已更新");
+  } catch (error) {
+    tell(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "生成路径证书";
   }
 });
 

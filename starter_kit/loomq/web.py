@@ -118,6 +118,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             if path == "/api/hybrid-trace":
                 self._hybrid_trace(payload)
                 return
+            if path == "/api/hybrid-path-certificate":
+                self._hybrid_path_certificate(payload)
+                return
             if path == "/api/agent":
                 self._agent(payload)
                 return
@@ -224,6 +227,12 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         if measurement_bits is None:
             raise ValueError("measurement_bits 必须提供")
         self._send_json(HTTPStatus.OK, adapter.trace_hybrid(source, measurement_bits))
+
+    def _hybrid_path_certificate(self, payload: Dict[str, Any]) -> None:
+        source = payload.get("source")
+        if not isinstance(source, str) or not source.strip():
+            raise ValueError("source 必须是非空字符串")
+        self._send_json(HTTPStatus.OK, adapter.hybrid_path_certificate(source))
 
     def _compare(self, payload: Dict[str, Any]) -> None:
         reference_qasm = payload.get("reference_qasm")

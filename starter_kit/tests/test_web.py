@@ -132,6 +132,8 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="clear-conversation"', page)
         self.assertIn('id="assert-panel"', page)
         self.assertIn('id="hybrid-panel"', page)
+        self.assertIn('id="hybrid-path-panel"', page)
+        self.assertIn('id="run-hybrid-path"', page)
         self.assertIn('id="counterfactual-panel"', page)
         self.assertIn('id="witness-panel"', page)
         self.assertIn('id="run-witness"', page)
@@ -288,6 +290,26 @@ class WebLabTests(unittest.TestCase):
         self.assertTrue(branch["machine_jump_taken"])
         self.assertFalse(branch["source_condition_true"])
         self.assertEqual(branch["influencing_measurements"], ["c[1]"])
+
+    def test_hybrid_path_certificate_endpoint_reports_exact_path_probabilities(self):
+        status, _headers, body = self.request(
+            "/api/hybrid-path-certificate",
+            {"source": HYBRID},
+        )
+
+        payload = json.loads(body)
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["schema_version"], "loomq-hybrid-path-certificate-v1")
+        self.assertEqual(payload["projected_measurement_bits"], [1])
+        self.assertEqual(
+            [item["branch_path"] for item in payload["path_probabilities"]],
+            ["if1:F", "if1:T"],
+        )
+        self.assertEqual(
+            [item["probability"] for item in payload["path_probabilities"]],
+            [0.5, 0.5],
+        )
+        self.assertEqual(payload["unreachable_outcomes"], [])
 
     def test_compare_endpoint_finds_the_first_causal_divergence(self):
         candidate = BELL.replace("cx q[0],q[1];", "x q[1];")

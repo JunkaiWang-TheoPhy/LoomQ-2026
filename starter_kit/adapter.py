@@ -11,6 +11,9 @@ try:
     from . import llm_client
     from .loomq.agent import chat
     from .loomq.hybrid import compile_hybrid as compile_hybrid_program
+    from .loomq.hybrid_path_certificate import (
+        build_hybrid_path_certificate as hybrid_path_certificate_program,
+    )
     from .loomq.prooftrace import compile_target, compile_with_proof
     from .loomq.hybrid_trace import trace_hybrid as trace_hybrid_program
     from .loomq.qasm import parse_qasm
@@ -19,6 +22,9 @@ except ImportError:  # Direct execution from starter_kit/.
     import llm_client
     from loomq.agent import chat
     from loomq.hybrid import compile_hybrid as compile_hybrid_program
+    from loomq.hybrid_path_certificate import (
+        build_hybrid_path_certificate as hybrid_path_certificate_program,
+    )
     from loomq.prooftrace import compile_target, compile_with_proof
     from loomq.hybrid_trace import trace_hybrid as trace_hybrid_program
     from loomq.qasm import parse_qasm
@@ -62,3 +68,8 @@ def compile_hybrid(hybrid_qasm_str: str) -> Tuple[List[str], str]:
 def trace_hybrid(hybrid_qasm_str: str, measurement_bits: object) -> Dict[str, Any]:
     """Optional L3 replay entry point preserving compile_hybrid's published tuple contract."""
     return trace_hybrid_program(hybrid_qasm_str, measurement_bits)
+
+
+def hybrid_path_certificate(hybrid_qasm_str: str) -> Dict[str, Any]:
+    """Return an exact projected measurement/path certificate for Hybrid-QASM."""
+    return hybrid_path_certificate_program(hybrid_qasm_str)
