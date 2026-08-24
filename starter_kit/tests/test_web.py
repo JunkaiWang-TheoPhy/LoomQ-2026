@@ -238,6 +238,8 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("verification.valid === true", script)
         self.assertIn('$("#run-judge-tour").addEventListener', script)
         self.assertIn("addEvidenceReset", script)
+        self.assertIn("function initializeTourState", script)
+        self.assertIn("initializeTourState();", script)
 
     def test_styles_include_mobile_overflow_guards_for_evidence_panels(self):
         status, headers, body = self.request("/styles.css")

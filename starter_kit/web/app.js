@@ -183,6 +183,12 @@ function addEvidenceReset(selector, eventName, steps) {
   });
 }
 
+function initializeTourState() {
+  ["run", "compare", "assert", "witness", "hybrid", "contract"].forEach(
+    (step) => resetTourStep(step, "未运行"),
+  );
+}
+
 function renderCircuit() {
   const source = qasm.value;
   const count = Number((source.match(/qreg\s+\w+\[(\d+)\]/) || [])[1] || 0);
@@ -229,6 +235,7 @@ selectExample("bell");
 $("#assertions-input").value = defaultAssertions;
 $("#hybrid-source").value = hybridExample;
 $("#candidate-qasm").value = bellCounterexample;
+initializeTourState();
 
 document.querySelectorAll(".task-card").forEach((button) => {
   button.addEventListener("click", () => {
