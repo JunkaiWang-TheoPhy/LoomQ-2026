@@ -6,15 +6,17 @@
 
 ```bash
 cd starter_kit
-python3 -m unittest tests.test_web -v
+python3 -m unittest tests.test_web tests.test_inquiry_frontend -v
 ```
 
-29 项测试覆盖：首页与四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
+`tests.test_web` 与 `tests.test_inquiry_frontend` 覆盖：首页 Quantum World 探究护照与错误结论纠正、四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
 
 ## 真实浏览器验收
 
 | 场景 | 结果 | 证据 |
 |---|---|---|
+| Quantum World 桌面 | 1440×900；A/B 实验并排显示，完整 Bell 为 `00/11`，禁用 CX 后为 `00/01`；错误结论显示 unsupported 并启用护照下载 | 2026-08-24 Google Chrome 真实 API 点击，visual-verdict `94/100` |
+| Quantum World 手机 | 390×844；探究步骤、预测、A/B 卡片、证据读法与审计依次单列；`scrollWidth=innerWidth=390` | 2026-08-24 Google Chrome 真实 API 点击，visual-verdict `94/100` |
 | 桌面评委入口 | 1440×900；页面 `scrollWidth=innerWidth=1440`。两张真机卡、六步按钮和完整状态条出现在任务卡之前 | 2026-08-24 Chrome 验收，visual-verdict `93/100` |
 | 移动端评委入口 | 390×844；页面 `scrollWidth=innerWidth=390`。真机卡单列，六步状态条横向滚动，不造成页面级横向溢出 | 2026-08-24 Chrome 验收，visual-verdict `93/100` |
 | 六步初始状态 | 两个 viewport 重新加载后均为 `未运行 × 6`，没有复用前一会话结果 | 真实浏览器 DOM 读取 |
@@ -38,6 +40,7 @@ python3 -m unittest tests.test_web -v
 ## 包容性设计
 
 - 跳转链接允许键盘用户直达实验区；运行结束后焦点进入结果区。
+- Quantum World 先要求预测，再显示只改变 CX 的 A/B 结果；用户选择结论后才启用护照下载，使学习过程包含一次可检查的判断，而不是被动阅读答案。
 - 概率同时用柱图和语义化表格表达；逐门状态还以文本列出概率、振幅和相位，不依赖颜色或图形才能读取。
 - Learn 文案区分“模拟得到经典相关性”与“真机纠缠证明”，避免给新手过度结论。
 - Counterfactual Circuit Lab 让用户通过删改一扇门学习中间态变化；输出显式限定为 8 比特、零输入、忽略全局相位的本地精确比较，不把它包装成真机噪声诊断。

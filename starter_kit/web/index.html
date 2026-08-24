@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/enhancements.css">
 </head>
 <body>
-  <a class="skip-link" href="#workspace">跳到实验区</a>
+  <a class="skip-link" href="#inquiry-world">跳到探究任务</a>
   <header class="masthead">
     <a class="brand" href="#top" aria-label="LoomQ 首页">
       <span class="brand-mark" aria-hidden="true">LQ</span>
@@ -83,6 +83,74 @@
           <p>点击修复一段错误 QASM，会看到 Agent 先给出可运行答案，再由同一页的本地规则校验。</p>
         </li>
       </ol>
+    </section>
+
+    <section id="inquiry-world" class="inquiry-world" aria-labelledby="inquiry-title" tabindex="-1">
+      <div class="inquiry-heading">
+        <div>
+          <p class="eyebrow">Quantum World · 第一个探究任务</p>
+          <h2 id="inquiry-title">H 和 CX 分别做了什么？</h2>
+          <p>不需要先学 QASM。先预测，再运行对照实验；系统只改变 CX，最后请你根据两组结果选择结论。</p>
+        </div>
+        <ol class="inquiry-route" aria-label="探究步骤">
+          <li><span>1</span>预测</li>
+          <li><span>2</span>实验</li>
+          <li><span>3</span>结论</li>
+          <li><span>4</span>护照</li>
+        </ol>
+      </div>
+
+      <div class="inquiry-prompt">
+        <div>
+          <span class="inquiry-label">研究问题</span>
+          <strong>删掉 CX 后，Bell 电路的测量结果会怎样变化？</strong>
+          <p>实验 A 保留 H 和 CX；实验 B 保留 H、暂时禁用 CX。其他条件相同。</p>
+        </div>
+        <label for="inquiry-prediction">运行前，我的预测
+          <select id="inquiry-prediction">
+            <option value="not-sure">我还不确定，先观察</option>
+            <option value="h-opens-branches">H 已经建立分支，CX 改变相关结构</option>
+            <option value="cx-opens-branches">CX 才建立最初的两个分支</option>
+          </select>
+        </label>
+        <button id="run-inquiry" class="primary" type="button">运行 A/B 对照实验</button>
+        <p id="inquiry-status" role="status" aria-live="polite">尚未运行；实验完全在本地完成。</p>
+      </div>
+
+      <div id="inquiry-results" class="inquiry-results" hidden>
+        <div class="inquiry-comparison">
+          <article class="inquiry-experiment">
+            <header><span>实验 A · 完整 Bell</span><strong>H + CX</strong></header>
+            <div id="inquiry-control-chart" class="inquiry-chart" aria-label="完整 Bell 电路测量分布"></div>
+            <p id="inquiry-control-observation">等待实验结果。</p>
+          </article>
+          <article class="inquiry-experiment variant">
+            <header><span>实验 B · 只改一个条件</span><strong>H，禁用 CX</strong></header>
+            <div id="inquiry-variant-chart" class="inquiry-chart" aria-label="禁用 CX 后的测量分布"></div>
+            <p id="inquiry-variant-observation">等待实验结果。</p>
+          </article>
+        </div>
+        <div class="inquiry-finding" aria-live="polite">
+          <span class="inquiry-label">证据读法</span>
+          <strong id="inquiry-finding-title">等待比较</strong>
+          <p id="inquiry-finding-copy"></p>
+          <code id="inquiry-divergence">first divergence —</code>
+        </div>
+        <div class="inquiry-conclusion">
+          <label for="inquiry-conclusion">根据结果，我的结论
+            <select id="inquiry-conclusion">
+              <option value="h-opens-branches-cx-correlates">H 建立分支，CX 改变两个比特的相关结构</option>
+              <option value="cx-opens-branches">CX 建立了最初的两个分支</option>
+              <option value="proves-nonlocality">这次 Z 基实验完整证明了 Bell 非定域性</option>
+            </select>
+          </label>
+          <button id="audit-inquiry" class="secondary" type="button">用实验审计结论</button>
+          <div id="inquiry-audit" class="inquiry-audit" role="status" aria-live="polite">
+            选择一条结论，让系统指出证据支持到哪里。
+          </div>
+          <a id="download-inquiry" class="proof-download" href="#" aria-disabled="true">下载可重放实验护照 JSON</a>
+        </div>
+      </div>
     </section>
 
     <section class="task-switcher" aria-labelledby="task-title">
@@ -348,6 +416,7 @@
 
   <footer><span>LoomQ 2026</span><span>OpenQASM → Native IR → Verified Counts</span></footer>
   <div id="notice" class="notice" role="status" aria-live="polite"></div>
+  <script src="/inquiry.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>

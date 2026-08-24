@@ -19,10 +19,10 @@
 | 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
 |---|---:|---|
 | L1 真机 | 已实现并提供复核入口 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
-| L2 交互体验 | 已实现并提供复核入口 | 首屏六步本地评委路径、下方 3 个用户任务、Prompt Contract、可下载并重算的 Witness Chain、反事实首门分歧、ProofTrace 证书、P1 断言、P2 Hybrid 回放、可重算的 Hybrid 路径证书、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图，以及当前仓库中的 Web 测试套件 |
+| L2 交互体验 | 已实现并提供复核入口 | Quantum World“预测—A/B 实验—结论审计—护照”零基础路径、首屏六步本地评委路径、Prompt Contract、可下载并重算的 Witness Chain、反事实首门分歧、ProofTrace 证书、P1 断言、P2 Hybrid 回放、可重算的 Hybrid 路径证书、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图，以及当前仓库中的 Web 测试套件 |
 | 工程与产品复核 | 已实现并提供复核入口 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
 | 自定义量子 RISC-V | 已实现并提供复核入口 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
-| 新手引导与视觉叙事 | 已实现并提供复核入口 | Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
+| 新手引导与视觉叙事 | 已实现并提供复核入口 | Quantum World 探究闭环、Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
 
 本表只说明仓库里已经放了哪些复核入口，不把公开自测表述成官方成绩。
 
@@ -82,7 +82,7 @@ evidence/files/spinq-screenshot.png
 启动界面或 CLI 的命令：`python3 -m starter_kit.loomq.web`（逐门 CLI：`python3 -m starter_kit.loomq_cli trace starter_kit/circuits/bell.qasm`）
 测试入口或页面地址：http://127.0.0.1:8765/
 用于交互体验评测的 3 个用户任务：
-1. **Learn + Counterfactual Build**：选择“第一次理解量子电路”，运行 Bell 后观察 H/CX 时间线、`00`/`11` 概率图和文本表；进入 Counterfactual Circuit Lab 比较默认反例，确认系统定位第 2 扇门、显示 `CX` 对 `X`、最大振幅差 `0.707107` 与 TV 距离 `0.500000`，再自行删改一扇门重试。
+1. **Quantum World Inquiry**：不读 QASM，先预测删掉 CX 后会发生什么；运行只改变 CX 的 A/B 实验，比较完整 Bell 的 `00/11` 与保留 H 后的 `00/01`。选择一条错误结论，让页面引用 `g2 · CX` 和两组主导态纠正它；最后下载包含问题、预测、QASM、结果、结论边界和重放入口的实验护照。
 2. **Repair**：点击“修复一段错误 QASM”，页面预填含越界 `cx q[0],q[2]` 的 Bell 修复任务；配置 `LOOMQ_LLM_*` 后提交，检查返回完整 OpenQASM 2.0，并确认语法、白名单门与 Bell 分布通过确定性校验，错误回答会携带诊断重试一次。
 3. **Backend Match + Judge Evidence**：先点击首屏“一键运行 6 项本地证据”，核对六个状态分别来自真实 API 的语义门槛。Prompt Contract 应把默认请求解析为 OriginQ、免费、至少 20 比特、simulator、无需账号，并显示费用与排队字段；服务端重建必须通过。配置 `LOOMQ_LLM_*` 后，再用 Backend Match 询问“免费、零排队、至少 20 比特的模拟器”，核对回答中的规范 capability ID。随后检查 P1 三种证据标签、P2 分支回放以及 Hybrid 路径概率、不可达 outcome、死路径与本地重算结果。
 截图或演示视频：首屏桌面 `starter_kit/evidence/files/web-lab-desktop-current.jpg`，移动端 `starter_kit/evidence/files/web-lab-mobile-current.jpg`；反事实结果桌面 `starter_kit/evidence/files/counterfactual-desktop.jpg`，移动端 `starter_kit/evidence/files/counterfactual-mobile.jpg`；完整验收矩阵见 `starter_kit/WEB_QA.md`。所有流程均由最终 commit 中的代码直接运行。
