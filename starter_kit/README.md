@@ -14,7 +14,8 @@
 
 - L1 使用同一个解析器与 `Circuit` 中间表示生成 SpinQ OpenQASM 2.0、OriginIR 和 Braket OpenQASM 3.0；
 - 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
-- ProofTrace 对安全冗余门做命名重写，记录源门到优化门的 lineage，并为三后端输出可下载的确定性证明证书；
+- ProofTrace 对安全冗余门做命名重写，记录源门到优化门的 lineage，并为三后端输出可下载的确定性证书；
+- ProofTrace 证书把三类证据分开写明：局部重写是符号恒等式证据，whole-circuit validation 是 `<=8` qubit、`tol=1e-12` 的全矩阵重算支持证据，native IR structural round-trip 仍然 mandatory；
 - L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务；生成的 QASM 会验证 Bell/GHZ/W、计算基态和均匀叠加目标分布，后端推荐会复核比特数、排队、费用和设备类型；失败时携带诊断重试一次，两次无效回答后才由同一目标/能力表验证器生成安全回退；
 - L2 附带固定种子、可恢复且带完整性哈希的 500 例真实模型压力 campaign，覆盖生成、修复、后端推荐、对抗输入和表述稳定性；
 - Witness Chain 用稳定的 `gN/mN` 源操作 ID，把 ProofTrace 谱系、反事实首门分歧、断言测量依赖与 Hybrid 分支 provenance 串成可下载、可重算的审计工件；
@@ -35,9 +36,9 @@
 python3 -m starter_kit.loomq.web
 ```
 
-打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例，然后点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释、目标平台原生指令，以及可下载的 ProofTrace 三后端证明证书；长轨迹默认折叠，服务只监听本机地址。
+打开 <http://127.0.0.1:8765/>，选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例，然后点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释、目标平台原生指令，以及可下载的 ProofTrace 三后端证书；长轨迹默认折叠，服务只监听本机地址。
 
-如果你只看评委路径，不必先学 QASM。首屏先点 `1 分钟看证据`，然后按问题清单去看 `ProofTrace：这次转译改了什么`、`列出所有可能分支` 和 `修复一段错误 QASM`。
+如果你只看评委路径，不必先学 QASM。首屏先点 `1 分钟看证据`，然后按问题清单去看 `ProofTrace：这次转译改了什么`、`列出所有可能分支` 和 `修复一段错误 QASM`。`ProofTrace` 面板会明确区分：哪些结论来自局部恒等式，哪些来自 bounded whole-circuit recomputation，哪些来自 native IR structural round-trip。详细边界见 [`WHOLE_CIRCUIT_VALIDATION.md`](WHOLE_CIRCUIT_VALIDATION.md)。
 
 也可以使用 CLI：
 

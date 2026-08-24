@@ -11,7 +11,7 @@
 先看这 3 个结果：
 
 1. `ProofTrace：这次转译改了什么`
-   会看到同一份电路如何落到 3 个目标平台，以及每一步可下载的证书入口。
+   会看到同一份电路如何落到 3 个目标平台，以及三类证据：局部重写、whole-circuit bounded recomputation、native IR structural round-trip。
 2. `列出所有可能分支`
    会看到每条路径的概率、可达/不可达 outcome 和死路径。
 3. `修复一段错误 QASM`
@@ -23,7 +23,7 @@
 
 1. 打开页面后先点 `1 分钟看证据`，确认首屏问题清单已经出现。
 2. 在默认 Bell 例子上点击 `运行电路`，展开 `ProofTrace：这次转译改了什么`。
-3. 看 `已应用的可证明重写`、`三后端独立回读`，再点下载 JSON。
+3. 看 `已应用的可证明重写`、`所有基列都查过了吗？`、`三后端独立回读`，再点下载 JSON。
 4. 回到证据区点击 `列出所有可能分支`，确认会出现路径概率、不可达 outcome 和死路径。
 5. 点击 `修复一段错误 QASM`，看输入框是否自动填入修复任务，再检查失败时不会跳过本地校验。
 
@@ -34,8 +34,8 @@
 | 区域 | 一条复核命令 | 主要证据 |
 |---|---|---|
 | 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 完整归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/compare/hybrid/witness 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
-| ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
-| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web -v` | 27 项 Web 集成测试覆盖首屏证据导航、`/api/causal-audit` Witness Chain、`/api/compare` 首门分歧与结构拒绝、`/api/assert`、`/api/hybrid-trace`、ProofTrace、favicon 与移动端防溢出样式 |
+| ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 structure rejection、225/225 semantic rejection、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
+| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web -v` | Web 集成测试覆盖首屏证据导航、`/api/causal-audit` Witness Chain、`/api/compare` 首门分歧与结构拒绝、`/api/assert`、`/api/hybrid-trace`、ProofTrace whole-circuit 字段、favicon 与移动端防溢出样式 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |
 | L1 三目标 | `python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket` | 统一 Circuit IR、12 门 × 3 target 归档测试 |
 | L1 语义回读 | `cd starter_kit && python3 -m unittest tests.test_native_ir_verifier -v` | SpinQ QASM 2、OriginIR、Braket QASM 3 独立 parser；篡改门负例 |
@@ -55,9 +55,9 @@
 ## 建议体验的三个任务
 
 1. 保留默认 Bell、候选反例、断言与 Hybrid 程序，点击“生成统一审计链”；核对 `g2` 首门分歧、`m1/m2` 断言依赖、`m2` 分支来源，并下载可重算 JSON。
-2. 点击 Learn，运行 Bell，读取逐门概率/相位与 ProofTrace 三目标证书；随后进入 Counterfactual Circuit Lab 单独查看 `CX` 对 `X` 与 TV 距离 `0.5`。
+2. 点击 Learn，运行 Bell，读取逐门概率/相位与 ProofTrace 三目标证书；先看“所有基列都查过了吗？/是不是同一个全局相位？/最大误差有多大？”，再进入 Counterfactual Circuit Lab 单独查看 `CX` 对 `X` 与 TV 距离 `0.5`。
 3. 点击 Repair 验证错误 QASM 的确定性恢复，再用 Backend Match 询问“免费、零排队、至少 20 比特的模拟器”，核对规范 capability ID。
 
-与十二个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只记录公开可审事实；私有 12 例 DeepSeek 评测和未公开提交仍然未知。
+与十二个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只记录公开可审事实；截至 2026-08-24，私有 12 例 DeepSeek 评测和未公开提交仍然未知。
 
 Web 不接收或保存模型 Key；启动进程只从 `LOOMQ_LLM_*` 读取。未配置模型时，L1 本地实验仍可完整使用。

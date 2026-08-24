@@ -15,14 +15,14 @@
 - [danjituya #103](https://github.com/QAIDAO/LoomQ-2026/issues/103)，`5773b3f451f0163030cee3c15ba008a8246fd10e`（L1/L2/L3、零依赖 Web；未申报真机或量子 RISC-V）
 - [Pennie514 #104](https://github.com/QAIDAO/LoomQ-2026/issues/104)，`7e7610411b200e16b369ef109a320448aa40eadb`（L1/L2/L3、Web/CLI、量子 RISC-V、单个 SpinQ 真机 job）
 
-“覆盖”表示当前仓库有可运行实现和直接验证证据；“外部证据缺口”表示代码路径存在，但没有凭据或新真机 job 时不能诚实伪造实验结果。本文件只声称公开可审能力覆盖；私有 12 例 DeepSeek 评测、未公开提交与组委会最终人工体验分仍然未知。
+“覆盖”表示当前仓库有可运行实现和直接验证证据；“外部证据缺口”表示代码路径存在，但没有凭据或新真机 job 时不能诚实伪造实验结果。本文件只声称公开可审能力覆盖；截至 2026-08-24，私有 12 例 DeepSeek 评测、未公开提交与组委会最终人工体验分仍然未知。
 
 | 能力 | 强对手公开实现 | 本仓库直接证据 | 判定 |
 |---|---|---|---|
 | 12 门 × SpinQ / OriginQ / Braket | 所列强队均覆盖 | `test_archive_core.py` 的 36 项门/target 矩阵；`evaluator.py --level l1` | 覆盖 |
 | 目标 IR 不是占位文本 | mayloveless、Wayne 的原生输出审计 | `loomq/native_ir.py` 独立回读三种语法；每次 `adapter.transpile()` 强制语义 round-trip | 已实现并提供复核入口 |
-| 证明携带编译与门谱系 | 对手未展示统一证书路径 | ProofTrace 记录命名重写、source→optimized lineage、metrics、三目标哈希与独立回读；Web 可下载 JSON | 额外提供可重算证书 |
-| 编译篡改基准 | mayloveless hidden-like、Wayne fuzz | 五个算法 × 三目标的 225 个单指令删除变异全部检出；另有 15 portability + 132 rewrite checks | 225 个固定变异全部检出 |
+| 证明携带编译与门谱系 | 对手未展示统一证书路径 | ProofTrace 记录命名重写、source→optimized lineage、metrics、whole-circuit validation、三目标哈希与独立回读；Web 可下载 JSON | 额外提供可重算证书，不把等价检查本身说成研究创新 |
+| 编译篡改基准 | mayloveless hidden-like、Wayne fuzz | 五个算法 × 三目标的 225 个单指令删除变异全部触发 structure rejection，且全部触发 semantic rejection；另有 15 portability + 132 rewrite checks | 225 个固定变异全部被两层证据拒绝 |
 | 独立数值 oracle | Wayne 的 vendor SDK 检查 | PyQuafu 0.4.5 固定 40 电路、三 target 共 120/120；最大振幅误差 `1.19e-15` | 覆盖 |
 | 可运行算法展品 | 0Dionysus0 的 Deutsch；其他队的 Grover/QFT/教学示例 | `deutsch_jozsa_balanced.qasm`、`grover3.qasm`、`qft4.qasm`；三 target 运行测试 | 已实现并放进 Web 入口 |
 | 逐门调试与教学解释 | mayloveless 的 trace/debug/explainer | Web 与 CLI `trace` 展示每门后的概率、复振幅、相位和作用说明 | 已实现并提供复核入口 |
@@ -48,4 +48,4 @@
 1. **真实 DeepSeek 成绩**：runner、500 例语料和防篡改 summary 都已存在，但当前没有获授权的 `LOOMQ_LLM_*` 服务。仓库不会把本地 fixture 或其他模型冒充正式 DeepSeek。
 2. **额外真机层析/多电路 job**：现有两平台 Bell job 合法且完整；若要覆盖 Wayne 的补充层析，必须在赛程窗口内获得新的平台登录、真实 job ID 和原始返回。模拟器不能替代这项证据。
 
-这两项是外部实验材料差距，不是本地软件缺少接口。基于上述十二个公开固定提交，本表只记录当前仓库已经放进仓库、且能直接复核的软件能力；私有 12 例 DeepSeek 评测和未公开 entrant 的最终比较结论仍然未知。
+这两项是外部实验材料差距，不是本地软件缺少接口。基于上述十二个公开固定提交，本表只记录当前仓库已经放进仓库、且能直接复核的软件能力；截至 2026-08-24，私有 12 例 DeepSeek 评测和未公开 entrant 的最终比较结论仍然未知。

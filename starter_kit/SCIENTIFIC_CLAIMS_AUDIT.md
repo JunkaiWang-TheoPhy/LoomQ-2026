@@ -9,9 +9,11 @@
 | P1 有限 shots 诊断 | `diagnose_observed_execution()` 与 Wilson / 总变差区间 | 观测数据与本地参考“相容 / 偏离 / 不确定”；区间只在提供 shots 时出现 | 将偏差归因到某种具体噪声机制、门保真度或硬件失效模式 |
 | Provider 概率诊断 | 平台直接返回的概率分布，无 shots | 如实报告为 `provider-probabilities`，不伪造置信区间 | 把 provider 概率冒充 shots、p-value 或统计显著性 |
 | 逐门状态故事 | 同一本地状态向量在每个门后的振幅、概率和相位；最多 8 比特 | 解释模拟器中的路径与相位干涉，支持手算和 CLI 复核 | 真机内部状态、实验层析结果或测量之外的直接观测 |
+| ProofTrace 局部重写 | 命名的相邻恒等式规则、source lineage 与重写记录 | 列出的局部 rewrite 在对应操作数上保持符号语义 | 任意规模的全局等价定理、真机保真度 |
+| ProofTrace whole-circuit validation | `compare_circuit_semantics()` 对 `<=8` qubit 线路重算全部计算基列，要求同一个全局相位、相同终端测量映射、`tol=1e-12` | 在声明边界内给出 bounded 数值 supporting evidence，可发现结构回读无法排除的相对相位错误 | 无界形式化证明、30 qubit 线路结论、真实硬件等价性 |
 | 反事实首门分歧实验 | Web `/api/compare` 复用 `diagnose_mutation()` 的精确态比较，最多 8 比特；寄存器或测量映射不同则报告结构不可比 | 给出 zero-input、global-phase 归一后的 first divergent gate、门对照、最大振幅差与最终分布 TV 距离 | 把时间上的首个模拟分歧冒充普遍因果推断；对 8 比特以上电路或真实硬件噪声作同样定位 |
 | 算法画廊 | 无噪声精确模拟：Deutsch–Jozsa `11=1`；两轮 Grover `P(111)=0.9453125`；QFT-4 测量均匀且振幅相位非平凡 | 这些归档电路在声明的理想模型和位序下具有对应分布/相位 | 量子加速、真实硬件优势，或任意 oracle/输入的普遍性能 |
-| Native IR 回读 | 三套独立语法 parser 重建与源完全相同的 `Circuit` | emitter 输出在所支持规范子集中没有丢门、换门、参数或测量映射 | 厂商云服务当前在线或接受所有扩展语法 |
+| Native IR 回读 | 三套独立语法 parser 重建与源完全相同的 `Circuit` | emitter 输出在所支持规范子集中没有丢门、换门、参数或测量映射；这是 mandatory structural round-trip | 厂商云服务当前在线或接受所有扩展语法 |
 | P2 Hybrid 回放 | `trace_hybrid()` 返回 `branch_path`、`machine_jump_taken`、`source_condition_true`、measurement provenance、寄存器增量和机器字 | 源码条件真假、机器跳转真假、bit 顺序 `c[0], c[1], …` 和寄存器变化可复核；Web 只是展示这些确定性证据 | 量子硬件噪声导致某条经典分支被选中，或未编码到 replay 输入的测量位在机器寄存器中被真实执行 |
 | P2 Hybrid 路径证书 | `certify_hybrid_paths()` 在记录的 `max_outcomes` 上限内穷举全部 `2**num_clbits` outcome，重放源码分支并列出路径总概率、不可达 outcome、死路径与终态寄存器差异；概率计算在 20 qubit 内使用稠密精确态、21–30 qubit 使用最多 1,000,000 个已占基态的稀疏精确态；`verify_hybrid_path_certificate()` 必须从源码本地重算 | 上述资源边界内的软件路径概率、不可达 outcome、死路径与终态寄存器差异可复核；这是本地证书，不是真机物理证据 | 把该证书外推为硬件路径选择机制、噪声来源或真机分支证明，或声称覆盖 30 qubit 以上及超过稀疏状态上限的线路 |
 | OriginQ Bell 真机 | job `9D182FA1EF76FF3807697CDF69DE7483`，Z 基 958/1000 位于 `00/11`，Wilson 95% 区间 `[0.9437,0.9688]` | 强 Z 基相关，与目标 Bell 电路的计算基支持集一致 | 单靠 Z 基数据证明纠缠、Bell 不等式或设备无关认证 |

@@ -4,11 +4,18 @@ import json
 import math
 import unittest
 
-from starter_kit.loomq.qasm import Circuit, Gate, Measurement
-from starter_kit.loomq.semantic_equivalence import (
-    compare_circuit_semantics,
-    verify_semantic_equivalence_certificate,
-)
+try:
+    from starter_kit.loomq.qasm import Circuit, Gate, Measurement
+    from starter_kit.loomq.semantic_equivalence import (
+        compare_circuit_semantics,
+        verify_semantic_equivalence_certificate,
+    )
+except ImportError:
+    from loomq.qasm import Circuit, Gate, Measurement
+    from loomq.semantic_equivalence import (
+        compare_circuit_semantics,
+        verify_semantic_equivalence_certificate,
+    )
 
 
 def canonical_json(value):
