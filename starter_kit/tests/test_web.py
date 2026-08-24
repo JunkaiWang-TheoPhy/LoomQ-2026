@@ -257,6 +257,44 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(headers["Content-Type"], "image/png")
         self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
 
+    def test_quantum_atlas_game_is_a_standalone_accessible_route(self):
+        status, headers, body = self.request("/game.html")
+
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", headers["Content-Type"])
+        page = body.decode()
+        self.assertIn("Quantum Atlas · 调查行动", page)
+        self.assertIn('id="game-world"', page)
+        self.assertIn('id="investigator"', page)
+        self.assertIn('id="game-score"', page)
+        self.assertIn('data-clue="state"', page)
+        self.assertIn('data-clue="possibility"', page)
+        self.assertIn('data-clue="repeat"', page)
+        self.assertIn('data-clue="control"', page)
+        self.assertIn('id="game-prediction"', page)
+        self.assertIn('id="game-run-experiment"', page)
+        self.assertIn('id="game-audit"', page)
+        self.assertIn("方向键或 WASD", page)
+        self.assertIn('aria-live="polite"', page)
+
+    def test_home_links_to_the_standalone_quantum_atlas_game(self):
+        status, _headers, body = self.request("/")
+
+        self.assertEqual(status, 200)
+        self.assertIn('<a href="/game.html">进入独立 HTML 游戏</a>', body.decode())
+
+    def test_quantum_atlas_game_assets_are_served_locally(self):
+        for path, content_type in (
+            ("/game.css", "text/css"),
+            ("/game.js", "javascript"),
+            ("/atlas-game-engine.js", "javascript"),
+        ):
+            with self.subTest(path=path):
+                status, headers, body = self.request(path)
+                self.assertEqual(status, 200)
+                self.assertIn(content_type, headers["Content-Type"])
+                self.assertTrue(body)
+
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
 

@@ -9,7 +9,7 @@ cd starter_kit
 python3 -m unittest tests.test_web tests.test_inquiry_frontend -v
 ```
 
-`tests.test_web` 与 `tests.test_inquiry_frontend` 覆盖：Quantum Atlas 三地点解锁、四条零基础调查规则、延迟展示 H/CX 探究、护照与错误结论纠正、本地地图资源、四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
+`tests.test_web`、`tests.test_inquiry_frontend` 与 `tests.test_atlas_game_frontend` 覆盖：Quantum Atlas 三地点解锁、独立 HTML 游戏的 100 分状态机、锁定地点失败关闭、四条零基础调查规则、延迟展示 H/CX 探究、护照与错误结论纠正、本地地图资源、四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
 
 ## 真实浏览器验收
 

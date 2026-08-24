@@ -432,6 +432,7 @@
 }
 .atlas-statusbar p { margin: 0; font: 650 11px/1.5 var(--mono); }
 .atlas-statusbar a { color: var(--acid); font-size: 12px; font-weight: 750; }
+.atlas-statusbar nav { display: flex; flex-wrap: wrap; gap: 9px 18px; justify-content: flex-end; }
 .atlas-boundary { margin: 14px 22px 18px; color: #5c685f; font-size: 11px; }
 
 .atlas-briefing {

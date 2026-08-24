@@ -33,9 +33,13 @@ _WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
 _STATIC = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/index.html": ("index.html", "text/html; charset=utf-8"),
+    "/game": ("game.html", "text/html; charset=utf-8"),
+    "/game.html": ("game.html", "text/html; charset=utf-8"),
     "/favicon.ico": ("favicon.svg", "image/svg+xml"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/inquiry.js": ("inquiry.js", "text/javascript; charset=utf-8"),
+    "/game.js": ("game.js", "text/javascript; charset=utf-8"),
+    "/atlas-game-engine.js": ("atlas_game_engine.js", "text/javascript; charset=utf-8"),
     "/assets/quantum-world-journey.png": (
         "assets/quantum-world-journey.png",
         "image/png",
@@ -46,6 +50,7 @@ _STATIC = {
     ),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/enhancements.css": ("enhancements.css", "text/css; charset=utf-8"),
+    "/game.css": ("game.css", "text/css; charset=utf-8"),
 }
 
 _BELL_INQUIRY_CONTROL = """OPENQASM 2.0;
