@@ -31,6 +31,8 @@ class StoryModeConsoleTests(unittest.TestCase):
         js = (WEB / "app.js").read_text(encoding="utf-8")
         for marker in ("beginner-intro", "qubit-demo-ball", "从一个小球开始", "看懂结果"):
             self.assertIn(marker, page)
+        for marker in ("data-demo-step=\"observe\"", "data-demo-step=\"split\"", "data-demo-step=\"measure\"", "data-beginner-demo-state"):
+            self.assertIn(marker, page)
         self.assertIn("@keyframes qubitTravel", css)
         self.assertIn("initBeginnerDemo", js)
         self.assertIn("data-beginner-demo-replay", page)

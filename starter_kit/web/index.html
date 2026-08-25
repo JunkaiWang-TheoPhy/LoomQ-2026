@@ -16,7 +16,11 @@
       <span class="brand-mark" aria-hidden="true">LQ</span>
       <span><strong>LoomQ</strong><small>量子电路实验台</small></span>
     </a>
-    <p class="status"><span aria-hidden="true"></span> 本地运行 · 凭据不离开电脑</p>
+    <div class="masthead-partner" aria-label="SheNicest 赛事合作标识">
+      <img src="assets/shenicest-logo.png" alt="SheNicest 赛事徽章">
+      <span><strong>SheNicest</strong><small>烈变黑客松 · 量子赛道</small></span>
+    </div>
+    <p class="status"><span aria-hidden="true"></span> 本地运行 <i></i> 凭据不离开电脑</p>
   </header>
 
   <main id="top">
@@ -35,12 +39,22 @@
       </div>
     </section>
 
+    <section class="researcher-diary" aria-labelledby="researcher-diary-title">
+      <div class="researcher-diary-heading"><p class="eyebrow">观测站日记 · 沈遥</p><h2 id="researcher-diary-title">她的一天，从一杯放凉的茶开始。</h2></div>
+      <div class="researcher-diary-grid">
+        <p><span>清晨</span>她先看窗外的云。云层没有回答她，仪器也没有。她把昨夜留下的数字抄在纸上，在旁边写下今天愿意相信的一句话。</p>
+        <p><span>午后</span>她把同一件事再做一次，只改一个小地方。等待的时候，她会给窗边的植物添水，听见老旧的通风机一下一下地响。</p>
+        <p><span>夜里</span>她把结果放回档案。能确定的就写清楚，不能确定的留在原处。研究员的工作有时很安静，安静到只剩一支笔在纸上的声音。</p>
+      </div>
+      <p class="researcher-diary-note">你现在看到的每一次实验，都从她这样的日常里开始。先观察，再动手，最后让结果自己说话。先预测，再动手，是沈遥留给新观察员的第一步。</p>
+    </section>
+
     <section class="beginner-intro" aria-labelledby="beginner-intro-title">
       <div class="beginner-intro-copy">
         <p class="eyebrow">第一次来量子世界？从这里开始</p>
         <p class="beginner-tag">零基础也能直接用 · 先看小球，再看结果</p>
         <h2 id="beginner-intro-title">从一个小球开始，<em>看懂结果。</em></h2>
-        <p>你不需要先会 QASM，也不用记住门的名字。把下面的小球当成一个“可能性”，我们只看三件事：它怎样移动、我们改了什么、最后看见了什么。</p>
+        <p>你不需要先记住任何专业符号，也不用背下门的名字。把下面的小球当成一个“可能性”，我们只看三件事：它怎样移动、我们改了什么、最后看见了什么。</p>
         <ol class="beginner-steps">
           <li><b>1</b><span><strong>先观察</strong><small>小球代表一次待验证的可能性。</small></span></li>
           <li><b>2</b><span><strong>拨动一扇门</strong><small>系统只改变一个条件，保留公平比较。</small></span></li>
@@ -54,12 +68,34 @@
           <span class="qubit-demo-ball" aria-hidden="true"></span>
           <span class="qubit-demo-node node-left">可能性</span><span class="qubit-demo-node node-right">观测</span>
           <span class="qubit-demo-gate">只改一个条件</span>
+          <span class="qubit-demo-state" data-beginner-demo-state>准备观察</span>
         </div>
         <div class="qubit-demo-caption">
-          <p><strong>动画只是比喻</strong><span>真正的答案会在后面的本地实验中产生。</span></p>
-          <button class="qubit-demo-replay" type="button" data-beginner-demo-replay>重播小球演示</button>
+          <p><strong data-beginner-demo-title>先观察</strong><span data-beginner-demo-copy>小球现在代表一个还没有被测量的可能性。</span></p>
+          <div class="qubit-demo-controls" role="group" aria-label="小球实验步骤">
+            <button class="qubit-demo-step active" type="button" data-demo-step="observe">准备状态</button>
+            <button class="qubit-demo-step" type="button" data-demo-step="split">出现两种可能</button>
+            <button class="qubit-demo-step" type="button" data-demo-step="measure">现在测量</button>
+          </div>
+          <button class="qubit-demo-replay" type="button" data-beginner-demo-replay>重新开始</button>
         </div>
       </div>
+    </section>
+
+    <section id="quantum-basics" class="quantum-basics" aria-labelledby="quantum-basics-title">
+      <div class="quantum-basics-heading">
+        <p class="eyebrow">沈遥的观测站手册 · 第一页</p>
+        <h2 id="quantum-basics-title">沈遥给新观察员讲的五件小事</h2>
+        <p>她不会一上来讲复杂公式。她先让新人知道，量子世界里“可能”“看见”和“相互关联”分别是什么意思。</p>
+      </div>
+      <div class="quantum-basics-grid">
+        <article><span>01</span><h3>状态：还没有按下快门</h3><p>量子状态是在测量前对系统的描述。它告诉我们有哪些结果可能出现，以及每种可能有多大。</p><div class="quantum-symbol">|0⟩　或　|1⟩</div></article>
+        <article><span>02</span><h3>叠加：几种可能先共存</h3><p>一个量子比特可以同时保留多个可能。它不是普通硬币的“正反面还没看见”，而是保留了能继续产生干涉的振幅。</p><div class="quantum-symbol">|0⟩ + |1⟩</div></article>
+        <article><span>03</span><h3>测量：把可能变成一次看见</h3><p>测量会给出一个实际结果。一次结果只说明这一次看到了什么，重复很多次，才会形成结果分布。</p><div class="quantum-symbol">可能 → 结果</div></article>
+        <article><span>04</span><h3>纠缠：结果之间有联系</h3><p>两个量子比特可以共享一个整体状态。看到其中一个结果时，另一个结果的分布会和它保持关联。</p><div class="quantum-symbol">一起变化</div></article>
+        <article><span>05</span><h3>干涉：可能会互相加强或抵消</h3><p>量子门会改变振幅和相位。不同路径重新相遇时，有些结果被加强，有些结果被抵消，这就是干涉。</p><div class="quantum-symbol">相遇 → 明暗</div></article>
+      </div>
+      <div class="quantum-basics-story"><strong>沈遥的提醒</strong><p>“先别急着给世界命名。先写下你猜什么，再只改变一个地方。结果会告诉你，这次实验真正支持到哪里。”</p><a href="#inquiry-world">把这五件事带进第一次实验</a></div>
     </section>
 
     <section class="story-caseboard" aria-labelledby="caseboard-title">
@@ -80,9 +116,9 @@
       <img src="assets/quantum-world-journey.png" alt="一位初学者从观测站走向由量子电路线构成的分岔世界，手中拿着实验护照">
       <div class="story-hero-copy">
         <p class="eyebrow">Quantum World · 序章</p>
-        <p class="story-kicker">实验日志 001 · 删掉 CX 之后，会发生什么？</p>
-        <h1 id="hero-title">先做一次实验，<br><em>再解释结果。</em></h1>
-        <p class="intro">你是这次实验的观测者。先猜 H 和 CX 会让两个量子比特怎样变化，再只改变一扇门，用两组本地运行结果修正自己的判断。</p>
+        <p class="story-kicker">研究日志 001 · 窗外的云还没有散</p>
+        <h1 id="hero-title">先陪她看一会儿，<br><em>再开始提问。</em></h1>
+        <p class="intro">沈遥每天都从一件很小的事开始。她把一个可能的答案写下来，再把同一件事重新观察一次。你可以和她一起走完这段路，不用先记住任何术语。</p>
         <nav class="story-actions" aria-label="Quantum World 快速入口">
           <a class="story-primary" href="#inquiry-world">进入第一章</a>
           <a class="story-secondary" href="#evidence-map">我想先看证据</a>
@@ -91,7 +127,7 @@
       </div>
       <ol id="story-chapters" class="story-chapters" aria-label="三幕探究旅程">
         <li data-story-chapter="predict" class="current"><span>第一幕</span><strong>在分岔以前</strong><small>先留下预测</small></li>
-        <li data-story-chapter="experiment" class="upcoming"><span>第二幕</span><strong>只拨动一扇门</strong><small>运行 A/B 实验</small></li>
+        <li data-story-chapter="experiment" class="upcoming"><span>第二幕</span><strong>只拨动一扇门</strong><small>做两次观察</small></li>
         <li data-story-chapter="conclude" class="upcoming"><span>第三幕</span><strong>带证据归来</strong><small>审计结论并领取护照</small></li>
       </ol>
       <p id="story-progress-copy" class="story-progress-copy" role="status" aria-live="polite">第一幕：先留下你的预测。</p>
@@ -127,8 +163,8 @@
       <div class="inquiry-heading">
         <div>
           <p class="eyebrow">Quantum World · 第一个探究任务</p>
-          <h2 id="inquiry-title">H 和 CX 分别做了什么？</h2>
-          <p>不需要先学 QASM。先预测，再运行对照实验；系统只改变 CX，最后请你根据两组结果选择结论。</p>
+          <h2 id="inquiry-title">同一件事，再看一遍，会发生什么？</h2>
+          <p>沈遥把原来的观察完整保留，再拿走一个连接，看看结果从哪里开始改变。先预测，再运行对照实验；你只需要先说出自己的猜想，剩下的交给两次测量。</p>
         </div>
         <ol class="inquiry-route" aria-label="探究步骤">
           <li><span>1</span>预测</li>
@@ -141,30 +177,30 @@
       <div class="inquiry-prompt">
         <div>
           <span class="inquiry-label">研究问题</span>
-          <strong>删掉 CX 后，Bell 电路的测量结果会怎样变化？</strong>
-          <p>实验 A 保留 H 和 CX；实验 B 保留 H、暂时禁用 CX。其他条件相同。</p>
+            <strong>拿走一个连接后，两次观察会留下什么不同？</strong>
+            <p>第一次保留原来的步骤。第二次只拿走一个连接。其他事情都不动。</p>
         </div>
         <label for="inquiry-prediction">运行前，我的预测
           <select id="inquiry-prediction">
             <option value="not-sure">我还不确定，先观察</option>
-            <option value="h-opens-branches">H 已经建立分支，CX 改变相关结构</option>
-            <option value="cx-opens-branches">CX 才建立最初的两个分支</option>
+            <option value="h-opens-branches">最开始的步骤让可能性分开，连接改变了它们的关系</option>
+            <option value="cx-opens-branches">是连接让最初的可能性出现</option>
           </select>
         </label>
-        <button id="run-inquiry" class="primary" type="button">运行 A/B 对照实验</button>
+        <button id="run-inquiry" class="primary" type="button">开始两次观察</button>
         <p id="inquiry-status" role="status" aria-live="polite">尚未运行；实验完全在本地完成。</p>
       </div>
 
       <div id="inquiry-results" class="inquiry-results" hidden>
         <div class="inquiry-comparison">
           <article class="inquiry-experiment">
-            <header><span>实验 A · 完整 Bell</span><strong>H + CX</strong></header>
+            <header><span>第一次观察 · 原来的步骤</span><strong>完整路径</strong></header>
             <div id="inquiry-control-chart" class="inquiry-chart" aria-label="完整 Bell 电路测量分布"></div>
             <p id="inquiry-control-observation">等待实验结果。</p>
           </article>
           <article class="inquiry-experiment variant">
-            <header><span>实验 B · 只改一个条件</span><strong>H，禁用 CX</strong></header>
-            <div id="inquiry-variant-chart" class="inquiry-chart" aria-label="禁用 CX 后的测量分布"></div>
+            <header><span>第二次观察 · 只改一个地方</span><strong>少一个连接</strong></header>
+            <div id="inquiry-variant-chart" class="inquiry-chart" aria-label="少一个连接后的测量分布"></div>
             <p id="inquiry-variant-observation">等待实验结果。</p>
           </article>
         </div>
@@ -177,8 +213,8 @@
         <div class="inquiry-conclusion">
           <label for="inquiry-conclusion">根据结果，我的结论
             <select id="inquiry-conclusion">
-              <option value="h-opens-branches-cx-correlates">H 建立分支，CX 改变两个比特的相关结构</option>
-              <option value="cx-opens-branches">CX 建立了最初的两个分支</option>
+              <option value="h-opens-branches-cx-correlates">最开始的步骤让可能性分开，连接改变了它们的关系</option>
+              <option value="cx-opens-branches">是连接让最初的可能性出现</option>
               <option value="proves-nonlocality">这次 Z 基实验完整证明了 Bell 非定域性</option>
             </select>
           </label>
@@ -256,7 +292,7 @@
         <button class="task-card" data-task="backend"><span>04 · MATCH</span><strong>选择合适的后端</strong><small>按比特数、费用和排队比较 SpinQ、本源和 Braket</small></button>
       </div>
       <div id="lesson" class="lesson" tabindex="-1">
-        <strong>Bell 态只需要两步：</strong>H 门让 q[0] 同时保留 0 和 1 的振幅；CX 再把 q[1] 与它关联。测量时主要得到 00 和 11，这证明模拟结果具有经典相关性；单靠 Z 基测量不能完整证明真机纠缠。
+        <strong>一次量子观察可以很简单：</strong>先让一个量子保留几种可能，再观察另一个量子是否跟着它一起变化。测量会留下 00、11 这样的结果；我们先描述看见的部分，再决定能不能继续解释。
       </div>
     </section>
 

@@ -37,6 +37,7 @@ _STATIC = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/favicon.ico": ("favicon.svg", "image/svg+xml"),
     "/favicon.svg": ("favicon.svg", "image/svg+xml"),
+    "/assets/shenicest-logo.png": ("assets/shenicest-logo.png", "image/png"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/inquiry.js": ("inquiry.js", "text/javascript; charset=utf-8"),
     "/assets/quantum-world-journey.png": (

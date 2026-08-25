@@ -371,6 +371,22 @@
   box-shadow: 12px 12px 0 var(--orange);
 }
 
+.masthead { position: relative; display: flex; align-items: center; gap: 24px; }
+.masthead-partner { display: flex; align-items: center; gap: 9px; margin-left: auto; padding: 4px 12px 4px 5px; border: 1px solid rgba(16, 40, 33, .16); border-radius: 999px; background: rgba(255, 255, 255, .42); }
+.masthead-partner img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; background: #090817; box-shadow: 0 2px 8px rgba(16, 40, 33, .18); }
+.masthead-partner span { display: grid; gap: 1px; }
+.masthead-partner strong { color: var(--ink); font: 800 13px var(--sans); letter-spacing: .02em; }
+.masthead-partner small { color: #728078; font: 9px var(--mono); }
+.masthead .status { margin-left: 0; white-space: nowrap; }
+.masthead .status i { display: inline-block; width: 4px; height: 4px; margin: 0 7px; border-radius: 50%; background: var(--acid); vertical-align: middle; }
+@media (max-width: 720px) {
+  .masthead { gap: 10px; }
+  .masthead-partner { padding-right: 7px; }
+  .masthead-partner span { display: none; }
+  .masthead-partner img { width: 34px; height: 34px; }
+  .masthead .status { font-size: 9px; }
+}
+
 .story-mode {
   display: grid;
   grid-template-columns: minmax(300px, .78fr) minmax(0, 1.22fr);
@@ -394,6 +410,14 @@
 .story-mode-ruleline { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
 .story-mode-ruleline span { padding: 8px 10px; border: 1px solid rgba(255, 255, 255, .22); color: #f4eee3; font: 11px var(--mono); }
 .story-mode-boundary { max-width: 680px; margin: 22px 0 0; color: #91a99e; font-size: 11px; }
+.researcher-diary { margin: 48px 0 40px; padding: 12px 0 0; }
+.researcher-diary-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; border-bottom: 1px solid #bdb4a6; padding-bottom: 16px; }
+.researcher-diary-heading h2 { max-width: 640px; margin: 7px 0 0; font-size: clamp(30px, 4.3vw, 56px); letter-spacing: -.045em; }
+.researcher-diary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-top: 24px; }
+.researcher-diary-grid p { margin: 0; color: #56665d; line-height: 1.85; }
+.researcher-diary-grid span { display: block; margin-bottom: 7px; color: #78905e; font: 700 12px var(--mono); letter-spacing: .12em; }
+.researcher-diary-note { max-width: 740px; margin: 28px 0 0; color: #2f4e3e; font-size: 15px; }
+@media (max-width: 700px) { .researcher-diary-heading { display: block; } .researcher-diary-grid { grid-template-columns: 1fr; gap: 18px; } }
 .beginner-intro { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr); gap: 28px; align-items: stretch; margin: 34px 0 58px; padding: 34px; border: 1px solid #c8bca9; background: #f4ede0; box-shadow: 10px 10px 0 var(--acid); }
 .beginner-tag { margin: 8px 0 0; color: #6d825d; font: 700 11px var(--mono); letter-spacing: .11em; text-transform: uppercase; }
 .beginner-intro-copy h2 { margin: 7px 0 14px; font-size: clamp(34px, 4.4vw, 58px); letter-spacing: -.05em; }
@@ -416,16 +440,42 @@
 .node-left { left: 16px; transform: translateY(-50%); color: #d2e7bb; }
 .node-right { right: 16px; transform: translateY(-50%); color: #a7ddd8; }
 .qubit-demo-gate { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); color: #d9e8c0; font: 10px var(--mono); letter-spacing: .08em; }
+.qubit-demo-state { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 6px 9px; color: #e5f1bf; border: 1px solid rgba(216, 243, 151, .38); font: 700 10px var(--mono); }
 .qubit-demo-caption { display: grid; gap: 8px; margin: 0; padding: 14px 16px; background: #0b201b; }
 .qubit-demo-caption p { display: grid; gap: 3px; margin: 0; }
 .qubit-demo-caption strong { color: var(--acid); }
 .qubit-demo-caption span { color: #b9cbbd; font-size: 11px; }
 .qubit-demo-replay { justify-self: start; margin-top: 10px; padding: 7px 11px; border: 1px solid rgba(216, 235, 105, .42); background: rgba(216, 235, 105, .12); color: var(--acid); font: 700 10px var(--mono); letter-spacing: .11em; text-transform: uppercase; cursor: pointer; }
 .qubit-demo-replay:hover, .qubit-demo-replay:focus-visible { background: rgba(216, 235, 105, .22); }
+.qubit-demo-controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.qubit-demo-step { padding: 7px 9px; border: 1px solid rgba(216, 243, 151, .35); background: transparent; color: #d2e7bb; font: 10px var(--mono); cursor: pointer; }
+.qubit-demo-step.active, .qubit-demo-step:hover, .qubit-demo-step:focus-visible { background: var(--acid); color: #102821; border-color: var(--acid); outline: none; }
+.qubit-demo[data-demo-state="split"] .qubit-demo-ball { animation: qubitSplit 1.8s ease-in-out infinite alternate; }
+.qubit-demo[data-demo-state="measure"] .qubit-demo-ball { animation: qubitMeasure .8s ease-out forwards; background: #8bd5c8; }
+.qubit-demo[data-demo-state="measure"] .qubit-demo-orbit { opacity: .18; }
 .qubit-demo-stage.is-replaying .qubit-demo-ball { animation-name: qubitTravel; }
 @keyframes qubitTravel { 0%, 100% { transform: translate(-62px, 0) scale(.82); } 50% { transform: translate(62px, 0) scale(1.16); } }
+@keyframes qubitSplit { 0% { transform: translate(-35px, 0) scale(.9); } 100% { transform: translate(35px, -25px) scale(1.2); } }
+@keyframes qubitMeasure { 0% { transform: translate(35px, -25px) scale(1.2); } 100% { transform: translate(88px, 0) scale(.72); } }
 @media (prefers-reduced-motion: reduce) { .qubit-demo-ball { animation: none; transform: translate(0, 0); } }
 .story-caseboard { margin: 56px 0; }
+.quantum-basics { margin: 54px 0; padding: 34px; border: 1px solid #263d35; background: #e6eee1; box-shadow: 10px 10px 0 #7fc9bd; }
+.quantum-basics-heading { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, .8fr); gap: 24px; align-items: end; }
+.quantum-basics-heading .eyebrow { grid-column: 1 / -1; margin: 0; color: #5d8065; }
+.quantum-basics-heading h2 { margin: 0; font-size: clamp(32px, 4.5vw, 58px); letter-spacing: -.05em; }
+.quantum-basics-heading p:last-child { margin: 0; color: #53665b; line-height: 1.7; }
+.quantum-basics-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 26px; }
+.quantum-basics-grid article { min-height: 246px; padding: 18px; border: 1px solid #a8bba8; background: #f5f0e5; }
+.quantum-basics-grid article > span { color: #6b9277; font: 700 11px var(--mono); }
+.quantum-basics-grid h3 { margin: 14px 0 10px; font-size: 17px; line-height: 1.25; }
+.quantum-basics-grid p { margin: 0; color: #56695b; font-size: 13px; line-height: 1.7; }
+.quantum-symbol { display: inline-block; margin-top: 18px; padding: 7px 9px; color: #16453d; background: #d9ebb8; font: 700 13px var(--mono); }
+.quantum-basics-story { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center; margin-top: 22px; padding: 17px 18px; background: #102821; color: #edf2e6; }
+.quantum-basics-story strong { color: var(--acid); white-space: nowrap; }
+.quantum-basics-story p { margin: 0; color: #c9d8cc; line-height: 1.6; }
+.quantum-basics-story a { color: var(--acid); font-weight: 800; text-decoration: none; white-space: nowrap; }
+@media (max-width: 1050px) { .quantum-basics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .quantum-basics { padding: 24px 20px; } .quantum-basics-heading { display: block; } .quantum-basics-heading h2 { margin: 7px 0 12px; } .quantum-basics-grid { grid-template-columns: 1fr; } .quantum-basics-grid article { min-height: auto; } .quantum-basics-story { grid-template-columns: 1fr; } .quantum-basics-story a { white-space: normal; } }
 .story-caseboard-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 22px; }
 .story-caseboard-heading h2 { margin: 7px 0 0; font-size: clamp(34px, 5vw, 62px); letter-spacing: -.05em; }
 .story-caseboard-heading p { max-width: 420px; margin: 0; color: #596960; line-height: 1.65; }

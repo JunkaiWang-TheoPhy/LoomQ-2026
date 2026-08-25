@@ -133,6 +133,12 @@ class WebLabTests(unittest.TestCase):
             self.assertIn("image/png", headers["Content-Type"], asset)
             self.assertGreater(len(body), 1000, asset)
 
+    def test_shenicest_partner_logo_is_served(self):
+        status, headers, body = self.request("/assets/shenicest-logo.png")
+        self.assertEqual(status, 200)
+        self.assertIn("image/png", headers["Content-Type"])
+        self.assertGreater(len(body), 1000)
+
     def test_case_page_assets_are_served(self):
         for path in ("/case.html", "/case.js", "/case.css"):
             status, _headers, body = self.request(path)
@@ -237,8 +243,8 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="inquiry-conclusion"', page)
         self.assertIn('id="audit-inquiry"', page)
         self.assertIn('id="download-inquiry"', page)
-        self.assertIn("H 和 CX 分别做了什么", page)
-        self.assertIn("先预测，再运行对照实验", page)
+        self.assertIn("同一件事，再看一遍，会发生什么", page)
+        self.assertIn("先观察，再动手", page)
         self.assertLess(page.index('id="inquiry-world"'), page.index('id="workspace"'))
 
     def test_home_frames_the_inquiry_as_an_accessible_three_act_story(self):

@@ -243,20 +243,42 @@ function initBeginnerDemo() {
   const replayButton = $("[data-beginner-demo-replay]");
   if (!stage) return;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const replay = () => {
-    if (reducedMotion.matches) return;
-    stage.classList.remove("is-replaying");
-    void stage.offsetWidth;
-    stage.classList.add("is-replaying");
+  const demo = $(".qubit-demo");
+  const state = $("[data-beginner-demo-state]");
+  const title = $("[data-beginner-demo-title]");
+  const copy = $("[data-beginner-demo-copy]");
+  const steps = document.querySelectorAll("[data-demo-step]");
+  const messages = {
+    observe: ["准备观察", "先观察", "小球现在代表一个还没有被测量的可能性。"],
+    split: ["保留两种可能", "出现两种可能", "这一步不是猜答案，而是让两种可能同时留在描述里。"],
+    measure: ["得到一次结果", "现在测量", "测量会告诉你这一次看见了什么；下一次还可以重新观察。"],
   };
-  stage.addEventListener("click", replay);
+  const choose = (name) => {
+    const [label, heading, description] = messages[name];
+    demo.dataset.demoState = name;
+    state.textContent = label;
+    title.textContent = heading;
+    copy.textContent = description;
+    steps.forEach((button) => button.classList.toggle("active", button.dataset.demoStep === name));
+    if (!reducedMotion.matches) {
+      stage.classList.remove("is-replaying");
+      void stage.offsetWidth;
+      stage.classList.add("is-replaying");
+    }
+  };
+  steps.forEach((button) => button.addEventListener("click", () => choose(button.dataset.demoStep)));
+  replayButton?.addEventListener("click", () => choose("observe"));
+  stage.addEventListener("click", (event) => {
+    if (event.target.closest("[data-demo-step], [data-beginner-demo-replay]")) return;
+    choose(demo.dataset.demoState === "observe" ? "split" : demo.dataset.demoState === "split" ? "measure" : "observe");
+  });
   stage.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      replay();
+      choose(demo.dataset.demoState === "observe" ? "split" : demo.dataset.demoState === "split" ? "measure" : "observe");
     }
   });
-  replayButton?.addEventListener("click", replay);
+  choose("observe");
 }
 
 function tell(message) {
@@ -1162,14 +1184,14 @@ $("#run-inquiry").addEventListener("click", async () => {
     renderInquiryExperiment(passport);
     renderStoryProgress(true, null);
     resetInquiryAudit("实验已完成。现在选择结论，并让证据检查它。");
-    status.textContent = "A/B 实验完成：只改变了 CX，下一步请形成结论。";
-    tell("Quantum World：对照实验完成");
+    status.textContent = "两次观察完成：只改变了一个连接，下一步请说说你的理解。";
+    tell("两次观察完成，结果已经留下");
   } catch (error) {
     status.textContent = `实验失败：${error.message}`;
     tell(error.message);
   } finally {
     button.disabled = false;
-    button.textContent = "重新运行 A/B 对照实验";
+    button.textContent = "再做两次观察";
   }
 });
 
@@ -1179,7 +1201,7 @@ $("#audit-inquiry").addEventListener("click", async () => {
   button.textContent = "正在核对证据…";
   try {
     if (!currentInquiryPassport) {
-      throw new Error("请先运行 A/B 对照实验，再审计结论");
+      throw new Error("请先完成两次观察，再审计你的理解");
     }
     const passport = globalThis.LoomQInquiry.withConclusion(
       currentInquiryPassport,
