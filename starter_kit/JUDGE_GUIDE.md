@@ -26,6 +26,12 @@
 
 打开 `/game.html` 并点击“开始调查”。这是一个连续的 Canvas 2D 世界：用 WASD / 方向键控制调查员，靠近发光物品或角色后按 E / 空格交互。玩家需要在观测站实际寻找四件工具、穿过任务门、操作原野中的 A/B 装置，再将同一份实验护照送到证据塔。
 
+### 故事与演示材料
+
+评委不会看到开发对话，故事和演示材料以提交目录为准。统一索引位于 `starter_kit/evidence/story/`：`Story.PR` 是完整故事稿，`Quantum_Atlas_Story.docx` 和 `Quantum_Atlas_Story.pdf` 是排版文档，`GAME_CATALOG.md` 说明三个游戏入口和主游戏位置，`DEMO_GUIDE.md` 给出五分钟路径，`TECHNICAL_REPORT.md` 记录 Story contract、API 和边界，`Quantum_Atlas_Demo.pptx` 是演示 slides。主游戏固定位置为 `starter_kit/web/game.html`。
+
+故事主角是宇航站观察者沈遥。她的第八十年构成主线《零点之后的观测者》，地图上的五个案件沿她的人生展开。故事材料只负责引导，实际量子结果仍来自 `/api/inquiry`、`/api/compare`、ProofTrace 和其他可重算证书。
+
 四件工具各贡献 5 分；运行前预测得 10 分，真实 A/B 护照返回后得 20 分并开放证据塔，结论审计得 50 分。总分只记录流程完成度，审计结果仍保留 `supported / unsupported / inconclusive`，不会把错误结论包装成正确答案。移动端显示虚拟摇杆和“调查”按钮，不要求精确点击地图热点。
 
 如果想体验参考图式的像素 RPG，打开 `/pixel.html`。这是 Atlas-7 轨道前哨的科幻序章：银河/舱壁背景和白色空间站建筑分层，三步引导先讲清移动、观察、过桥。故事线索会从失联呼叫推进到三枚调查碎片、纠缠能道、量子井回声和未知观察者；地图场景依次为量子前哨、纠缠能道、证据环站。能道不可直接通过，必须走桥；建筑和障碍是独立碰撞对象。PHASE HUD、纠缠轨迹和量子井脉冲是量子风格反馈；点击开始调查后可用右上角音乐开关打开程序化 chiptune 环境音乐。SheNicest 像素徽章和移动控制贴图作为独立 PNG 资源接入。用方向键或 WASD 在地图里走，靠近三枚发光碎片按 E 收集，再去找小满启动量子井；量子井会调用真实 `/api/inquiry`，不是假的剧情数字。

@@ -50,6 +50,20 @@ python3 -m starter_kit.loomq.web
 
 另有像素 RPG 入口 <http://127.0.0.1:8765/pixel.html>。它使用太空舱/银河背景、独立白色空间站贴图、稳定 3:2 游戏舞台、三步新手引导、底部调查快捷栏和像素任务 HUD。故事从 Atlas-7 轨道前哨失联开始，五段线索依次揭示三枚调查碎片、纠缠能道、量子井回声和未知观察者。地图分为量子前哨、纠缠能道、证据环站三个场景，河水/能道不可通过，只有桥面通行；建筑与障碍独立绘制并参与碰撞。PHASE HUD 和纠缠轨迹表达量子语义，开始调查后由 Web Audio 生成低音量 chiptune 环境音乐。玩家收集三枚调查碎片，交给 NPC 后启动真实 A/B 量子井。像素地图资产保存在 [`web/assets/pixel-space-background.png`](web/assets/pixel-space-background.png)，SheNicest 像素徽章和控制贴图也作为独立资源接入。
 
+### Story / DOCX / PDF / Slides 交付包
+
+评委不会看到开发对话；故事和演示材料以最终提交文件为准，统一放在 [`evidence/story/`](evidence/story/)：
+
+- [`Story.PR`](evidence/story/Story.PR)：完整故事稿，主角是宇航站观察者沈遥，主线为《零点之后的观测者》，五案按她的人生阶段展开；
+- [`Quantum_Atlas_Story.docx`](evidence/story/Quantum_Atlas_Story.docx)：带封面、章节层级、页眉页脚和地图插图的可编辑故事文档；
+- [`Quantum_Atlas_Story.pdf`](evidence/story/Quantum_Atlas_Story.pdf)：DOCX 的固定版式 PDF，适合直接阅读和归档；
+- [`GAME_CATALOG.md`](evidence/story/GAME_CATALOG.md)：主游戏、像素支线和原证据实验室的路径清单，主游戏位置是 `starter_kit/web/game.html`；
+- [`DEMO_GUIDE.md`](evidence/story/DEMO_GUIDE.md)：五分钟评委演示脚本；
+- [`TECHNICAL_REPORT.md`](evidence/story/TECHNICAL_REPORT.md)：Story contract、API、证据边界和复核结果；
+- [`Quantum_Atlas_Demo.pptx`](evidence/story/Quantum_Atlas_Demo.pptx)：演示 slides，覆盖沈遥、五案、H/CX 入门、可玩循环、证据层和评委路径。
+
+文档中的故事资产只负责叙事导航。量子结果仍来自 `/api/inquiry`、`/api/compare`、ProofTrace 和其他可重算证书，不能把插图或角色台词当成科学证据。
+
 也可以使用 CLI：
 
 ```bash

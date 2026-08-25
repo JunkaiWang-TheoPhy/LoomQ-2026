@@ -76,6 +76,22 @@ evidence/files/spinq-screenshot.png
 
 ## L2 交互体验
 
+### Story World 交付索引
+
+完整故事和评委材料已经随提交归档，统一位于 `starter_kit/evidence/story/`：
+
+```text
+Story.PR                         完整故事稿
+Quantum_Atlas_Story.docx         可编辑故事文档
+Quantum_Atlas_Story.pdf          固定版式故事文档
+GAME_CATALOG.md                  游戏列表与主游戏位置
+DEMO_GUIDE.md                    五分钟评委演示路径
+TECHNICAL_REPORT.md              Story contract、API 与证据边界
+Quantum_Atlas_Demo.pptx          演示 slides
+```
+
+主游戏位置是 `starter_kit/web/game.html`。故事主线是《零点之后的观测者》，第一案是《她的第八十年》。案件板从 `/api/story-world` 读取五案，已开放案件通过 `/api/compare` 运行自己的最小 QASM 对照。DOCX 和 PDF 的故事正文与 `Story.PR` 保持同一版本；Slides 只做演示，不替代代码或证书。
+
 请填写：
 
 ```text
