@@ -9,6 +9,9 @@
   const HEIGHT = 16;
   const TILE = 16;
   const WORLD_SCALE = 2;
+  const DEFAULT_ZOOM = 0.82;
+  const MIN_ZOOM = 0.65;
+  const MAX_ZOOM = 2.4;
   const MOVE_INTERVAL = 0.14;
   const SHARDS = ["state", "repeat", "control"];
   const GUIDE_STEPS = [
@@ -84,12 +87,13 @@
     return Object.entries(SCENES).find(([, scene]) => x >= scene.range[0] && x <= scene.range[1])[0];
   }
 
-  function cameraFor(player, viewport) {
-    const worldWidth = WIDTH * TILE * WORLD_SCALE;
-    const worldHeight = HEIGHT * TILE * WORLD_SCALE;
+  function cameraFor(player, viewport, zoom = 1) {
+    const safeZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
+    const worldWidth = WIDTH * TILE * WORLD_SCALE * safeZoom;
+    const worldHeight = HEIGHT * TILE * WORLD_SCALE * safeZoom;
     return {
-      x: Math.max(0, Math.min(worldWidth - viewport.width, player.x * TILE * WORLD_SCALE - viewport.width / 2)),
-      y: Math.max(0, Math.min(worldHeight - viewport.height, player.y * TILE * WORLD_SCALE - viewport.height / 2)),
+      x: Math.max(0, Math.min(worldWidth - viewport.width, player.x * TILE * WORLD_SCALE * safeZoom - viewport.width / 2)),
+      y: Math.max(0, Math.min(worldHeight - viewport.height, player.y * TILE * WORLD_SCALE * safeZoom - viewport.height / 2)),
     };
   }
 
@@ -136,5 +140,5 @@
     return { event: target.kind, id: target.id };
   }
 
-  return { BUILDINGS, GUIDE_STEPS, HEIGHT, MAP, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt };
+  return { BUILDINGS, DEFAULT_ZOOM, GUIDE_STEPS, HEIGHT, MAP, MAX_ZOOM, MIN_ZOOM, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt };
 });

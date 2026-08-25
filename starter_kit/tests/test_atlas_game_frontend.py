@@ -139,7 +139,8 @@ const pixel = require(process.argv[1]);
 const left = pixel.cameraFor({x: 2, y: 14}, {width: 384, height: 256});
 const middle = pixel.cameraFor({x: 12, y: 7}, {width: 384, height: 256});
 const right = pixel.cameraFor({x: 23, y: 7}, {width: 384, height: 256});
-process.stdout.write(JSON.stringify({left, middle, right, scale: pixel.WORLD_SCALE}));
+const zoomed = pixel.cameraFor({x: 12, y: 7}, {width: 384, height: 256}, 1.8);
+process.stdout.write(JSON.stringify({left, middle, right, zoomed, scale: pixel.WORLD_SCALE}));
 """
         completed = subprocess.run(
             [
@@ -158,6 +159,7 @@ process.stdout.write(JSON.stringify({left, middle, right, scale: pixel.WORLD_SCA
         self.assertEqual(result["left"], {"x": 0, "y": 256})
         self.assertGreater(result["middle"]["x"], result["left"]["x"])
         self.assertEqual(result["right"]["x"], 384)
+        self.assertGreater(result["zoomed"]["x"], result["middle"]["x"])
         self.assertEqual(result["scale"], 2)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")

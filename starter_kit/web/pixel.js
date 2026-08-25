@@ -31,7 +31,11 @@ const MOVE_INTERVAL = worldEngine.MOVE_INTERVAL;
 let storyWorld = null;
 let completedNodes = [];
 let storyBeatIndex = 0;
-let camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height });
+let zoom = worldEngine.DEFAULT_ZOOM;
+let camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height }, zoom);
+const pointers = new Map();
+let pinchStartDistance = null;
+let pinchStartZoom = zoom;
 
 function announce(text) { $("#pixel-sr").textContent = text; }
 
@@ -56,6 +60,7 @@ function updateHud() {
   $("#pixel-scene-name strong").textContent = worldEngine.SCENES[currentScene].name;
   $("#pixel-phase-value").textContent = worldEngine.SCENES[currentScene].phase.toUpperCase();
   $(".pixel-stage").style.backgroundImage = `url('${worldEngine.SCENES[currentScene].background}')`;
+  $("#pixel-zoom-meter strong").textContent = `${Math.round(zoom * 100)}%`;
   updateGuide();
   updateStoryLog();
 }
@@ -493,10 +498,10 @@ function drawQuantumWell(x, y, time) {
 
 function render(time) {
   ctx.imageSmoothingEnabled = false;
-  const targetCamera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height });
+  const targetCamera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height }, zoom);
   camera.x += (targetCamera.x - camera.x) * .18;
   camera.y += (targetCamera.y - camera.y) * .18;
-  ctx.setTransform(worldEngine.WORLD_SCALE, 0, 0, worldEngine.WORLD_SCALE, -camera.x, -camera.y);
+  ctx.setTransform(worldEngine.WORLD_SCALE * zoom, 0, 0, worldEngine.WORLD_SCALE * zoom, -camera.x, -camera.y);
   drawMap(time);
   drawPlayer(time);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -592,7 +597,8 @@ function reset() {
   storyWorld = null;
   storyBeatIndex = 0;
   movementClock = 0;
-  camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height });
+  zoom = worldEngine.DEFAULT_ZOOM;
+  camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height }, zoom);
   dialogueOpen = false;
   dialogueLocked = false;
   $("#pixel-dialogue").hidden = true;
@@ -634,6 +640,43 @@ $("#pixel-music-toggle").addEventListener("click", () => {
 });
 $("#pixel-continue").addEventListener("click", () => { $("#pixel-complete").hidden = true; canvas.focus(); });
 $("#pixel-touch-action").addEventListener("click", interact);
+
+function setZoom(nextZoom) {
+  zoom = Math.max(worldEngine.MIN_ZOOM, Math.min(worldEngine.MAX_ZOOM, nextZoom));
+  updateHud();
+}
+
+function pointerDistance() {
+  const values = [...pointers.values()];
+  if (values.length < 2) return null;
+  return Math.hypot(values[0].x - values[1].x, values[0].y - values[1].y);
+}
+
+canvas.addEventListener("pointerdown", (event) => {
+  pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  canvas.setPointerCapture(event.pointerId);
+  if (pointers.size === 2) {
+    pinchStartDistance = pointerDistance();
+    pinchStartZoom = zoom;
+  }
+});
+canvas.addEventListener("pointermove", (event) => {
+  if (!pointers.has(event.pointerId)) return;
+  pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+  if (pointers.size >= 2 && pinchStartDistance) {
+    setZoom(pinchStartZoom * (pointerDistance() / pinchStartDistance));
+  }
+});
+function endPointer(event) {
+  pointers.delete(event.pointerId);
+  if (pointers.size < 2) pinchStartDistance = null;
+}
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", endPointer);
+canvas.addEventListener("wheel", (event) => {
+  event.preventDefault();
+  setZoom(zoom - Math.sign(event.deltaY) * .08);
+}, { passive: false });
 
 const stick = $("#pixel-stick");
 const knob = stick.querySelector("i");
