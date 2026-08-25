@@ -726,8 +726,24 @@
 .quantum-guide-concept code { display: block; padding: 12px; background: #f8f1df; color: #244a48; font-size: 12px; overflow-wrap: anywhere; }
 .quantum-guide-concept .story-secondary { margin-top: auto; text-align: center; border-color: #244a48; color: #244a48; }
 .quantum-guide-boundary { display: block; margin-top: 12px; color: #52615a; }
+.hardware-console { margin-top: 24px; padding: 22px; background: #203d42; color: #fff8e8; }
+.hardware-console-heading { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.hardware-console h3 { margin: 7px 0; font-size: 25px; }
+.hardware-console p { color: #e9e0cb; }
+.hardware-backends { display: grid; gap: 8px; }
+.hardware-backend-status { display: block; padding: 9px 11px; border-left: 4px solid #87948e; background: rgba(255,255,255,.08); font-size: 13px; }
+.hardware-backend-status.ready { border-left-color: #d9e769; }
+.hardware-backend-status.fixture_available { border-left-color: #f0b45b; }
+.hardware-backend-status.configuration_required, .hardware-backend-status.adapter_required { border-left-color: #e87864; }
+.hardware-qasm-label { display: block; margin-top: 18px; color: #d9e769; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+#hardware-qasm { width: 100%; margin-top: 7px; padding: 12px; box-sizing: border-box; resize: vertical; background: #14292d; color: #f5ebcc; border: 1px solid #5f827a; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.hardware-console-actions { display: flex; gap: 14px; align-items: end; flex-wrap: wrap; margin-top: 14px; }
+.hardware-console-actions label { display: grid; gap: 5px; color: #e9e0cb; font-size: 12px; }
+.hardware-console-actions select, .hardware-console-actions input { min-height: 38px; padding: 0 9px; background: #f8f1df; color: #203d42; border: 0; }
+.hardware-job-status { min-height: 24px; margin-top: 14px; color: #d9e769; font-size: 13px; }
+.hardware-result { margin: 10px 0 0; padding: 13px; overflow: auto; background: #14292d; color: #e9e0cb; font-size: 12px; }
 @media (max-width: 860px) {
-  .quantum-guide-heading, .quantum-guide-lab { grid-template-columns: 1fr; }
+  .quantum-guide-heading, .quantum-guide-lab, .hardware-console-heading { grid-template-columns: 1fr; }
 }
 @media (max-width: 620px) {
   .quantum-guide { padding: 20px; }

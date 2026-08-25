@@ -455,6 +455,35 @@
         <button id="inspect-prompt-contract" class="secondary" type="button">检查 Prompt Contract</button>
         <span id="prompt-contract-status" class="backend">等待检查</span>
       </div>
+      <section id="hardware-console" class="hardware-console" aria-labelledby="hardware-console-title">
+        <div class="hardware-console-heading">
+          <div>
+            <span class="inquiry-label">真实实验室 · 统一入口</span>
+            <h3 id="hardware-console-title">先看后端状态，再提交实验</h3>
+            <p>页面只会把已配置凭证的 provider 标为可提交；没有凭证时显示配置指引。提交后用 job ID 轮询，并把 counts、bit order、timestamp 和 provenance 一起展示。</p>
+          </div>
+          <div id="hardware-backends" class="hardware-backends" aria-live="polite"><span>正在检查后端…</span></div>
+        </div>
+        <label class="hardware-qasm-label" for="hardware-qasm">实验电路（OpenQASM 2.0）</label>
+        <textarea id="hardware-qasm" rows="7">OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+cx q[0],q[1];
+measure q -> c;</textarea>
+        <div class="hardware-console-actions">
+          <label for="hardware-backend-select">提交到
+            <select id="hardware-backend-select"></select>
+          </label>
+          <label for="hardware-shots">shots
+            <input id="hardware-shots" type="number" min="1" max="100000" value="1000">
+          </label>
+          <button id="hardware-submit" class="primary" type="button" disabled>提交实验</button>
+        </div>
+        <div id="hardware-job-status" class="hardware-job-status" role="status" aria-live="polite">尚未提交实验。</div>
+        <pre id="hardware-result" class="hardware-result" hidden></pre>
+      </section>
       <div id="prompt-contract-result" class="prompt-contract-result" aria-live="polite">
         <p>运行后显示任务类型、目标态、平台与账号约束，以及服务端重建结果。</p>
       </div>
@@ -481,6 +510,7 @@
   <div id="notice" class="notice" role="status" aria-live="polite"></div>
   <script src="/inquiry.js" defer></script>
   <script src="/quantum-guide.js" defer></script>
+  <script src="/hardware.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
