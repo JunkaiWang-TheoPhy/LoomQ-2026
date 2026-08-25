@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Tuple
 try:
     from . import llm_client
     from .loomq.agent import chat
+    from .loomq.cross_platform_agent import build_cross_platform_plan
     from .loomq.hybrid import compile_hybrid as compile_hybrid_program
     from .loomq.hybrid_paths import (
         certify_hybrid_paths as certify_hybrid_paths_program,
@@ -22,6 +23,7 @@ try:
 except ImportError:  # Direct execution from starter_kit/.
     import llm_client
     from loomq.agent import chat
+    from loomq.cross_platform_agent import build_cross_platform_plan
     from loomq.hybrid import compile_hybrid as compile_hybrid_program
     from loomq.hybrid_paths import (
         certify_hybrid_paths as certify_hybrid_paths_program,
@@ -60,6 +62,23 @@ def run(qasm_str: str, target: str, shots: int) -> Dict[str, Any]:
 def agent_chat(prompt: str, history: object = None) -> str:
     """Optional L2 entry point using the documented LOOMQ_LLM_* environment."""
     return chat(prompt, llm_client.chat_completion, history)
+
+
+def cross_platform_agent(
+    prompt: str,
+    history: object = None,
+    *,
+    shots: int = 128,
+    targets: tuple[str, ...] = ("spinq", "originq", "braket"),
+) -> Dict[str, Any]:
+    """Generate once and validate/replay the same circuit across all adapters."""
+    return build_cross_platform_plan(
+        prompt,
+        llm_client.chat_completion,
+        history,
+        shots=shots,
+        targets=targets,
+    )
 
 
 def compile_hybrid(hybrid_qasm_str: str) -> Tuple[List[str], str]:

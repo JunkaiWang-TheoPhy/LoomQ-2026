@@ -54,6 +54,7 @@ Agent 生成是可选的第 7 步。配置 `LOOMQ_LLM_*` 后再运行它；模�
 | L3 | `python3 starter_kit/evaluator.py --level l3` | AST 编译器、独立参考语义与固定种子随机程序 |
 | 对抗边界 | `cd starter_kit && python3 -m unittest tests.test_resource_boundaries -v` | 超大寄存器、稠密 21-qubit 拒绝、稀疏执行匹配 24/30/25 比特能力表、31-qubit Web 400、65 层分支拒绝 |
 | 自定义量子 RISC-V | `python3 starter_kit/bonus_evaluator.py`；`cd starter_kit && python3 -m unittest tests.test_quantum_riscv -v` | 32 位 `custom-0` 编码、字节序列、严格解码、12 门固定机器字、字面 Bell 执行、无损参数表、100 条随机线路与扩展模拟器闭环 |
+| 跨平台 Agent | `cd starter_kit && python3 -m unittest tests.test_cross_platform_agent -v` | 一次自然语言请求生成一个经确定性验证的 QASM，并在 SpinQ、OriginQ、Braket 三个本地 adapter 上预览 native IR、统一 counts 和一致性结果；凭据仍由后续真机路径注入 |
 | 科学边界 | 阅读 `SCIENTIFIC_CLAIMS_AUDIT.md` | 模拟器、Z 基相关、真机噪声、模型 fixture 的允许结论与非声明 |
 
 ## 建议体验的三个任务
