@@ -16,13 +16,6 @@
     { id: "observe", action: "靠近发光碎片，按 E 进行一次观察" },
     { id: "bridge", action: "沿木桥穿过分岔河谷，去找小满" },
   ];
-  const STORY_BEATS = [
-    { id: "arrival", title: "失联的量子前哨", line: "Atlas-7 轨道站只发来一句话：不要观测第二条路径。" },
-    { id: "fragments", title: "三枚调查碎片", line: "碎片不是燃料，而是三段被删除的实验记录：准备、重复、对照。" },
-    { id: "crossing", title: "纠缠能道", line: "河谷中的能道连接两条世界线，木桥是唯一不会强制测量的通路。" },
-    { id: "well", title: "量子井回声", line: "小满发现井底还留着一个未知观察者的相位签名。" },
-    { id: "choice", title: "谁在观察观察者", line: "A/B 结果一致，却出现了第三个不可见的 witness。" },
-  ];
   const MAP = [
     "########################",
     "#..............#.......#",
@@ -100,6 +93,17 @@
     };
   }
 
+  function directionForKey(key) {
+    const normalized = String(key || "").toLowerCase();
+    const directions = {
+      arrowright: { x: 1, y: 0 }, d: { x: 1, y: 0 },
+      arrowleft: { x: -1, y: 0 }, a: { x: -1, y: 0 },
+      arrowup: { x: 0, y: -1 }, w: { x: 0, y: -1 },
+      arrowdown: { x: 0, y: 1 }, s: { x: 0, y: 1 },
+    };
+    return directions[normalized] || null;
+  }
+
   function move(state, dx, dy) {
     const stepX = Math.sign(dx);
     const stepY = Math.sign(dy);
@@ -132,5 +136,5 @@
     return { event: target.kind, id: target.id };
   }
 
-  return { BUILDINGS, GUIDE_STEPS, HEIGHT, MAP, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, STORY_BEATS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, interact, isWall, isWater, move, obstacleAt, sceneAt };
+  return { BUILDINGS, GUIDE_STEPS, HEIGHT, MAP, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt };
 });

@@ -109,7 +109,6 @@ process.stdout.write(JSON.stringify({steps: pixel.GUIDE_STEPS, scenes: pixel.SCE
         script = """
 const pixel = require(process.argv[1]);
 process.stdout.write(JSON.stringify({
-  story: pixel.STORY_BEATS.map((beat) => beat.id),
   buildingIds: pixel.BUILDINGS.map((building) => building.id),
   obstacle: pixel.obstacleAt(5, 3),
   open: pixel.obstacleAt(6, 3)
@@ -129,7 +128,6 @@ process.stdout.write(JSON.stringify({
 
         self.assertEqual(completed.returncode, 0, completed.stderr)
         result = json.loads(completed.stdout)
-        self.assertEqual(result["story"], ["arrival", "fragments", "crossing", "well", "choice"])
         self.assertIn("outpost", result["buildingIds"])
         self.assertIsNotNone(result["obstacle"])
         self.assertIsNone(result["open"])
@@ -161,6 +159,34 @@ process.stdout.write(JSON.stringify({left, middle, right, scale: pixel.WORLD_SCA
         self.assertGreater(result["middle"]["x"], result["left"]["x"])
         self.assertEqual(result["right"]["x"], 384)
         self.assertEqual(result["scale"], 2)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_pixel_direction_keys_have_immediate_directions(self):
+        script = """
+const pixel = require(process.argv[1]);
+process.stdout.write(JSON.stringify({
+  right: pixel.directionForKey("ArrowRight"),
+  up: pixel.directionForKey("w"),
+  none: pixel.directionForKey("q")
+}));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "pixel_adventure_engine.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertEqual(result["right"], {"x": 1, "y": 0})
+        self.assertEqual(result["up"], {"x": 0, "y": -1})
+        self.assertIsNone(result["none"])
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_adventure_world_moves_collides_and_unlocks_interactions(self):

@@ -28,7 +28,9 @@ let musicOn = false;
 let musicStep = 0;
 let movementClock = 0;
 const MOVE_INTERVAL = worldEngine.MOVE_INTERVAL;
-let currentStory = "arrival";
+let storyWorld = null;
+let completedNodes = [];
+let storyBeatIndex = 0;
 let camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height });
 
 function announce(text) { $("#pixel-sr").textContent = text; }
@@ -59,17 +61,39 @@ function updateHud() {
 }
 
 function updateStoryLog() {
-  const story = worldEngine.STORY_BEATS.find((beat) => beat.id === currentStory) || worldEngine.STORY_BEATS[0];
+  const story = storyContext();
   $("#pixel-story-title").textContent = story.title;
   $("#pixel-story-line").textContent = story.line;
   $("#pixel-story-log").hidden = !started || mission.complete;
 }
 
-function setStory(id) {
-  if (!worldEngine.STORY_BEATS.some((beat) => beat.id === id)) return;
-  currentStory = id;
+function storyContext() {
+  if (!storyWorld) return { title: "正在连接案件档案", line: "等待 Atlas-7 的叙事数据……" };
+  if (!completedNodes.includes("observer-zero")) {
+    const beat = storyWorld.mainline.beats[Math.min(storyBeatIndex, storyWorld.mainline.beats.length - 1)];
+    return { title: storyWorld.mainline.title, line: `${beat.label}：${beat.action}` };
+  }
+  const currentCase = storyWorld.cases.find((item) => storyWorld.progress.cases[item.id] === "current") || storyWorld.cases[0];
+  return { title: currentCase.title, line: currentCase.question };
+}
+
+async function loadStoryWorld() {
+  const query = completedNodes.length ? `?completed=${encodeURIComponent(completedNodes.join(","))}` : "";
+  try {
+    const response = await fetch(`/api/story-world${query}`);
+    if (!response.ok) throw new Error("story world request failed");
+    storyWorld = await response.json();
+    updateStoryLog();
+  } catch (_error) {
+    storyWorld = null;
+    updateStoryLog();
+  }
+}
+
+function setStoryBeat(index) {
+  storyBeatIndex = index;
   updateStoryLog();
-  announce(worldEngine.STORY_BEATS.find((beat) => beat.id === id).line);
+  announce(storyContext().line);
 }
 
 function guideIndex() {
@@ -464,8 +488,8 @@ function performMove(dx, dy) {
 
 function collect(id) {
   mission.shards = [...mission.shards, id];
-  if (mission.shards.length === 1) setStory("fragments");
-  if (mission.shards.length === 3) setStory("crossing");
+  if (mission.shards.length === 1) setStoryBeat(1);
+  if (mission.shards.length === 3) setStoryBeat(2);
   updateHud();
   const lines = {
     state: "状态碎片：先记下系统怎样被准备。",
@@ -476,14 +500,15 @@ function collect(id) {
 }
 
 async function runWell() {
-  setStory("well");
-  openDialogue({ speaker: "量子井", kicker: "正在点亮", text: "三个碎片正在对齐……井底的两条路径开始分岔。", locked: true });
+  setStoryBeat(3);
+  openDialogue({ speaker: "量子井", kicker: "正在点亮", text: storyContext().line, locked: true });
   try {
     const response = await fetch("/api/inquiry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mission: "bell-gates", prediction: "h-opens-branches", conclusion: "h-opens-branches-cx-correlates", shots: 128 }) });
     const passport = await response.json();
     if (!response.ok) throw new Error(passport.error || "井没有返回护照");
     mission.complete = true;
-    setStory("choice");
+    completedNodes = ["observer-zero"];
+    await loadStoryWorld();
     $("#pixel-complete-text").textContent = `量子井记录了 ${Object.keys(passport.experiment.control.probabilities).length} 种控制结果和 ${Object.keys(passport.experiment.variant.probabilities).length} 种变体结果。你可以把它们带回 LoomQ 实验室继续复查。`;
     $("#pixel-complete").hidden = false;
     $("#pixel-dialogue").hidden = true;
@@ -502,10 +527,10 @@ function interact() {
   if (event.event === "locked") return openDialogue({ speaker: event.id === "npc" ? "小满" : "东侧栅门", kicker: "还差一点", text: event.reason });
   if (event.event === "shard") return collect(event.id);
   if (event.event === "mentor") {
-    setStory("fragments");
-    return openDialogue({ speaker: "林默", kicker: "Atlas-7 量子前哨", text: "轨道站在三分钟前失联。三枚碎片记录着准备、重复和对照，找齐它们，我们才能判断是谁删除了第二条路径。" });
+    setStoryBeat(1);
+    return openDialogue({ speaker: "林默", kicker: storyContext().title, text: storyContext().line });
   }
-  if (event.event === "npc") return openDialogue({ speaker: "小满", kicker: "量子井管理员", text: "你把三条方法找回来了。现在要不要把它们放进井里，看看删掉第二步以后，世界会怎么分岔？", choices: [{ label: "启动量子井，运行一次 A/B", action: runWell }, { label: "我再走走，先不启动", action: closeDialogue }] });
+  if (event.event === "npc") return openDialogue({ speaker: "小满", kicker: storyContext().title, text: storyContext().line, choices: [{ label: "启动量子井，运行一次 A/B", action: runWell }, { label: "我再走走，先不启动", action: closeDialogue }] });
   if (event.event === "gate") return toast("栅门已经打开，量子井在东南角");
 }
 
@@ -542,7 +567,9 @@ function reset() {
   game = worldEngine.createPixelGame();
   mission = { shards: [], complete: false };
   currentScene = worldEngine.sceneAt(game.player);
-  currentStory = "arrival";
+  completedNodes = [];
+  storyWorld = null;
+  storyBeatIndex = 0;
   movementClock = 0;
   camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height });
   dialogueOpen = false;
@@ -555,7 +582,7 @@ function reset() {
   canvas.focus();
 }
 
-document.addEventListener("keydown", (event) => {
+function handleKeydown(event) {
   const key = event.key.toLowerCase();
   if (["arrowleft", "arrowright", "arrowup", "arrowdown", "w", "a", "s", "d", "e", " "].includes(key)) event.preventDefault();
   if (!started && key === "enter") { $("#pixel-start-button").click(); return; }
@@ -564,12 +591,20 @@ document.addEventListener("keydown", (event) => {
     return;
   }
   if (key === "e" || key === " ") interact();
-  else keys.add(key);
-});
-document.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
+  else {
+    const direction = worldEngine.directionForKey(key);
+    if (direction && !event.repeat && started) {
+      performMove(direction.x, direction.y);
+      movementClock = 0;
+    }
+    keys.add(key);
+  }
+}
+window.addEventListener("keydown", handleKeydown);
+window.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
 window.addEventListener("blur", () => keys.clear());
 
-$("#pixel-start-button").addEventListener("click", () => { started = true; $("#pixel-start").hidden = true; setStory("arrival"); updateGuide(); startMusic(); canvas.focus(); toast("Atlas-7 轨道站：先找到林默"); });
+$("#pixel-start-button").addEventListener("click", () => { started = true; $("#pixel-start").hidden = true; setStoryBeat(0); loadStoryWorld(); updateGuide(); startMusic(); canvas.focus(); toast("Atlas-7 轨道站：先找到林默"); });
 $("#pixel-close").addEventListener("click", closeDialogue);
 $("#pixel-reset").addEventListener("click", reset);
 $("#pixel-music-toggle").addEventListener("click", () => {
@@ -597,4 +632,5 @@ stick.addEventListener("pointerup", release);
 stick.addEventListener("pointercancel", release);
 
 updateHud();
+loadStoryWorld();
 requestAnimationFrame(frame);
