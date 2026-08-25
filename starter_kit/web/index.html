@@ -98,6 +98,33 @@
       <div class="quantum-basics-story"><strong>沈遥的提醒</strong><p>“先别急着给世界命名。先写下你猜什么，再只改变一个地方。结果会告诉你，这次实验真正支持到哪里。”</p><a href="#inquiry-world">把这五件事带进第一次实验</a></div>
     </section>
 
+    <section id="quantum-guide" class="quantum-guide" aria-labelledby="quantum-guide-title" tabindex="-1">
+      <div class="quantum-guide-heading">
+        <div>
+          <p class="eyebrow">量子村庄 · RPG 前导手册</p>
+          <h2 id="quantum-guide-title">先认识量子世界，<br><em>再开始冒险。</em></h2>
+          <p>先用一枚量子硬币认识叠加与测量，再进入沈遥的案件。每次按下测量，页面都会用本地精确模拟器计算结果，再把结果映射成两面世界贴图。</p>
+        </div>
+        <ol id="quantum-guide-lessons" class="quantum-guide-lessons" aria-label="量子入门四课"></ol>
+      </div>
+      <div class="quantum-guide-lab">
+        <article class="quantum-guide-coin" aria-labelledby="quantum-guide-coin-title">
+          <div class="quantum-guide-face-wrap">
+            <img id="quantum-guide-face" src="assets/quantum-guide/village-face.png" alt="量子硬币尚未测量">
+            <span id="quantum-guide-face-state" class="quantum-guide-face-state">未测量 · 两面都在可能之中</span>
+          </div>
+          <div class="quantum-guide-coin-copy">
+            <span class="inquiry-label">第一关 · 量子硬币</span>
+            <h3 id="quantum-guide-coin-title">一次测量，选择一条世界线</h3>
+            <p id="quantum-guide-copy">H 门把硬币放进叠加态。测量前，村庄与宇宙都保留为可能；测量后，结果会落在其中一面。</p>
+            <button id="quantum-guide-measure" class="primary" type="button">测量这枚硬币</button>
+            <p id="quantum-guide-status" class="quantum-guide-status" role="status" aria-live="polite">准备好后，亲手测一次。</p>
+            <p class="quantum-guide-source">来源：<strong>本地精确模拟器</strong> · 电路与概率可展开复核 · <a href="#evidence-map">真机实验室证据</a></p>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <section class="story-caseboard" aria-labelledby="caseboard-title">
       <div class="story-caseboard-heading">
         <div><p class="eyebrow">五份档案 · 五次回到现场</p><h2 id="caseboard-title">她的双面人生</h2></div>
@@ -562,6 +589,8 @@
   <footer><span>LoomQ 2026</span><span>OpenQASM → Native IR → Verified Counts</span></footer>
   <div id="notice" class="notice" role="status" aria-live="polite"></div>
   <script src="inquiry.js" defer></script>
+  <script src="quantum-guide.js" defer></script>
+  <!-- server-route compatibility: src="/quantum-guide.js" -->
   <script src="app.js" defer></script>
 </body>
 </html>

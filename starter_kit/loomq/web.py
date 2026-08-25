@@ -20,6 +20,7 @@ try:
     from .qasm import parse_qasm
     from .witness import build_causal_audit, verify_causal_audit
     from .story_world import build_story_world
+    from .quantum_intro import build_quantum_intro, measure_quantum_coin
 except ImportError:  # Direct execution from starter_kit/.
     import adapter
     from loomq.agent import normalize_history
@@ -29,6 +30,7 @@ except ImportError:  # Direct execution from starter_kit/.
     from loomq.qasm import parse_qasm
     from loomq.witness import build_causal_audit, verify_causal_audit
     from loomq.story_world import build_story_world
+    from loomq.quantum_intro import build_quantum_intro, measure_quantum_coin
 
 
 _WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
@@ -40,6 +42,7 @@ _STATIC = {
     "/assets/shenicest-logo.png": ("assets/shenicest-logo.png", "image/png"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/inquiry.js": ("inquiry.js", "text/javascript; charset=utf-8"),
+    "/quantum-guide.js": ("quantum-guide.js", "text/javascript; charset=utf-8"),
     "/assets/quantum-world-journey.png": (
         "assets/quantum-world-journey.png",
         "image/png",
@@ -74,6 +77,14 @@ _STATIC = {
     ),
     "/assets/story/double-life-village-cosmos-2d.png": (
         "assets/story/double-life-village-cosmos-2d.png",
+        "image/png",
+    ),
+    "/assets/quantum-guide/village-face.png": (
+        "assets/quantum-guide/village-face.png",
+        "image/png",
+    ),
+    "/assets/quantum-guide/cosmos-face.png": (
+        "assets/quantum-guide/cosmos-face.png",
         "image/png",
     ),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
@@ -173,6 +184,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             except (TypeError, ValueError) as exc:
                 self._error(HTTPStatus.BAD_REQUEST, "invalid_story_progress", str(exc))
             return
+        if path == "/api/quantum-intro":
+            self._send_json(HTTPStatus.OK, build_quantum_intro())
+            return
         asset = _STATIC.get(path)
         if asset is None:
             self._error(HTTPStatus.NOT_FOUND, "not_found", "页面不存在")
@@ -216,6 +230,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             if path == "/api/inquiry":
                 self._inquiry(payload)
                 return
+            if path == "/api/quantum-intro/measure":
+                self._quantum_intro_measure(payload)
+                return
             if path == "/api/agent":
                 self._agent(payload)
                 return
@@ -237,6 +254,12 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
 
     def do_PATCH(self) -> None:
         self._error(HTTPStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "该路径不支持 PATCH")
+
+    def _quantum_intro_measure(self, payload: Dict[str, Any]) -> None:
+        outcome = payload.get("outcome")
+        if outcome is not None and isinstance(outcome, bool):
+            raise ValueError("outcome 必须是 0 或 1")
+        self._send_json(HTTPStatus.OK, measure_quantum_coin(outcome))
 
     def _run(self, payload: Dict[str, Any]) -> None:
         qasm = payload.get("qasm")
