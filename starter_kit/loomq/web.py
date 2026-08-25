@@ -9,7 +9,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 try:
     from .. import adapter
@@ -19,6 +19,7 @@ try:
     from .simulator import trace_statevector
     from .qasm import parse_qasm
     from .witness import build_causal_audit, verify_causal_audit
+    from .story_world import build_story_world
 except ImportError:  # Direct execution from starter_kit/.
     import adapter
     from loomq.agent import normalize_history
@@ -27,6 +28,7 @@ except ImportError:  # Direct execution from starter_kit/.
     from loomq.simulator import trace_statevector
     from loomq.qasm import parse_qasm
     from loomq.witness import build_causal_audit, verify_causal_audit
+    from loomq.story_world import build_story_world
 
 
 _WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
@@ -107,9 +109,18 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         return payload
 
     def do_GET(self) -> None:
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         if path == "/api/health":
             self._send_json(HTTPStatus.OK, {"status": "ok", "service": "loomq-web"})
+            return
+        if path == "/api/story-world":
+            raw_completed = parse_qs(parsed.query).get("completed", [""])[0]
+            completed = [item for item in raw_completed.split(",") if item]
+            try:
+                self._send_json(HTTPStatus.OK, build_story_world(completed))
+            except (TypeError, ValueError) as exc:
+                self._error(HTTPStatus.BAD_REQUEST, "invalid_story_progress", str(exc))
             return
         asset = _STATIC.get(path)
         if asset is None:
