@@ -43,6 +43,9 @@ class StoryModeConsoleTests(unittest.TestCase):
             self.assertIn(f"case.html?case={case_id}", page)
         for marker in ("case-intro", "case-interaction", "case-summary", "进行一次小实验", "你学会了"):
             self.assertIn(marker, case_page)
+        case_js = (WEB / "case.js").read_text(encoding="utf-8")
+        self.assertGreaterEqual(case_js.count("question:"), 5)
+        self.assertGreaterEqual(case_js.count("lesson:"), 5)
 
 
 if __name__ == "__main__":
