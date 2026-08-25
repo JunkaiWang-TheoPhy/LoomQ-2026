@@ -9,14 +9,16 @@ cd starter_kit
 python3 -m unittest tests.test_web tests.test_inquiry_frontend -v
 ```
 
-`tests.test_web` 与 `tests.test_inquiry_frontend` 覆盖：首页三幕故事进度、Quantum World 探究护照与错误结论纠正、本地主视觉资源、四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
+`tests.test_web`、`tests.test_inquiry_frontend` 与 `tests.test_atlas_game_frontend` 覆盖：Quantum Atlas 三地点解锁、独立 2D 游戏的角色移动/碰撞/近距离交互/任务门和 100 分状态机、锁定路径失败关闭、四条零基础调查规则、延迟展示 H/CX 探究、护照与错误结论纠正、本地资源、四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
+
+像素版额外覆盖：`/pixel.html` 独立路由、银河/舱壁背景与独立白色空间站贴图、稳定 3:2 像素舞台与移动端裁剪、量子前哨/纠缠能道/证据环站三个场景、河水不可通行且桥面可通行、16×16 网格移动、独立建筑/障碍碰撞、五段故事线索、碎片拾取、三步新手引导、NPC/量子井门槛、PHASE HUD/纠缠轨迹/量子井脉冲、Web Audio 音乐开关、SheNicest 像素徽章、生成式移动控制贴图、统一像素 HUD/底部快捷栏和触屏控制 DOM；背景和贴图只负责视觉，不替代 `/api/inquiry` 的证据返回。
 
 ## 真实浏览器验收
 
 | 场景 | 结果 | 证据 |
 |---|---|---|
-| Quantum World 桌面 | 1440×1000；原创主视觉、序章文案、双入口与三幕卡完整可见；A/B 后进度为 `complete/complete/current`，错误结论审计后为三幕 complete | 2026-08-24 Google Chrome 真实 API 点击，visual-verdict `93/100` |
-| Quantum World 手机 | 390×844；主视觉、序章、CTA、三幕卡与实验依次单列；三幕状态随同一次护照推进；`scrollWidth=innerWidth=390` | 2026-08-24 Google Chrome 真实 API 点击，visual-verdict `93/100` |
+| Quantum Atlas 旧地图版 | 1440×1000 与 390×844；旧版地点卡链路曾完成真实 API 点击与 visual-verdict `93/100` | 已由 2D 游戏取代；仅作为历史记录，不代表当前画面验收 |
+| Quantum Atlas 2D 游戏 | 全屏 Canvas、连续世界、角色移动、动态封锁门、NPC/装置近距离交互；窄屏提供虚拟摇杆与调查按钮 | 状态机、碰撞和静态资源自动化通过；当前版本待人工设备体验 |
 | 桌面评委入口 | 1440×1000；页面 `scrollWidth=innerWidth=1440`。证据附录位于首次探究之后、任务卡之前，双入口可直接跳转 | 2026-08-24 Chrome 验收，visual-verdict `93/100` |
 | 移动端评委入口 | 390×844；页面 `scrollWidth=innerWidth=390`。真机卡单列，六步状态条横向滚动，不造成页面级横向溢出 | 2026-08-24 Chrome 验收，visual-verdict `93/100` |
 | 六步初始状态 | 两个 viewport 重新加载后均为 `未运行 × 6`，没有复用前一会话结果 | 真实浏览器 DOM 读取 |
@@ -39,8 +41,8 @@ python3 -m unittest tests.test_web tests.test_inquiry_frontend -v
 
 ## 包容性设计
 
-- 跳转链接允许键盘用户直达实验区；运行结束后焦点进入结果区。
-- Quantum World 先要求预测，再显示只改变 CX 的 A/B 结果；用户选择结论后才启用护照下载，使学习过程包含一次可检查的判断，而不是被动阅读答案。
+- 游戏不把 Canvas 作为唯一操作入口：任务、分数、对话、选项与触屏控制均有语义化 DOM；键盘使用 WASD/方向键移动、E/空格交互，窄屏提供虚拟摇杆与独立调查按钮。
+- Quantum Atlas 在 H/CX 门名出现前先解释状态、多种可能、重复观察和只改一个条件；简报后才开放预测与 A/B，用户选择结论后才启用护照下载。
 - 概率同时用柱图和语义化表格表达；逐门状态还以文本列出概率、振幅和相位，不依赖颜色或图形才能读取。
 - Learn 文案区分“模拟得到经典相关性”与“真机纠缠证明”，避免给新手过度结论。
 - Counterfactual Circuit Lab 让用户通过删改一扇门学习中间态变化；输出显式限定为 8 比特、零输入、忽略全局相位的本地精确比较，不把它包装成真机噪声诊断。

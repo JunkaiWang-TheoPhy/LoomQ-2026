@@ -1,10 +1,10 @@
 # LoomQ 评委快速复核
 
-页面首屏先给零基础用户一条三幕 Quantum World 旅程，第一章后是标题为“每项结论都能复核”的评委附录。附录中的真机卡区分 OriginQ finite-shot counts 与 SpinQ provider probabilities；本地路径不需要模型密钥、平台账号或网络服务。主视觉由 OpenAI 图像生成工具生成，不参与科学判定。
+页面首屏是 `Quantum Atlas · 无形世界调查局`。零基础用户先在观测站理解四条调查规则，随后解锁分岔原野的 Bell A/B 实验和证据塔的结论审计；后方仍保留标题为“每项结论都能复核”的评委附录。附录中的真机卡区分 OriginQ finite-shot counts 与 SpinQ provider probabilities；本地路径不需要模型密钥、平台账号或网络服务。地图由内置图像生成工具生成，不参与科学判定。
 
 ## 30 秒入口
 
-1. 打开页面，点击“我想先看证据”跳到附录，核对两张真机卡的 provider、job ID、结果类型和原始文件链接。
+1. 打开页面，点击“熟悉量子计算？直接查看证据附录”，核对两张真机卡的 provider、job ID、结果类型和原始文件链接。
 2. 点击 `一键运行 6 项本地证据`。
 3. 等状态显示 `6/6 已由真实本地 API 完成`。沿深色状态条点开任意一项，可查看产生该状态的完整结果。
 
@@ -12,15 +12,23 @@
 
 ## 3 分钟零基础用户路径
 
-1. 从 `Quantum World · 序章` 进入第一章，选择“CX 才建立最初的两个分支”。
-2. 运行 A/B 实验。实验 A 保留 H+CX，实验 B 保留 H、禁用 CX；两组使用相同 shots。
-3. 页面应显示 A 的主导态为 `00/11`、B 为 `00/01`，并将首次状态分歧定位到 `g2 · CX`。
+1. 在观测站读完“状态、多种可能、重复观察、只改一个条件”，确认简报后检查分岔原野从 locked 变为 current。
+2. 进入 Bell 实验，选择“CX 才建立最初的两个分支”，再运行 A/B。实验 A 保留 H+CX，实验 B 保留 H、禁用 CX；两组使用相同 shots。
+3. 页面应显示 A 的主导态为 `00/11`、B 为 `00/01`，将首次状态分歧定位到 `g2 · CX`，并把证据塔变为 current。
 4. 继续选择结论“CX 建立了最初的两个分支”，点击结论审计。页面必须指出该结论不受实验支持，同时保留“单次 Z 基实验不能完整证明 Bell 非定域性”的边界。
-5. 下载 `loomq-inquiry-bell-gates.json`。护照包含问题、预测、两份 QASM、A/B 结果、首门分歧、结论审计和重放入口。
+5. 下载 `loomq-inquiry-bell-gates.json`。护照包含问题、预测、两份 QASM、A/B 结果、首门分歧、结论审计和重放入口；证据塔此时才变为 complete。
 
-三幕进度必须由真实交互驱动：初始为“预测”当前；A/B 返回后变为“结论”当前；审计完成后才允许三幕全部完成。错误结论同样可以完成学习旅程，但护照中的审计状态必须保持 `unsupported`，不能把“完成”偷换成“正确”。
+地图进度必须由真实交互驱动：简报前只有观测站可用；确认简报后开放分岔原野；A/B 返回后开放证据塔；审计完成后才允许案件归档。错误结论同样可以完成学习旅程，但护照中的审计状态必须保持 `unsupported`，不能把“完成”偷换成“正确”。
 
 这条路径不要求用户先读 QASM 或 assertions JSON。它使用 `/api/inquiry` 编排现有模拟与精确比较能力，不调用模型充当裁判。
+
+## 3 分钟独立 HTML 游戏
+
+打开 `/game.html` 并点击“开始调查”。这是一个连续的 Canvas 2D 世界：用 WASD / 方向键控制调查员，靠近发光物品或角色后按 E / 空格交互。玩家需要在观测站实际寻找四件工具、穿过任务门、操作原野中的 A/B 装置，再将同一份实验护照送到证据塔。
+
+四件工具各贡献 5 分；运行前预测得 10 分，真实 A/B 护照返回后得 20 分并开放证据塔，结论审计得 50 分。总分只记录流程完成度，审计结果仍保留 `supported / unsupported / inconclusive`，不会把错误结论包装成正确答案。移动端显示虚拟摇杆和“调查”按钮，不要求精确点击地图热点。
+
+如果想体验参考图式的像素 RPG，打开 `/pixel.html`。这是 Atlas-7 轨道前哨的科幻序章：银河/舱壁背景和白色空间站建筑分层，三步引导先讲清移动、观察、过桥。故事线索会从失联呼叫推进到三枚调查碎片、纠缠能道、量子井回声和未知观察者；地图场景依次为量子前哨、纠缠能道、证据环站。能道不可直接通过，必须走桥；建筑和障碍是独立碰撞对象。PHASE HUD、纠缠轨迹和量子井脉冲是量子风格反馈；点击开始调查后可用右上角音乐开关打开程序化 chiptune 环境音乐。SheNicest 像素徽章和移动控制贴图作为独立 PNG 资源接入。用方向键或 WASD 在地图里走，靠近三枚发光碎片按 E 收集，再去找小满启动量子井；量子井会调用真实 `/api/inquiry`，不是假的剧情数字。
 
 ## 90 秒页面验收
 
@@ -38,8 +46,8 @@ Agent 生成是可选的第 7 步。配置 `LOOMQ_LLM_*` 后再运行它；模�
 | 区域 | 一条复核命令 | 主要证据 |
 |---|---|---|
 | 全部无凭据路径 | `python3 starter_kit/verify_submission.py` | 完整归档回归、Node present 时执行前端语法检查，否则显式 `SKIP`、Web/API/assert/compare/hybrid/witness 焦点套件、ProofTrace、L2 固定语料、真机 manifest、L1/L3/RISC-V |
-| ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 structure rejection、225/225 semantic rejection、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
-| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web tests.test_inquiry_frontend -v` | Web 集成与前端状态模型覆盖 Quantum World 探究护照、错误结论纠正、六步评委路径、Prompt Contract、Witness Chain、首门分歧、统计断言、Hybrid trace/path、ProofTrace whole-circuit 字段、安全头与移动端防溢出样式 |
+| ProofTrace 证明 | `cd starter_kit && python3 -m scripts.prooftrace_benchmark --json` | 225/225 native-IR 删除变异检出、15 项 portability、132 项安全重写；固定 corpus SHA-256 |
+| Web 因果学习与 P1/P2 证据 | `cd starter_kit && python3 -m unittest tests.test_web tests.test_inquiry_frontend -v` | Web 集成与前端状态模型覆盖 Quantum World 探究护照、错误结论纠正、六步评委路径、Prompt Contract、`/api/causal-audit`、首门分歧、统计断言、Hybrid trace/path、ProofTrace、安全头与移动端防溢出样式 |
 | 离线压力证据 | `python3 -m starter_kit.scripts.offline_stress_campaign --validate` | 40,000/40,000 项、六条断言通道、固定语料 SHA-256 |
 | L1 三目标 | `python3 starter_kit/evaluator.py --level l1 --target spinq,originq,braket` | 统一 Circuit IR、12 门 × 3 target 归档测试 |
 | L1 语义回读 | `cd starter_kit && python3 -m unittest tests.test_native_ir_verifier -v` | SpinQ QASM 2、OriginIR、Braket QASM 3 独立 parser；篡改门负例 |
@@ -59,7 +67,7 @@ Agent 生成是可选的第 7 步。配置 `LOOMQ_LLM_*` 后再运行它；模�
 ## 建议体验的三个任务
 
 1. 完成 Quantum World 的 Bell A/B 探究：先做错误预测，运行实验，再让证据纠正结论并下载可重放护照。
-2. 点击 Learn，运行 Bell，读取逐门概率/相位与 ProofTrace 三目标证书；核对局部恒等式、整电路全基列重算与 native IR structural round-trip 三层证据，再进入 Counterfactual Circuit Lab 查看 `CX` 对 `X` 与 TV 距离 `0.5`。
+2. 点击 Learn，运行 Bell，读取逐门概率/相位与 ProofTrace 三目标证书；随后进入 Counterfactual Circuit Lab 单独查看 `CX` 对 `X` 与 TV 距离 `0.5`。
 3. 点击 Repair 验证错误 QASM 的确定性恢复，再用 Backend Match 询问“免费、零排队、至少 20 比特的模拟器”，核对规范 capability ID。
 
 与十五个公开可审固定提交的逐项映射及仍需外部凭据的材料见 `COMPETITIVE_COVERAGE.md`。该比较只记录 accepted archive 中可复核的事实；私有 12 例 DeepSeek 评测和未公开提交仍然未知。

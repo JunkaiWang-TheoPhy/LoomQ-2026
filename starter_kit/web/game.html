@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="在可探索的二维世界中，完成第一宗量子调查案件。">
+  <title>Quantum Atlas · 无形世界调查局</title>
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+  <link rel="stylesheet" href="/game.css">
+</head>
+<body>
+  <main id="game-shell" class="game-shell">
+    <canvas id="adventure-canvas" tabindex="0" aria-label="二维调查世界"></canvas>
+
+    <header class="top-hud" aria-label="案件状态">
+      <div class="case-mark" aria-label="Quantum Atlas 无形世界调查局">
+        <span>QA</span>
+        <div><strong>无形世界调查局</strong><small>CASE 001 · 分岔之前</small></div>
+      </div>
+      <div class="hud-objective">
+        <small>当前任务</small>
+        <strong id="game-objective">去和林默调查员碰面</strong>
+      </div>
+      <div class="hud-stats">
+        <div><small>线索</small><strong id="clue-count">0 / 4</strong></div>
+        <div><small>证据</small><strong><output id="game-score">0</output> / 100</strong></div>
+      </div>
+      <button id="game-reset" class="icon-button" type="button" aria-label="重新开始案件">↻</button>
+      <a class="exit-game" href="/" aria-label="退出游戏，返回 LoomQ 实验室">退出</a>
+    </header>
+
+    <aside id="case-board" class="case-board" aria-label="Quantum Atlas 五个地图案件">
+      <div class="case-board-heading">
+        <small>CASE MAP · STORY WORLD</small>
+        <strong>零点之后的观测者</strong>
+      </div>
+      <p id="case-board-status">完成主线实验后，五个案件会从地图上亮起。</p>
+      <ol id="case-list" class="case-list" aria-label="五个地图案件"></ol>
+    </aside>
+
+    <aside class="control-hint" aria-label="操作说明">
+      <span><kbd>WASD</kbd> / 方向键移动</span>
+      <span><kbd>E</kbd> / 空格调查</span>
+    </aside>
+
+    <div id="region-card" class="region-card" aria-hidden="true">
+      <small>NOW ENTERING</small><strong>雾镜观测站</strong>
+    </div>
+
+    <div id="interaction-prompt" class="interaction-prompt" hidden>
+      <kbd>E</kbd><span>调查</span>
+    </div>
+
+    <section id="dialogue-box" class="dialogue-box" role="dialog" aria-modal="true" aria-labelledby="dialogue-speaker" hidden>
+      <div id="speaker-portrait" class="speaker-portrait" aria-hidden="true"><span></span></div>
+      <div class="dialogue-content">
+        <small id="dialogue-kicker">调查记录</small>
+        <h1 id="dialogue-speaker">林默</h1>
+        <p id="dialogue-text"></p>
+        <div id="dialogue-choices" class="dialogue-choices"></div>
+      </div>
+      <button id="dialogue-close" class="dialogue-close" type="button">继续 <kbd>空格</kbd></button>
+    </section>
+
+    <div id="toast" class="toast" aria-hidden="true"></div>
+    <p id="sr-status" class="sr-only" aria-live="polite"></p>
+
+    <section id="start-screen" class="start-screen">
+      <div class="start-vignette" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><b></b>
+      </div>
+      <div class="start-copy">
+        <span class="agency-seal">QUANTUM ATLAS · CASE 001</span>
+        <h1>无形世界<br>调查局</h1>
+        <p>世界没有坏掉。只是有些真相，<br>一次观察看不见。</p>
+        <button id="start-game" type="button"><span>开始调查</span><small>ENTER THE ATLAS</small></button>
+        <small>无需量子基础 · 约 5 分钟</small>
+      </div>
+    </section>
+
+    <section id="case-complete" class="case-complete" role="dialog" aria-modal="true" aria-labelledby="complete-title" hidden>
+      <div class="complete-stamp" aria-hidden="true">ARCHIVED</div>
+      <small>CASE 001 · 调查完成</small>
+      <h2 id="complete-title">你留下的不是答案，<br>是一条可以复查的证据链。</h2>
+      <p id="complete-summary"></p>
+      <div class="complete-score"><span>调查完成度</span><strong><output id="final-score">100</output> / 100</strong></div>
+      <div class="complete-actions">
+        <button id="continue-world" type="button">回到世界</button>
+        <a href="/">进入 LoomQ 证据实验室</a>
+      </div>
+    </section>
+
+    <div id="touch-stick" class="touch-stick" aria-label="触屏移动控制">
+      <div id="stick-knob"></div>
+    </div>
+    <button id="touch-action" class="touch-action" type="button" aria-label="调查附近目标">调查</button>
+  </main>
+
+  <script src="/atlas-game-engine.js" defer></script>
+  <script src="/atlas-adventure-engine.js" defer></script>
+  <script src="/game.js" defer></script>
+</body>
+</html>

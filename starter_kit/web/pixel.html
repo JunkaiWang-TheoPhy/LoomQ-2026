@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Quantum Atlas · Atlas-7 轨道站科幻 RPG 序章。">
+  <title>Quantum Atlas · Atlas-7 轨道站</title>
+  <link rel="icon" href="/favicon.ico" type="image/svg+xml">
+  <link rel="stylesheet" href="/pixel.css">
+</head>
+<body>
+  <main class="pixel-shell">
+    <section class="pixel-stage" aria-label="像素风二维调查地图">
+      <canvas id="pixel-canvas" width="384" height="256" tabindex="0" aria-label="像素风二维调查地图"></canvas>
+    </section>
+    <header class="pixel-hud" aria-label="像素案件状态">
+      <a class="pixel-logo" href="/">QA <span>像素调查局</span></a>
+      <img id="shenicest-logo" class="shenicest-logo" src="/assets/shenicest-pixel-logo.png" alt="SheNicest">
+      <div id="pixel-scene-name" class="pixel-scene-name"><small>LOCATION</small><strong>雾镜镇</strong></div>
+      <div class="pixel-objective"><small>MISSION 01</small><strong id="pixel-objective">找齐三枚调查碎片</strong></div>
+      <div id="pixel-phase-meter" class="pixel-phase-meter"><small>PHASE</small><strong id="pixel-phase-value">PREPARED</strong></div>
+      <div class="pixel-counter"><span id="pixel-shards">0 / 3</span><small>碎片</small></div>
+      <button id="pixel-music-toggle" type="button" aria-pressed="false" aria-label="打开量子环境音乐">♫</button>
+      <button id="pixel-reset" type="button" aria-label="重置像素案件">↻</button>
+    </header>
+    <section id="pixel-guide" class="pixel-guide" aria-label="新手引导" hidden>
+      <div class="guide-kicker"><span>FIELD GUIDE</span><strong>第一次调查</strong></div>
+      <p id="pixel-guide-step">用方向键 / WASD 移动到林默身边</p>
+      <div class="guide-progress"><i></i><i></i><i></i></div>
+      <small>你可以随时按 E 调查附近的对象</small>
+    </section>
+    <aside id="pixel-story-log" class="pixel-story-log" aria-label="案件线索" hidden>
+      <div><small>CASE FILE · ATLAS-7</small><strong id="pixel-story-title">失联的量子前哨</strong></div>
+      <p id="pixel-story-line">Atlas-7 轨道站只发来一句话：不要观测第二条路径。</p>
+    </aside>
+    <section id="pixel-quickbar" class="pixel-quickbar" aria-label="调查碎片快捷栏">
+      <span class="quickbar-title">调查手册</span>
+      <div class="quickbar-slot" data-slot="state"><i></i><small>状态</small></div>
+      <div class="quickbar-slot" data-slot="repeat"><i></i><small>重复</small></div>
+      <div class="quickbar-slot" data-slot="control"><i></i><small>对照</small></div>
+      <span class="quickbar-tip">靠近发光碎片按 <kbd>E</kbd></span>
+    </section>
+    <aside class="pixel-controls"><kbd>方向键 / WASD</kbd> 移动 <kbd>J / Shift</kbd> 跳跃 <kbd>E</kbd> 调查</aside>
+    <div id="pixel-zoom-meter" class="pixel-zoom-meter" aria-live="polite"><strong>82%</strong><small>双指捏合 / 滚轮缩放</small></div>
+    <div id="pixel-toast" class="pixel-toast" aria-hidden="true"></div>
+    <section id="pixel-dialogue" class="pixel-dialogue" role="dialog" aria-modal="true" aria-labelledby="pixel-speaker" hidden>
+      <div class="pixel-avatar" aria-hidden="true">●</div>
+      <div><small id="pixel-kicker">调查记录</small><h1 id="pixel-speaker">???</h1><p id="pixel-text"></p><div id="pixel-choices" class="pixel-choices"></div></div>
+      <button id="pixel-close" type="button">继续 <kbd>空格</kbd></button>
+    </section>
+    <section id="pixel-start" class="pixel-start">
+      <div class="pixel-sun" aria-hidden="true"></div>
+      <img id="pixel-intro-character" class="pixel-intro-character" src="/assets/pixel-protagonist-intro.png" alt="Atlas-7 调查员，科幻日式 RPG 角色">
+      <small>QUANTUM ATLAS · SIDE QUEST</small>
+      <img class="start-sponsor" src="/assets/shenicest-pixel-logo.png" alt="SheNicest">
+      <h1>像素调查局</h1>
+      <p>把三枚散落的调查碎片交给小满，<br>让量子井重新亮起来。</p>
+      <div class="pixel-start-guide" aria-label="三步新手引导">
+        <div><b>01</b><strong>移动</strong><small>找到林默</small></div>
+        <div><b>02</b><strong>观察</strong><small>靠近碎片按 E</small></div>
+        <div><b>03</b><strong>过桥</strong><small>让两条路径相遇</small></div>
+      </div>
+      <button id="pixel-start-button" type="button">开始调查 <span>ENTER</span></button>
+      <em>方向键 / WASD 移动 · J / Shift 跳跃 · E 调查</em>
+    </section>
+    <section id="pixel-complete" class="pixel-complete" role="dialog" aria-modal="true" hidden>
+      <small>QUEST CLEAR</small><h2>量子井亮了！</h2><p id="pixel-complete-text"></p><button id="pixel-continue" type="button">继续在地图里走走</button><a href="/">回到 LoomQ 实验室</a>
+    </section>
+    <button id="pixel-touch-action" class="pixel-touch-action" type="button" aria-label="调查附近目标">E</button>
+    <button id="pixel-touch-jump" class="pixel-touch-jump" type="button" aria-label="跳跃">↟</button>
+    <div id="pixel-stick" class="pixel-stick" aria-label="像素版触屏移动摇杆"><i></i></div>
+    <p id="pixel-sr" class="pixel-sr" aria-live="polite"></p>
+  </main>
+  <script src="/pixel-adventure-engine.js" defer></script>
+  <script src="/pixel.js" defer></script>
+</body>
+</html>

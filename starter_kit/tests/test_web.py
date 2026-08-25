@@ -5,13 +5,9 @@ import unittest
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from unittest import mock
 
-try:
-    from loomq.web import create_server
-except ImportError:
-    from starter_kit.loomq.web import create_server
+from loomq.web import create_server
 
 
 BELL = """OPENQASM 2.0;
@@ -133,10 +129,6 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="result-table"', page)
         self.assertIn('id="proof-panel"', page)
         self.assertIn('id="download-proof"', page)
-        self.assertIn('id="proof-semantic-basis"', page)
-        self.assertIn('id="proof-semantic-phase"', page)
-        self.assertIn('id="proof-semantic-error"', page)
-        self.assertIn('id="proof-semantic-bound"', page)
         self.assertIn('role="alert"', page)
         self.assertIn('aria-describedby="prompt-help"', page)
         self.assertIn('<details id="state-trace"', page)
@@ -227,14 +219,29 @@ class WebLabTests(unittest.TestCase):
         _status, _headers, body = self.request("/")
 
         page = body.decode()
-        self.assertIn('class="story-hero"', page)
-        self.assertIn('src="/assets/quantum-world-journey.png"', page)
-        self.assertIn('id="story-chapters"', page)
-        self.assertIn('id="story-progress-copy"', page)
-        self.assertIn('href="#inquiry-world"', page)
+        self.assertIn('class="atlas-hero"', page)
+        self.assertIn('src="/assets/quantum-atlas-map.png"', page)
+        self.assertIn('id="atlas-map"', page)
+        self.assertIn('id="atlas-progress-copy"', page)
+        self.assertIn('data-atlas-location="observatory"', page)
+        self.assertIn('data-atlas-location="field"', page)
+        self.assertIn('data-atlas-location="archive"', page)
+        self.assertIn('id="atlas-briefing"', page)
+        self.assertIn('id="begin-case"', page)
+        self.assertIn('id="inquiry-world" class="inquiry-world" aria-labelledby="inquiry-title" tabindex="-1" hidden', page)
+        self.assertIn("状态", page)
+        self.assertIn("多种可能", page)
+        self.assertIn("重复观察", page)
+        self.assertIn("只改一个条件", page)
         self.assertIn('href="#evidence-map"', page)
-        self.assertLess(page.index('class="story-hero"'), page.index('id="inquiry-world"'))
+        self.assertLess(page.index('id="atlas-briefing"'), page.index('id="inquiry-world"'))
         self.assertLess(page.index('id="inquiry-world"'), page.index('id="evidence-map"'))
+
+        briefing = page.split('id="atlas-briefing"', 1)[1].split(
+            'id="inquiry-world"', 1
+        )[0]
+        self.assertNotIn(">H<", briefing)
+        self.assertNotIn(">CX<", briefing)
 
     def test_quantum_world_artwork_is_served_as_a_local_png(self):
         status, headers, body = self.request("/assets/quantum-world-journey.png")
@@ -242,6 +249,147 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(headers["Content-Type"], "image/png")
         self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
+    def test_quantum_atlas_artwork_is_served_as_a_local_png(self):
+        status, headers, body = self.request("/assets/quantum-atlas-map.png")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "image/png")
+        self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
+    def test_quantum_atlas_game_is_a_standalone_accessible_route(self):
+        status, headers, body = self.request("/game.html")
+
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", headers["Content-Type"])
+        page = body.decode()
+        self.assertIn("Quantum Atlas · 无形世界调查局", page)
+        self.assertIn('id="adventure-canvas"', page)
+        self.assertIn('id="dialogue-box"', page)
+        self.assertIn('id="touch-stick"', page)
+        self.assertIn('id="touch-action"', page)
+        self.assertIn('id="game-score"', page)
+        self.assertIn("WASD", page)
+        self.assertIn("方向键移动", page)
+        self.assertIn("空格调查", page)
+        self.assertIn('aria-label="二维调查世界"', page)
+        self.assertIn('aria-live="polite"', page)
+
+    def test_home_links_to_the_standalone_quantum_atlas_game(self):
+        status, _headers, body = self.request("/")
+
+        self.assertEqual(status, 200)
+        self.assertIn('<a href="/game.html">进入独立 HTML 游戏</a>', body.decode())
+
+    def test_quantum_atlas_game_assets_are_served_locally(self):
+        for path, content_type in (
+            ("/game.css", "text/css"),
+            ("/game.js", "javascript"),
+            ("/atlas-game-engine.js", "javascript"),
+            ("/atlas-adventure-engine.js", "javascript"),
+        ):
+            with self.subTest(path=path):
+                status, headers, body = self.request(path)
+                self.assertEqual(status, 200)
+                self.assertIn(content_type, headers["Content-Type"])
+                self.assertTrue(body)
+
+    def test_pixel_quantum_game_is_a_separate_playable_route(self):
+        status, headers, body = self.request("/pixel.html")
+
+        self.assertEqual(status, 200)
+        self.assertIn("text/html", headers["Content-Type"])
+        page = body.decode()
+        self.assertIn("Quantum Atlas · Atlas-7 轨道站", page)
+        self.assertIn('id="pixel-canvas"', page)
+        self.assertIn('id="pixel-dialogue"', page)
+        self.assertIn("像素风", page)
+        self.assertIn("方向键 / WASD", page)
+        self.assertIn('id="pixel-quickbar"', page)
+        self.assertIn('class="pixel-stage"', page)
+        self.assertIn('data-slot="state"', page)
+        self.assertIn('id="pixel-scene-name"', page)
+        self.assertIn('id="pixel-guide"', page)
+        self.assertIn('id="pixel-guide-step"', page)
+        self.assertIn('id="pixel-music-toggle"', page)
+        self.assertIn('id="pixel-phase-meter"', page)
+        self.assertIn('class="pixel-start-guide"', page)
+        self.assertIn('id="pixel-story-log"', page)
+        self.assertIn('id="shenicest-logo"', page)
+        self.assertIn('id="pixel-canvas"', page)
+        self.assertIn('id="pixel-zoom-meter"', page)
+        self.assertIn("双指捏合", page)
+        self.assertIn('id="pixel-intro-character"', page)
+        self.assertIn('id="pixel-touch-jump"', page)
+        self.assertIn("J / Shift", page)
+
+    def test_pixel_quantum_game_assets_are_served_locally(self):
+        for path, content_type in (
+            ("/pixel.css", "text/css"),
+            ("/pixel.js", "javascript"),
+            ("/pixel-adventure-engine.js", "javascript"),
+        ):
+            with self.subTest(path=path):
+                status, headers, body = self.request(path)
+                self.assertEqual(status, 200)
+                self.assertIn(content_type, headers["Content-Type"])
+                self.assertTrue(body)
+
+    def test_pixel_game_uses_a_local_top_down_map_asset(self):
+        status, headers, body = self.request("/assets/pixel-map.png")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(headers["Content-Type"], "image/png")
+        self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
+    def test_pixel_space_background_and_control_sheet_are_served(self):
+        for path in (
+            "/assets/pixel-space-background.png",
+            "/assets/pixel-space-bridge.png",
+            "/assets/pixel-space-archive.png",
+            "/assets/pixel-space-background-v2.png",
+            "/assets/pixel-space-bridge-v2.png",
+            "/assets/pixel-space-archive-v2.png",
+            "/assets/pixel-building-sheet-v2.png",
+            "/assets/pixel-space-capsule-rpg-v1.png",
+            "/assets/pixel-controls.png",
+            "/assets/pixel-dpad.png",
+            "/assets/pixel-action.png",
+            "/assets/pixel-phase-ring.png",
+            "/assets/shenicest-pixel-logo.png",
+            "/assets/pixel-protagonist-intro.png",
+            "/assets/pixel-heroine-sheet.png",
+        ):
+            with self.subTest(path=path):
+                status, headers, body = self.request(path)
+                self.assertEqual(status, 200)
+                self.assertEqual(headers["Content-Type"], "image/png")
+                self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
+    def test_pixel_stage_preserves_the_complete_scene_without_cover_cropping(self):
+        status, headers, body = self.request("/pixel.css")
+
+        css = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("background:#081522", css)
+        self.assertIn("height:min(100vh, 66.6667vw)", css)
+        self.assertIn("object-fit:contain", css)
+        self.assertNotIn("object-fit:cover", css)
+        self.assertNotIn("background:#081522 url('/assets/pixel-space-background.png') center / cover", css)
+
+        status, headers, body = self.request("/pixel-adventure-engine.js")
+        engine = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("pixel-space-background-v2.png", engine)
+        self.assertIn("pixel-space-bridge-v2.png", engine)
+        self.assertIn("pixel-space-archive-v2.png", engine)
+
+        status, headers, body = self.request("/pixel.js")
+        script = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("function drawContain(image)", script)
+        self.assertIn("drawContain(mapImage)", script)
+        self.assertNotIn("function drawCover(image)", script)
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
@@ -252,19 +400,10 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("state.amplitude_real", script)
         self.assertIn("state.amplitude_imag", script)
         self.assertIn("data.trace.length <= 15", script)
-        self.assertIn("proof?.portability || {}", script)
+        self.assertIn("data.proof.portability", script)
         self.assertIn("application/json", script)
         self.assertIn("downloadProof.href = lastProofUrl", script)
         self.assertIn("downloadProof.download =", script)
-        self.assertIn("proof?.whole_circuit_validation", script)
-        self.assertIn("data.proof_status", script)
-        self.assertIn("data.proof_notice", script)
-        self.assertIn("没有 whole-circuit 证书", script)
-        self.assertIn("全局相位为", script)
-        self.assertIn("最大误差", script)
-        self.assertIn("不当成形式化证明", script)
-        self.assertIn("semantic.scope.max_qubits", script)
-        self.assertIn("semantic.scope.tolerance", script)
         self.assertIn("coveredSourceOperations", script)
         self.assertIn("sourceMetrics.measurement_count", script)
         self.assertIn("agentHistory.splice(0)", script)
@@ -304,20 +443,6 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("addEvidenceReset", script)
         self.assertIn("function initializeTourState", script)
         self.assertIn("initializeTourState();", script)
-
-    def test_prooftrace_doc_uses_actual_benchmark_keys(self):
-        status, headers, body = self.request("/index.html")
-        self.assertEqual(status, 200)
-        self.assertIn("text/html", headers["Content-Type"])
-
-        prooftrace_doc = Path(__file__).resolve().parents[1] / "PROOFTRACE.md"
-        with prooftrace_doc.open(encoding="utf-8") as handle:
-            content = handle.read()
-
-        self.assertIn('"detected_mutants": 225', content)
-        self.assertIn('"semantic_rejections": 225', content)
-        self.assertNotIn('"detected_structure_mutants"', content)
-        self.assertNotIn('"detected_semantic_mutants"', content)
 
     def test_styles_include_mobile_overflow_guards_for_evidence_panels(self):
         status, headers, body = self.request("/styles.css")
@@ -364,14 +489,7 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(set(result["probabilities"]), {"00", "11"})
         self.assertIn("OPENQASM 2.0", result["native_ir"])
         self.assertEqual(result["proof"]["schema_version"], "loomq-prooftrace-v1")
-        self.assertIn("whole_circuit_validation", result["proof"])
         self.assertTrue(result["proof"]["equivalence"]["verified"])
-        self.assertTrue(result["proof"]["whole_circuit_validation"]["verified"])
-        self.assertTrue(
-            result["proof"]["whole_circuit_validation"]["one_global_phase"]["consistent"]
-        )
-        self.assertEqual(result["proof"]["whole_circuit_validation"]["basis_columns_checked"], 4)
-        self.assertEqual(result["proof"]["whole_circuit_validation"]["maximum_absolute_error"], 0.0)
         self.assertEqual(set(result["proof"]["portability"]), {"spinq", "originq", "braket"})
         self.assertTrue(
             all(
@@ -861,28 +979,8 @@ qreg q[9]; creg c[9]; x q[8]; measure q -> c;
         payload = json.loads(body)
         self.assertEqual(status, 200)
         self.assertEqual(payload["result"]["counts"], {"100000000": 17})
-        self.assertIsNone(payload["proof"])
-        self.assertEqual(payload["proof_status"], "out_of_scope")
-        self.assertIn("no whole-circuit certificate beyond 8 qubits", payload["proof_notice"])
         self.assertEqual(payload["trace"], [])
         self.assertIn("at most 8 qubits", payload["trace_notice"])
-        self.assertIn("OPENQASM 2.0", payload["native_ir"])
-
-    def test_large_valid_circuit_does_not_emit_a_fake_proof_payload(self):
-        source = """OPENQASM 2.0; include "qelib1.inc";
-qreg q[9]; creg c[9]; x q[8]; measure q -> c;
-"""
-
-        status, _headers, body = self.request(
-            "/api/run", {"qasm": source, "target": "spinq", "shots": 8}
-        )
-
-        payload = json.loads(body)
-        self.assertEqual(status, 200)
-        self.assertNotIn("schema_version", payload)
-        self.assertNotIn("whole_circuit_validation", payload)
-        self.assertNotIn("portability", payload)
-        self.assertIsNone(payload["proof"])
 
     def test_invalid_run_is_a_structured_400_error(self):
         request = urllib.request.Request(

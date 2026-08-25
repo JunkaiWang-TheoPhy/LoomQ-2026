@@ -2,7 +2,7 @@
 
 本工具包定义参赛提交协议，并提供公开自测。它不包含正式评分器、隐藏答案、Mock 得分路径或任何 Level 的参考解答。
 
-运行 `python3 -m starter_kit.loomq.web`，打开 <http://127.0.0.1:8765/>。页面先以三幕故事带零基础用户完成第一次 Bell 探究，再进入可折叠的评委证据附录；逐项复核命令见 [`JUDGE_GUIDE.md`](JUDGE_GUIDE.md)，自然语言合同的字段与边界见 [`PROMPT_CONTRACT.md`](PROMPT_CONTRACT.md)。
+运行 `python3 -m starter_kit.loomq.web`，打开 <http://127.0.0.1:8765/>。页面先进入 `Quantum Atlas · 无形世界调查局`：零基础用户从观测站学习四条调查规则，再解锁 Bell 对照实验与证据塔；逐项复核命令见 [`JUDGE_GUIDE.md`](JUDGE_GUIDE.md)，自然语言合同的字段与边界见 [`PROMPT_CONTRACT.md`](PROMPT_CONTRACT.md)。
 
 最快复核只需三步：
 
@@ -10,7 +10,7 @@
 2. 点击六步按钮，等待状态显示 `6/6`。
 3. 沿状态条检查 ProofTrace、首门分歧、断言、Witness Chain、Hybrid 路径和 Prompt Contract。
 
-零基础用户从同一页面的 `Quantum World` 序章开始，以“观测者”身份走过三幕：在分岔以前留下预测，只拨动 CX 运行 A/B 实验，再带着证据边界和 `loomq-inquiry-passport-v1` 护照归来。该路径不要求模型密钥、平台账号或 QASM 知识；主视觉只是旅程隐喻，不作为量子态证据。
+零基础用户从同一页面的 `Quantum Atlas` 调查地图开始。页面在出现 H/CX 门名之前，先解释状态、多种可能、重复观察和只改一个条件；用户完成简报后才进入分岔原野，留下预测并运行 A/B 实验，最后在证据塔审计结论并取得 `loomq-inquiry-passport-v1` 护照。该路径不要求模型密钥、平台账号或 QASM 知识；地图只是教学隐喻，不作为量子态证据。
 
 ## 本 fork 的实现
 
@@ -18,11 +18,10 @@
 
 - L1 使用同一个解析器与 `Circuit` 中间表示生成 SpinQ OpenQASM 2.0、OriginIR 和 Braket OpenQASM 3.0；
 - 内置无第三方依赖的状态向量运行时，统一输出 little-endian `counts`；
-- ProofTrace 对安全冗余门做命名重写，记录源门到优化门的 lineage，并为三后端输出可下载的确定性证书；
-- ProofTrace 证书把三类证据分开写明：局部重写是符号恒等式证据，whole-circuit validation 是 `<=8` qubit、`tol=1e-12` 的全矩阵重算支持证据，native IR structural round-trip 仍然 mandatory；
+- ProofTrace 对安全冗余门做命名重写，记录源门到优化门的 lineage，并为三后端输出可下载的确定性证明证书；
 - L2 通过 `LOOMQ_LLM_*` 调用组委会提供的模型服务；生成的 QASM 会验证 Bell/GHZ/W、计算基态和均匀叠加目标分布，后端推荐会复核比特数、排队、费用和设备类型；失败时携带诊断重试一次，两次无效回答后才由同一目标/能力表验证器生成安全回退；
 - Prompt Contract 在模型调用前抽取 fence 外语义、目标态和后端约束；模型输入与结果验证器共用这份合同，服务端可从原 prompt 重建并核对摘要；
-- Quantum World 把 Bell 的 H/CX 问题组织成“预测—对照实验—结论审计—护照”闭环；错误结论会引用 A/B 主导态和首门分歧进行纠正，而不是由模型自由评分；
+- Quantum Atlas 把 Bell 的 H/CX 问题组织成“背景简报—预测—对照实验—结论审计—护照”闭环；观测站、分岔原野和证据塔由真实完成状态依次解锁，错误结论会引用 A/B 主导态和首门分歧进行纠正，而不是由模型自由评分；
 - L2 附带固定种子、可恢复且带完整性哈希的 500 例真实模型压力 campaign，覆盖生成、修复、后端推荐、对抗输入和表述稳定性；
 - Witness Chain 用稳定的 `gN/mN` 源操作 ID，把 ProofTrace 谱系、反事实首门分歧、断言测量依赖与 Hybrid 分支 provenance 串成可下载、可重算的审计工件；
 - L3 将有界 Hybrid-QASM 经典块解析为 AST，并生成官方轻量模拟器可执行的 RISC-V 控制流；
@@ -43,9 +42,13 @@
 python3 -m starter_kit.loomq.web
 ```
 
-打开 <http://127.0.0.1:8765/>，先完成 Quantum World 的 Bell A/B 探究；再选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例并点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释、目标平台原生指令，以及可下载的 ProofTrace 三后端证书。证书明确区分局部恒等式、`<=8` qubit 的 bounded whole-circuit recomputation 与 native IR structural round-trip；边界见 [`WHOLE_CIRCUIT_VALIDATION.md`](WHOLE_CIRCUIT_VALIDATION.md)。长轨迹默认折叠，服务只监听本机地址。
+打开 <http://127.0.0.1:8765/>，先在 Quantum Atlas 读完四条调查规则，完成 Bell A/B 探究；再选择 Bell、GHZ、W、均匀叠加、相位干涉、Deutsch–Jozsa、Grover 或 QFT 示例并点击“运行电路”。页面会同时显示量子门时间线、逐门概率/振幅/相位、测量概率、位序解释、目标平台原生指令，以及可下载的 ProofTrace 三后端证明证书；长轨迹默认折叠，服务只监听本机地址。
 
 评委路径不要求先学 QASM。点击首屏六步按钮后，状态条会链接到产生每项结论的页面区域；模型调用是单独的可选步骤。
+
+独立游戏入口位于 <http://127.0.0.1:8765/game.html>。它是零依赖 Canvas 2D 调查冒险，而非实验台的换皮页面：玩家自由移动、绕开建筑与任务封锁门，靠近 NPC、发光工具和实验装置后交互。四条调查方法开启分岔原野，真实 `/api/inquiry` 护照开启证据塔，同一护照再限制最终结论。键盘和触屏摇杆均可完整通关；游戏不另造模拟结果，也不取代完整实验台。
+
+另有像素 RPG 入口 <http://127.0.0.1:8765/pixel.html>。它使用太空舱/银河背景、独立白色空间站贴图、稳定 3:2 游戏舞台、三步新手引导、底部调查快捷栏和像素任务 HUD。故事从 Atlas-7 轨道前哨失联开始，五段线索依次揭示三枚调查碎片、纠缠能道、量子井回声和未知观察者。地图分为量子前哨、纠缠能道、证据环站三个场景，河水/能道不可通过，只有桥面通行；建筑与障碍独立绘制并参与碰撞。PHASE HUD 和纠缠轨迹表达量子语义，开始调查后由 Web Audio 生成低音量 chiptune 环境音乐。玩家收集三枚调查碎片，交给 NPC 后启动真实 A/B 量子井。像素地图资产保存在 [`web/assets/pixel-space-background.png`](web/assets/pixel-space-background.png)，SheNicest 像素徽章和控制贴图也作为独立资源接入。
 
 也可以使用 CLI：
 

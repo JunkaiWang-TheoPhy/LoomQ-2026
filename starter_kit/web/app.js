@@ -148,6 +148,7 @@ let lastHybridPathUrl = null;
 let lastWitnessUrl = null;
 let lastInquiryUrl = null;
 let currentInquiryPassport = null;
+let atlasBriefingComplete = false;
 
 function tell(message) {
   notice.textContent = message;
@@ -280,19 +281,6 @@ function parseJsonInput(raw, label) {
 
 function formatPercent(value) {
   return `${(value * 100).toFixed(1)}%`;
-}
-
-function formatPhaseComponent(value) {
-  return Math.abs(value) < 1e-12 ? "0" : value.toFixed(6);
-}
-
-function formatAbsoluteError(value) {
-  return value === 0 ? "0" : Number(value).toExponential(2);
-}
-
-function formatMetricDelta(before, after) {
-  if (typeof before !== "number" || typeof after !== "number") return "—";
-  return before === after ? String(after) : `${before} → ${after}`;
 }
 
 function renderAssertionSummary(item) {
@@ -618,17 +606,28 @@ function resetInquiryAudit(message = "选择一条结论，让系统指出证据
   }
 }
 
-function renderStoryProgress(hasExperiment, auditStatus) {
-  const progress = globalThis.LoomQInquiry.journeyProgress(hasExperiment, auditStatus);
-  progress.chapters.forEach((chapter) => {
-    const item = document.querySelector(`[data-story-chapter="${chapter.id}"]`);
-    if (!item) return;
-    item.classList.remove("current", "complete", "upcoming");
-    item.classList.add(chapter.state);
-    if (chapter.state === "current") item.setAttribute("aria-current", "step");
-    else item.removeAttribute("aria-current");
+function renderAtlasProgress(hasExperiment, auditStatus) {
+  const progress = globalThis.LoomQInquiry.atlasProgress(
+    atlasBriefingComplete,
+    hasExperiment,
+    auditStatus,
+  );
+  progress.locations.forEach((location) => {
+    const button = document.querySelector(`[data-atlas-location="${location.id}"]`);
+    if (!button) return;
+    button.classList.remove("current", "complete", "locked");
+    button.classList.add(location.state);
+    button.disabled = location.state === "locked";
+    if (location.state === "current") button.setAttribute("aria-current", "step");
+    else button.removeAttribute("aria-current");
+    const stateLabel = button.querySelector("span");
+    if (stateLabel) {
+      stateLabel.textContent = location.state === "complete"
+        ? "已完成"
+        : location.state === "current" ? "当前地点" : "待解锁";
+    }
   });
-  $("#story-progress-copy").textContent = progress.message;
+  $("#atlas-progress-copy").textContent = progress.message;
 }
 
 function renderInquiryExperiment(passport) {
@@ -711,83 +710,33 @@ function renderResults(data) {
   const leaders = entries.slice(0, 2).map(([state]) => `|${state}⟩`).join(" 与 ");
   $("#explanation").textContent = `共测量 ${data.result.shots} 次。主导结果为 ${leaders}；位串从左到右对应高位到低位。`;
   const proof = data.proof;
-  const proofStatus = data.proof_status || "available";
-  const proofNotice = data.proof_notice || "";
-  const semantic = proof?.whole_circuit_validation || null;
-  const sourceMetrics = proof?.metrics?.source || {};
-  const optimizedMetrics = proof?.metrics?.optimized || {};
-  $("#proof-status").textContent = proofStatus === "out_of_scope"
-    ? "超出范围"
-    : proof?.equivalence?.verified ? "已验证" : "有边界";
-  $("#proof-scope").textContent = proofStatus === "out_of_scope"
-    ? `这次没有 whole-circuit 证书。${proofNotice}`
-    : semantic?.verified
-    ? "局部重写是符号恒等式证据；native IR 结构回读仍然必须通过；整条电路只做有界数值重算，不把它写成形式化证明。"
-    : "这次结果保留运行结果与结构回读；整条电路重算有量子比特上限，超过上限时不会把缺失证据伪装成通过。";
-  $("#proof-semantic-basis").textContent = proofStatus === "out_of_scope"
-    ? "没有 whole-circuit 证书。"
-    : semantic
-    ? `查了 ${semantic.basis_columns_checked} 列，合计 ${semantic.amplitudes_checked} 个振幅。`
-    : "未提供整条电路重算字段。";
-  $("#proof-semantic-phase").textContent = proofStatus === "out_of_scope"
-    ? "超过 8 个量子比特时不生成整条电路相位证书。"
-    : !semantic
-    ? "这次没有整条电路相位报告。"
-    : semantic.verified && semantic.one_global_phase.consistent
-      ? `是。全局相位为 ${formatPhaseComponent(semantic.one_global_phase.real)} + ${formatPhaseComponent(semantic.one_global_phase.imag)}i。`
-      : "不是。找不到同一个全局相位。";
-  $("#proof-semantic-error").textContent = proofStatus === "out_of_scope"
-    ? "没有 whole-circuit 误差证书。"
-    : semantic
-    ? `最大误差 ${formatAbsoluteError(semantic.maximum_absolute_error)}。`
-    : "最大误差未计算。";
-  $("#proof-semantic-bound").textContent = proofStatus === "out_of_scope"
-    ? "这里只保留运行结果与已请求目标的结构编译；不会伪造 JSON 证明下载。"
-    : semantic?.scope
-    ? `这里只重算，不当成形式化证明。最多只重算 ${semantic.scope.max_qubits} 个量子比特，容差 ${semantic.scope.tolerance}。${semantic.reason ? ` ${semantic.reason}` : ""}`
-    : "这里只重算，不当成形式化证明。";
-  $("#proof-gates").textContent = proofStatus === "out_of_scope"
-    ? "—"
-    : formatMetricDelta(sourceMetrics.gate_count, optimizedMetrics.gate_count);
-  $("#proof-depth").textContent = proofStatus === "out_of_scope"
-    ? "—"
-    : formatMetricDelta(sourceMetrics.depth, optimizedMetrics.depth);
-  $("#proof-two-qubit").textContent = proofStatus === "out_of_scope"
-    ? "—"
-    : formatMetricDelta(
+  const sourceMetrics = proof.metrics.source;
+  const optimizedMetrics = proof.metrics.optimized;
+  const metricDelta = (before, after) => before === after ? String(after) : `${before} → ${after}`;
+  $("#proof-status").textContent = proof.equivalence.verified ? "已验证" : "未验证";
+  $("#proof-scope").textContent =
+    "证明范围：命名的通用酉恒等式；测量映射保持不变。它不把模拟结果冒充真机保真度。";
+  $("#proof-gates").textContent = metricDelta(sourceMetrics.gate_count, optimizedMetrics.gate_count);
+  $("#proof-depth").textContent = metricDelta(sourceMetrics.depth, optimizedMetrics.depth);
+  $("#proof-two-qubit").textContent = metricDelta(
     sourceMetrics.two_qubit_gate_count,
     optimizedMetrics.two_qubit_gate_count,
   );
   const coveredSourceOperations = new Set([
-    ...((proof?.lineage) || []).flatMap((item) => item.source_operation_indices || []),
-    ...((proof?.rewrites) || []).flatMap((item) => item.source_operation_indices || []),
+    ...proof.lineage.flatMap((item) => item.source_operation_indices),
+    ...proof.rewrites.flatMap((item) => item.source_operation_indices),
   ]);
-  const sourceOperationCount = (sourceMetrics.gate_count || 0) + (sourceMetrics.measurement_count || 0);
-  $("#proof-lineage").textContent = proofStatus === "out_of_scope"
-    ? "—"
-    : sourceOperationCount
-    ? `${coveredSourceOperations.size}/${sourceOperationCount} 项`
-    : "—";
+  const sourceOperationCount = sourceMetrics.gate_count + sourceMetrics.measurement_count;
+  $("#proof-lineage").textContent = `${coveredSourceOperations.size}/${sourceOperationCount} 项`;
   const proofTargets = $("#proof-targets");
   proofTargets.replaceChildren();
-  Object.entries(proof?.portability || {}).forEach(([target, report]) => {
+  Object.entries(data.proof.portability).forEach(([target, report]) => {
     const hash = report.native_ir_sha256.slice(0, 10);
-    const structural = report.roundtrip_verified ? "结构回读通过" : "结构回读失败";
-    const wholeCircuit = report.whole_circuit_validation?.verified
-      ? "整条电路重算通过"
-      : "整条电路重算失败";
-    proofTargets.append(element("li", "", `${target} · ${structural} · ${wholeCircuit} · ${hash}…`));
+    proofTargets.append(element("li", "", `${target} · ${report.roundtrip_verified ? "通过" : "失败"} · ${hash}…`));
   });
-  if (!proofTargets.childElementCount) {
-    proofTargets.append(element("li", "", proofStatus === "out_of_scope"
-      ? "这次没有 whole-circuit 证书；当前结果只保留已请求目标的运行与结构编译。"
-      : "这次没有三后端证书；当前结果只保留已请求目标的运行与结构检查。"));
-  }
   const proofRewrites = $("#proof-rewrites");
   proofRewrites.replaceChildren();
-  if (proofStatus === "out_of_scope") {
-    proofRewrites.append(element("li", "", "这次没有 ProofTrace 证书，所以这里不展示重写记录。"));
-  } else if (!(proof?.rewrites || []).length) {
+  if (!proof.rewrites.length) {
     proofRewrites.append(element("li", "", "未发现冗余门；原线路直接进入三后端验证。"));
   } else {
     proof.rewrites.forEach((rewrite) => {
@@ -795,18 +744,13 @@ function renderResults(data) {
       proofRewrites.append(element("li", "", `${rewrite.rule} · 源操作 ${sources}`));
     });
   }
+  if (lastProofUrl) URL.revokeObjectURL(lastProofUrl);
+  const proofBlob = new Blob([JSON.stringify(proof, null, 2)], { type: "application/json" });
+  lastProofUrl = URL.createObjectURL(proofBlob);
   const downloadProof = $("#download-proof");
-  if (proof?.schema_version && proof.source_sha256) {
-    if (lastProofUrl) URL.revokeObjectURL(lastProofUrl);
-    const proofBlob = new Blob([JSON.stringify(proof, null, 2)], { type: "application/json" });
-    lastProofUrl = URL.createObjectURL(proofBlob);
-    downloadProof.href = lastProofUrl;
-    downloadProof.download = `loomq-prooftrace-${proof.source_sha256.slice(0, 12)}.json`;
-    downloadProof.setAttribute("aria-disabled", "false");
-  } else {
-    downloadProof.removeAttribute("href");
-    downloadProof.setAttribute("aria-disabled", "true");
-  }
+  downloadProof.href = lastProofUrl;
+  downloadProof.download = `loomq-prooftrace-${proof.source_sha256.slice(0, 12)}.json`;
+  downloadProof.setAttribute("aria-disabled", "false");
   const traceSteps = $("#trace-steps");
   $("#state-trace").open = data.trace.length <= 15;
   traceSteps.replaceChildren();
@@ -1040,6 +984,36 @@ $("#run").addEventListener("click", async () => {
   }
 });
 
+$("#begin-case").addEventListener("click", () => {
+  if (atlasBriefingComplete) return;
+  atlasBriefingComplete = true;
+  const beginButton = $("#begin-case");
+  beginButton.disabled = true;
+  beginButton.textContent = "简报已完成";
+  const inquiry = $("#inquiry-world");
+  inquiry.hidden = false;
+  renderAtlasProgress(false, null);
+  inquiry.scrollIntoView({
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    block: "start",
+  });
+  inquiry.focus({ preventScroll: true });
+  tell("分岔原野已解锁：先预测，再运行对照实验");
+});
+
+document.querySelectorAll("[data-atlas-location]").forEach((button) => {
+  button.addEventListener("click", () => {
+    if (button.disabled) return;
+    const target = document.querySelector(button.dataset.target);
+    if (!target) return;
+    target.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+    target.focus?.({ preventScroll: true });
+  });
+});
+
 $("#run-inquiry").addEventListener("click", async () => {
   const button = $("#run-inquiry");
   const status = $("#inquiry-status");
@@ -1050,10 +1024,10 @@ $("#run-inquiry").addEventListener("click", async () => {
     const passport = await requestInquiry();
     currentInquiryPassport = passport;
     renderInquiryExperiment(passport);
-    renderStoryProgress(true, null);
+    renderAtlasProgress(true, null);
     resetInquiryAudit("实验已完成。现在选择结论，并让证据检查它。");
     status.textContent = "A/B 实验完成：只改变了 CX，下一步请形成结论。";
-    tell("Quantum World：对照实验完成");
+    tell("Quantum Atlas：对照实验完成");
   } catch (error) {
     status.textContent = `实验失败：${error.message}`;
     tell(error.message);
@@ -1076,7 +1050,7 @@ $("#audit-inquiry").addEventListener("click", async () => {
       $("#inquiry-conclusion").value,
     );
     renderInquiryAudit(passport);
-    renderStoryProgress(true, passport.conclusion_audit.status);
+    renderAtlasProgress(true, passport.conclusion_audit.status);
     $("#inquiry-audit").setAttribute("tabindex", "-1");
     $("#inquiry-audit").focus();
     tell("结论审计完成；实验护照可以下载");
@@ -1094,12 +1068,12 @@ $("#inquiry-prediction").addEventListener("change", () => {
   $("#inquiry-results").hidden = true;
   $("#inquiry-status").textContent = "预测已记录；运行实验后再看答案。";
   resetInquiryAudit();
-  renderStoryProgress(false, null);
+  renderAtlasProgress(false, null);
 });
 
 $("#inquiry-conclusion").addEventListener("change", () => {
   resetInquiryAudit("结论已变化；请重新用当前实验审计。");
-  renderStoryProgress(Boolean(currentInquiryPassport), null);
+  renderAtlasProgress(Boolean(currentInquiryPassport), null);
 });
 
 $("#run-assert").addEventListener("click", async () => {

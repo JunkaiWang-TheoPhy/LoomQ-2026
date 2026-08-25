@@ -10,6 +10,52 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class InquiryFrontendTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_atlas_progress_unlocks_locations_from_verified_actions(self):
+        script = """
+const inquiry = require(process.argv[1]);
+process.stdout.write(JSON.stringify([
+  inquiry.atlasProgress(false, false, null),
+  inquiry.atlasProgress(true, false, null),
+  inquiry.atlasProgress(true, true, null),
+  inquiry.atlasProgress(true, true, "unsupported"),
+]));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "inquiry.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        initial, briefed, experimented, audited = json.loads(completed.stdout)
+        self.assertEqual(
+            [location["state"] for location in initial["locations"]],
+            ["current", "locked", "locked"],
+        )
+        self.assertEqual(
+            [location["state"] for location in briefed["locations"]],
+            ["complete", "current", "locked"],
+        )
+        self.assertEqual(
+            [location["state"] for location in experimented["locations"]],
+            ["complete", "complete", "current"],
+        )
+        self.assertEqual(
+            [location["state"] for location in audited["locations"]],
+            ["complete", "complete", "complete"],
+        )
+        self.assertIn("调查规则", initial["message"])
+        self.assertIn("对照实验", briefed["message"])
+        self.assertIn("审计结论", experimented["message"])
+        self.assertIn("案件归档", audited["message"])
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_story_progress_marks_the_learners_next_chapter(self):
         script = """
 const inquiry = require(process.argv[1]);

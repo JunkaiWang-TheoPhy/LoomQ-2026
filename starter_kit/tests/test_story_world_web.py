@@ -44,6 +44,28 @@ class StoryWorldWebTests(unittest.TestCase):
             urllib.request.urlopen(self.base + "/api/story-world?completed=unknown", timeout=3)
         self.assertEqual(caught.exception.code, 400)
 
+    def test_each_case_evidence_contract_runs_through_compare_endpoint(self):
+        with urllib.request.urlopen(self.base + "/api/story-world", timeout=3) as response:
+            world = json.loads(response.read())
+
+        for case_file in world["cases"]:
+            contract = case_file["evidence_contract"]
+            request = urllib.request.Request(
+                self.base + "/api/compare",
+                data=json.dumps(
+                    {
+                        "reference_qasm": contract["reference_qasm"],
+                        "candidate_qasm": contract["variant_qasm"],
+                    }
+                ).encode(),
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(request, timeout=3) as response:
+                report = json.loads(response.read())
+            self.assertEqual(response.status, 200, case_file["id"])
+            self.assertIn("scope_note", report)
+            self.assertIn("final_distribution_distance", report)
+
 
 if __name__ == "__main__":
     unittest.main()

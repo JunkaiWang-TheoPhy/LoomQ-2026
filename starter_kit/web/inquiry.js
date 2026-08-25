@@ -68,6 +68,30 @@
     return { chapters, message };
   }
 
+  function atlasProgress(briefingComplete, hasExperiment, auditStatus) {
+    const locations = [
+      { id: "observatory", state: "current" },
+      { id: "field", state: "locked" },
+      { id: "archive", state: "locked" },
+    ];
+    let message = "观测站：先学会四条调查规则，再出发。";
+    if (briefingComplete) {
+      locations[0].state = "complete";
+      locations[1].state = "current";
+      message = "分岔原野：用只改一个条件的对照实验观察变化。";
+    }
+    if (briefingComplete && hasExperiment) {
+      locations[1].state = "complete";
+      locations[2].state = "current";
+      message = "证据塔：根据同一次实验审计结论，不让解释跑在证据前面。";
+    }
+    if (briefingComplete && hasExperiment && auditStatus) {
+      locations[2].state = "complete";
+      message = "案件归档：预测、对照实验、结论与证据边界已写入实验护照。";
+    }
+    return { locations, message };
+  }
+
   function viewModel(passport) {
     const controlBars = bars(passport.experiment.control.probabilities);
     const variantBars = bars(passport.experiment.variant.probabilities);
@@ -90,6 +114,7 @@
 
   return {
     auditHeading,
+    atlasProgress,
     bars,
     journeyProgress,
     requestPayload,

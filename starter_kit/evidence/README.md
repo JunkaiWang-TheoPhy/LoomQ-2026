@@ -19,7 +19,7 @@
 | 官方人工评分项 | 本 fork 申报 | 首要可复核证据 |
 |---|---:|---|
 | L1 真机 | 已实现并提供复核入口 | 下方两个平台的 job ID、原始结果、QASM、截图；`python3 -m starter_kit.scripts.validate_hardware_evidence` |
-| L2 交互体验 | 已实现并提供复核入口 | Quantum World“预测—A/B 实验—结论审计—护照”零基础路径、首屏六步本地评委路径、Prompt Contract、可下载并重算的 Witness Chain、反事实首门分歧、ProofTrace 证书（含 local rewrite / whole-circuit validation / structural round-trip 三类边界）、P1 断言、P2 Hybrid 回放、可重算的 Hybrid 路径证书、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图，以及当前仓库中的 Web 测试套件 |
+| L2 交互体验 | 已实现并提供复核入口 | Quantum World“预测—A/B 实验—结论审计—护照”零基础路径、首屏六步本地评委路径、Prompt Contract、可下载并重算的 Witness Chain、反事实首门分歧、ProofTrace 证书、P1 断言、P2 Hybrid 回放、可重算的 Hybrid 路径证书、三算法画廊、逐门状态故事、受限多轮上下文、`starter_kit/WEB_QA.md`、桌面/移动端截图，以及当前仓库中的 Web 测试套件 |
 | 工程与产品复核 | 已实现并提供复核入口 | `starter_kit/JUDGE_GUIDE.md`、`ARCHITECTURE.md`、零依赖启动、`python3 starter_kit/verify_submission.py` |
 | 自定义量子 RISC-V | 已实现并提供复核入口 | `starter_kit/QUANTUM_RISCV_SPEC.md`、扩展模拟器、`bonus_evaluator.py` |
 | 新手引导与视觉叙事 | 已实现并提供复核入口 | Quantum World 探究闭环、Learn/Build/Repair/Backend Match、双通道结果表达、错误恢复和键盘/移动端支持 |
@@ -108,7 +108,7 @@ PyQuafu 0.4.5 的固定种子验证覆盖 40 个唯一电路、全部 12 门和�
 
 此外，公开 `transpile()` 不直接信任自己的 emitter：`loomq/native_ir.py` 会把三种输出重新解析成 `Circuit` 并做完全相等检查。Deutsch–Jozsa、Grover 与 QFT 三个展品均跨三 target 回读和运行；恶意资源输入由 `tests.test_resource_boundaries` 验证在分配前拒绝。P1 断言报告明确区分本地精确、有限 shots 与 provider 概率三类证据；P2 Hybrid 回放显示 bit 顺序 `c[0], c[1], …`、branch path 与机器寄存器事件。Hybrid 路径证书在记录的 `max_outcomes` 上限内穷举全部 `2**num_clbits` outcome：20 qubit 内使用稠密精确态，21–30 qubit 使用最多 1,000,000 个已占基态的稀疏精确态；超出任一边界会明确拒绝。证书列出路径总概率、不可达 outcome、死路径与重算结果，但不用于推断真机噪声来源。
 
-ProofTrace 在此基础上增加可审计的安全重写、源门 lineage、优化 metrics、whole-circuit validation 和三目标证书。`python3 -m starter_kit.scripts.prooftrace_benchmark --json` 对五个算法的三目标输出执行 225 个单指令删除变异，结果为 225/225 structure rejection、225/225 semantic rejection、0 false accept，并完成 15 项 portability 与 132 项重写检查。`whole_circuit_validation` 只表示 `<=8` qubit、`tol=1e-12` 的全矩阵重算支持证据，不是形式化证明。范围和不能外推的结论见 `starter_kit/PROOFTRACE.md` 与 `starter_kit/WHOLE_CIRCUIT_VALIDATION.md`。
+ProofTrace 在此基础上增加可审计的安全重写、源门 lineage、优化 metrics 和三目标证书。`python3 -m starter_kit.scripts.prooftrace_benchmark --json` 对五个算法的三目标输出执行 225 个单指令删除变异，结果 225/225 检出、0 false accept，并完成 15 项 portability 与 132 项重写检查。范围和不能外推的结论见 `starter_kit/PROOFTRACE.md`。
 
 ### 40,000 项离线活动
 
