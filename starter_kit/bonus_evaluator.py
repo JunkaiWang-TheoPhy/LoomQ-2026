@@ -7,11 +7,11 @@ import json
 
 try:
     from .loomq.qasm import Circuit, Gate, Measurement
-    from .loomq.quantum_riscv import CUSTOM_0_OPCODE, decode_program, encode_circuit
+    from .loomq.quantum_riscv import CUSTOM_0_OPCODE, decode_program, encode_circuit, trace_program
     from .riscv_emulator import TinyRISCVEmulator
 except ImportError:
     from loomq.qasm import Circuit, Gate, Measurement
-    from loomq.quantum_riscv import CUSTOM_0_OPCODE, decode_program, encode_circuit
+    from loomq.quantum_riscv import CUSTOM_0_OPCODE, decode_program, encode_circuit, trace_program
     from riscv_emulator import TinyRISCVEmulator
 
 
@@ -41,6 +41,7 @@ def evaluate_bonus() -> dict:
         "passed": all(checks.values()),
         "checks": checks,
         "machine_words": [f"0x{word:08x}" for word in encoded.words],
+        "machine_trace": trace_program(encoded),
         "counts": result["counts"],
     }
 

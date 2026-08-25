@@ -53,7 +53,7 @@ Agent 生成是可选的第 7 步。配置 `LOOMQ_LLM_*` 后再运行它；模�
 | 统一 Witness Chain | Web 默认 Bell 例点击“生成统一审计链” | `g2 → m1/m2 → m2` 对齐 ProofTrace、首门分歧、断言和 Hybrid 分支；下载 JSON 后用 `verify_causal_audit()` 全量重算，见 `WITNESS_CHAIN.md` |
 | L3 | `python3 starter_kit/evaluator.py --level l3` | AST 编译器、独立参考语义与固定种子随机程序 |
 | 对抗边界 | `cd starter_kit && python3 -m unittest tests.test_resource_boundaries -v` | 超大寄存器、稠密 21-qubit 拒绝、稀疏执行匹配 24/30/25 比特能力表、31-qubit Web 400、65 层分支拒绝 |
-| 自定义量子 RISC-V | `python3 starter_kit/bonus_evaluator.py`；`cd starter_kit && python3 -m unittest tests.test_quantum_riscv -v` | 32 位 `custom-0` 编码、字节序列、严格解码、12 门固定机器字、字面 Bell 执行、无损参数表、100 条随机线路与扩展模拟器闭环 |
+| 自定义量子 RISC-V | `python3 starter_kit/bonus_evaluator.py`；`cd starter_kit && python3 -m unittest tests.test_quantum_riscv -v` | 32 位 `custom-0` 编码、字节序列、严格解码、机器字级 `loomq-quantum-riscv-trace-v1`、12 门固定机器字、字面 Bell 执行、无损参数表、100 条随机线路与扩展模拟器闭环 |
 | 科学边界 | 阅读 `SCIENTIFIC_CLAIMS_AUDIT.md` | 模拟器、Z 基相关、真机噪声、模型 fixture 的允许结论与非声明 |
 
 ## 建议体验的三个任务

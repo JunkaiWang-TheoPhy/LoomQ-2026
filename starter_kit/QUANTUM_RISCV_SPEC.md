@@ -87,3 +87,22 @@ python3 -m unittest tests.test_quantum_riscv -v
 The Bell case encodes `h`, `cx`, and two measurements into four machine words,
 decodes them through the extended official lightweight emulator, and returns
 exactly 512 counts each for `00` and `11` at 1024 shots.
+
+## Machine-level audit trace
+
+`trace_program(program)` emits `loomq-quantum-riscv-trace-v1`.  Each entry binds
+the program counter to its exact 32-bit word, little-endian bytes, and decoded
+operation.  The report also includes the SHA-256 digest of the serialized
+machine code and the complete decoded operation list.  This is an audit view of
+the artifact that entered the extended emulator; it is not a second simulator
+or a claim about physical hardware execution.
+
+The credential-free Bonus evaluator includes this trace under `machine_trace`:
+
+```bash
+python3 starter_kit/bonus_evaluator.py
+```
+
+The resulting JSON can be archived alongside the source circuit.  A reviewer
+can independently compare `machine_words`, `bytes_le`, `decoded_circuit`, and
+`machine_code_sha256` before inspecting the returned Bell counts.
