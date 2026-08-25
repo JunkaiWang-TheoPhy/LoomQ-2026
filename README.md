@@ -14,6 +14,9 @@
 | `starter_kit/` | 选手工具包 v1.1.0：提交清单、人工评分证据模板、L2 环境协议、公开自测、容器基线、RISC-V 模拟器、公开电路与上手资料 |
 | `docs/TECHNICAL_REPORT.md` | 证据驱动的系统架构、验证结果与创新点技术报告 |
 | `docs/LOOMQ_JUDGE_DECK.pptx` | 面向评委的 3 分钟技术演示稿 |
+| `docs/QUANTUM_CAPSULE_ADVENTURE_DESIGN.md` | 太空舱入口、量子引擎维修、冒险基地返回门与状态契约设计 |
+| `docs/QUANTUM_CAPSULE_ADVENTURE_DESIGN.docx` | 太空舱与冒险基地设计说明书（Word 版） |
+| `docs/QUANTUM_CAPSULE_ADVENTURE_DECK.pptx` | 太空舱入口与冒险基地闭环演示稿 |
 
 ## 最终提交流程图
 
