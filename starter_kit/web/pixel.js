@@ -6,8 +6,11 @@ const ctx = canvas.getContext("2d");
 const $ = (selector) => document.querySelector(selector);
 const TILE = 16;
 const COLORS = { grass: "#75b59e", grass2: "#83c1a4", wall: "#3e3657", wallTop: "#5f577b", water: "#78c7d4", flower: "#f06a7b", yellow: "#f6dd78", player: "#f06a7b", ink: "#281d35", paper: "#fff2c8" };
-const mapImage = new Image();
-mapImage.src = "/assets/pixel-map.png";
+const mapImages = Object.fromEntries(Object.entries(worldEngine.SCENES).map(([id, scene]) => {
+  const image = new Image();
+  image.src = scene.background;
+  return [id, image];
+}));
 
 let game = worldEngine.createPixelGame();
 let mission = { shards: [], complete: false };
@@ -23,6 +26,9 @@ let audioContext = null;
 let musicTimer = null;
 let musicOn = false;
 let musicStep = 0;
+let movementClock = 0;
+const MOVE_INTERVAL = worldEngine.MOVE_INTERVAL;
+let currentStory = "arrival";
 
 function announce(text) { $("#pixel-sr").textContent = text; }
 
@@ -46,7 +52,23 @@ function updateHud() {
   });
   $("#pixel-scene-name strong").textContent = worldEngine.SCENES[currentScene].name;
   $("#pixel-phase-value").textContent = worldEngine.SCENES[currentScene].phase.toUpperCase();
+  $(".pixel-stage").style.backgroundImage = `url('${worldEngine.SCENES[currentScene].background}')`;
   updateGuide();
+  updateStoryLog();
+}
+
+function updateStoryLog() {
+  const story = worldEngine.STORY_BEATS.find((beat) => beat.id === currentStory) || worldEngine.STORY_BEATS[0];
+  $("#pixel-story-title").textContent = story.title;
+  $("#pixel-story-line").textContent = story.line;
+  $("#pixel-story-log").hidden = !started || mission.complete;
+}
+
+function setStory(id) {
+  if (!worldEngine.STORY_BEATS.some((beat) => beat.id === id)) return;
+  currentStory = id;
+  updateStoryLog();
+  announce(worldEngine.STORY_BEATS.find((beat) => beat.id === id).line);
 }
 
 function guideIndex() {
@@ -154,9 +176,17 @@ function drawPixelRect(x, y, width, height, color) {
   ctx.fillRect(x * TILE, y * TILE, width * TILE, height * TILE);
 }
 
+function drawCover(image) {
+  const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+  const width = image.naturalWidth * scale;
+  const height = image.naturalHeight * scale;
+  ctx.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+}
+
 function drawMap(time) {
+  const mapImage = mapImages[currentScene];
   if (mapImage.complete && mapImage.naturalWidth) {
-    ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
+    drawCover(mapImage);
   } else {
     ctx.fillStyle = COLORS.grass;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -183,6 +213,7 @@ function drawMap(time) {
       }
     }
   }
+  drawBuildings();
   drawQuantumField(time);
   drawGate();
   drawQuantumWell(18, 12, time);
@@ -196,6 +227,51 @@ function drawMap(time) {
   // NPCs and signposts.
   drawPerson(3, 13, COLORS.pink, "林默", time);
   drawPerson(12, 7, COLORS.sky, "小满", time);
+}
+
+function drawBuildings() {
+  worldEngine.BUILDINGS.forEach((building) => {
+    const px = building.x * TILE;
+    const py = building.y * TILE;
+    ctx.fillStyle = "rgba(0,0,0,.32)";
+    ctx.fillRect(px - 3, py + building.height * TILE - 2, building.width * TILE + 6, 5);
+    ctx.fillStyle = "#111c35";
+    ctx.fillRect(px, py, building.width * TILE, building.height * TILE);
+    ctx.strokeStyle = "#334b76";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px + 2, py + 2, building.width * TILE - 4, building.height * TILE - 4);
+    ctx.fillStyle = COLORS.sky;
+    if (building.kind === "outpost") {
+      ctx.fillRect(px + 12, py + 8, 40, 4);
+      ctx.fillRect(px + 20, py + 16, 24, 12);
+      ctx.fillStyle = COLORS.pink;
+      ctx.fillRect(px + 25, py + 14, 14, 3);
+    } else if (building.kind === "relay") {
+      ctx.fillRect(px + 8, py + 7, 12, 18);
+      ctx.fillStyle = COLORS.yellow;
+      ctx.fillRect(px + 11, py + 10, 6, 3);
+    } else if (building.kind === "archive") {
+      ctx.fillRect(px + 10, py + 6, 44, 5);
+      ctx.fillRect(px + 20, py + 15, 25, 12);
+      ctx.fillStyle = COLORS.pink;
+      ctx.fillRect(px + 28, py + 16, 8, 8);
+    } else {
+      ctx.fillRect(px + 10, py + 8, 28, 4);
+      ctx.fillStyle = COLORS.yellow;
+      ctx.fillRect(px + 20, py + 13, 8, 8);
+    }
+  });
+  worldEngine.OBSTACLES.forEach((obstacle) => {
+    const px = obstacle.x * TILE;
+    const py = obstacle.y * TILE;
+    ctx.fillStyle = "#0b142a";
+    ctx.fillRect(px, py, obstacle.width * TILE, obstacle.height * TILE);
+    ctx.strokeStyle = "#273d62";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(px + 1, py + 1, obstacle.width * TILE - 2, obstacle.height * TILE - 2);
+    ctx.fillStyle = COLORS.sky;
+    ctx.fillRect(px + 3, py + 3, Math.max(3, obstacle.width * TILE - 6), 2);
+  });
 }
 
 function drawQuantumField(time) {
@@ -382,6 +458,8 @@ function performMove(dx, dy) {
 
 function collect(id) {
   mission.shards = [...mission.shards, id];
+  if (mission.shards.length === 1) setStory("fragments");
+  if (mission.shards.length === 3) setStory("crossing");
   updateHud();
   const lines = {
     state: "状态碎片：先记下系统怎样被准备。",
@@ -392,12 +470,14 @@ function collect(id) {
 }
 
 async function runWell() {
+  setStory("well");
   openDialogue({ speaker: "量子井", kicker: "正在点亮", text: "三个碎片正在对齐……井底的两条路径开始分岔。", locked: true });
   try {
     const response = await fetch("/api/inquiry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mission: "bell-gates", prediction: "h-opens-branches", conclusion: "h-opens-branches-cx-correlates", shots: 128 }) });
     const passport = await response.json();
     if (!response.ok) throw new Error(passport.error || "井没有返回护照");
     mission.complete = true;
+    setStory("choice");
     $("#pixel-complete-text").textContent = `量子井记录了 ${Object.keys(passport.experiment.control.probabilities).length} 种控制结果和 ${Object.keys(passport.experiment.variant.probabilities).length} 种变体结果。你可以把它们带回 LoomQ 实验室继续复查。`;
     $("#pixel-complete").hidden = false;
     $("#pixel-dialogue").hidden = true;
@@ -415,20 +495,27 @@ function interact() {
   if (event.event === "none") return toast("附近没有可以调查的东西");
   if (event.event === "locked") return openDialogue({ speaker: event.id === "npc" ? "小满" : "东侧栅门", kicker: "还差一点", text: event.reason });
   if (event.event === "shard") return collect(event.id);
-  if (event.event === "mentor") return openDialogue({ speaker: "林默", kicker: "像素调查局", text: "三枚碎片在镇子的不同角落。找到它们，再把记录交给小满。" });
+  if (event.event === "mentor") {
+    setStory("fragments");
+    return openDialogue({ speaker: "林默", kicker: "Atlas-7 量子前哨", text: "轨道站在三分钟前失联。三枚碎片记录着准备、重复和对照，找齐它们，我们才能判断是谁删除了第二条路径。" });
+  }
   if (event.event === "npc") return openDialogue({ speaker: "小满", kicker: "量子井管理员", text: "你把三条方法找回来了。现在要不要把它们放进井里，看看删掉第二步以后，世界会怎么分岔？", choices: [{ label: "启动量子井，运行一次 A/B", action: runWell }, { label: "我再走走，先不启动", action: closeDialogue }] });
   if (event.event === "gate") return toast("栅门已经打开，量子井在东南角");
 }
 
 function update(delta) {
   if (!started || dialogueOpen) return;
+  movementClock += delta;
   let dx = touch.x;
   let dy = touch.y;
   if (keys.has("arrowleft") || keys.has("a")) dx -= 1;
   if (keys.has("arrowright") || keys.has("d")) dx += 1;
   if (keys.has("arrowup") || keys.has("w")) dy -= 1;
   if (keys.has("arrowdown") || keys.has("s")) dy += 1;
-  if (dx || dy) performMove(dx, dy);
+  if ((dx || dy) && movementClock >= MOVE_INTERVAL) {
+    performMove(dx, dy);
+    movementClock = 0;
+  }
   const nextScene = worldEngine.sceneAt(game.player);
   if (nextScene !== currentScene) {
     currentScene = nextScene;
@@ -449,6 +536,8 @@ function reset() {
   game = worldEngine.createPixelGame();
   mission = { shards: [], complete: false };
   currentScene = worldEngine.sceneAt(game.player);
+  currentStory = "arrival";
+  movementClock = 0;
   dialogueOpen = false;
   dialogueLocked = false;
   $("#pixel-dialogue").hidden = true;
@@ -473,7 +562,7 @@ document.addEventListener("keydown", (event) => {
 document.addEventListener("keyup", (event) => keys.delete(event.key.toLowerCase()));
 window.addEventListener("blur", () => keys.clear());
 
-$("#pixel-start-button").addEventListener("click", () => { started = true; $("#pixel-start").hidden = true; updateGuide(); startMusic(); canvas.focus(); toast("从林默开始，向地图中央走"); });
+$("#pixel-start-button").addEventListener("click", () => { started = true; $("#pixel-start").hidden = true; setStory("arrival"); updateGuide(); startMusic(); canvas.focus(); toast("Atlas-7 轨道站：先找到林默"); });
 $("#pixel-close").addEventListener("click", closeDialogue);
 $("#pixel-reset").addEventListener("click", reset);
 $("#pixel-music-toggle").addEventListener("click", () => {

@@ -82,7 +82,7 @@ process.stdout.write(JSON.stringify({scenes, waterBlocked, bridgeOpen}));
     def test_pixel_guide_has_three_actions_and_quantum_phase_metadata(self):
         script = """
 const pixel = require(process.argv[1]);
-process.stdout.write(JSON.stringify({steps: pixel.GUIDE_STEPS, scenes: pixel.SCENES}));
+process.stdout.write(JSON.stringify({steps: pixel.GUIDE_STEPS, scenes: pixel.SCENES, moveInterval: pixel.MOVE_INTERVAL}));
 """
         completed = subprocess.run(
             [
@@ -101,6 +101,38 @@ process.stdout.write(JSON.stringify({steps: pixel.GUIDE_STEPS, scenes: pixel.SCE
         self.assertEqual([step["id"] for step in result["steps"]], ["move", "observe", "bridge"])
         self.assertTrue(all(step["action"] for step in result["steps"]))
         self.assertEqual(result["scenes"]["river"]["phase"], "entangled")
+        self.assertGreaterEqual(result["moveInterval"], 0.1)
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_pixel_story_and_obstacle_layers_are_separate_from_background(self):
+        """Story beats and collision objects must remain data, not baked into the background bitmap."""
+        script = """
+const pixel = require(process.argv[1]);
+process.stdout.write(JSON.stringify({
+  story: pixel.STORY_BEATS.map((beat) => beat.id),
+  buildingIds: pixel.BUILDINGS.map((building) => building.id),
+  obstacle: pixel.obstacleAt(5, 3),
+  open: pixel.obstacleAt(6, 3)
+}));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "pixel_adventure_engine.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertEqual(result["story"], ["arrival", "fragments", "crossing", "well", "choice"])
+        self.assertIn("outpost", result["buildingIds"])
+        self.assertIsNotNone(result["obstacle"])
+        self.assertIsNone(result["open"])
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_adventure_world_moves_collides_and_unlocks_interactions(self):

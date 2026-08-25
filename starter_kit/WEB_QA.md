@@ -11,7 +11,7 @@ python3 -m unittest tests.test_web tests.test_inquiry_frontend -v
 
 `tests.test_web`、`tests.test_inquiry_frontend` 与 `tests.test_atlas_game_frontend` 覆盖：Quantum Atlas 三地点解锁、独立 2D 游戏的角色移动/碰撞/近距离交互/任务门和 100 分状态机、锁定路径失败关闭、四条零基础调查规则、延迟展示 H/CX 探究、护照与错误结论纠正、本地资源、四条任务路径、六步评委状态条、Prompt Contract API、反事实首门分歧与结构拒绝、`/api/causal-audit` Witness Chain、三种目标后端、Bell 计数与逐门状态轨迹、Hybrid trace/path、非法输入、20,000 字符 Agent 上限、有界多轮历史、无凭据降级、安全头、favicon 和移动端防溢出样式。协议 fixture 还验证 Web API 到 OpenAI-compatible HTTP 服务再到 `agent_chat` 确定性校验的完整请求链；它不冒充真实 DeepSeek 成绩。
 
-像素版额外覆盖：`/pixel.html` 独立路由、稳定 3:2 像素舞台与移动端裁剪、雾镜镇/分岔河谷/证据塔庭院三个场景、河水不可通行且木桥可通行、16×16 网格移动、墙体碰撞、碎片拾取、三步新手引导、NPC/量子井门槛、PHASE HUD/纠缠轨迹/量子井脉冲、Web Audio 音乐开关、统一像素 HUD/底部快捷栏、像素地图 PNG 静态资源和触屏控制 DOM；像素地图只负责视觉，不替代 `/api/inquiry` 的证据返回。
+像素版额外覆盖：`/pixel.html` 独立路由、银河/舱壁背景与独立白色空间站贴图、稳定 3:2 像素舞台与移动端裁剪、量子前哨/纠缠能道/证据环站三个场景、河水不可通行且桥面可通行、16×16 网格移动、独立建筑/障碍碰撞、五段故事线索、碎片拾取、三步新手引导、NPC/量子井门槛、PHASE HUD/纠缠轨迹/量子井脉冲、Web Audio 音乐开关、SheNicest 像素徽章、生成式移动控制贴图、统一像素 HUD/底部快捷栏和触屏控制 DOM；背景和贴图只负责视觉，不替代 `/api/inquiry` 的证据返回。
 
 ## 真实浏览器验收
 

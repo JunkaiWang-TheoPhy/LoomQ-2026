@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Quantum Atlas 像素调查局：在一张小小的像素地图里寻找三枚量子调查碎片。">
-  <title>Quantum Atlas · 像素调查局</title>
+  <meta name="description" content="Quantum Atlas · Atlas-7 轨道站科幻 RPG 序章。">
+  <title>Quantum Atlas · Atlas-7 轨道站</title>
   <link rel="icon" href="/favicon.ico" type="image/svg+xml">
   <link rel="stylesheet" href="/pixel.css">
 </head>
@@ -15,6 +15,7 @@
     </section>
     <header class="pixel-hud" aria-label="像素案件状态">
       <a class="pixel-logo" href="/">QA <span>像素调查局</span></a>
+      <img id="shenicest-logo" class="shenicest-logo" src="/assets/shenicest-pixel-logo.png" alt="SheNicest">
       <div id="pixel-scene-name" class="pixel-scene-name"><small>LOCATION</small><strong>雾镜镇</strong></div>
       <div class="pixel-objective"><small>MISSION 01</small><strong id="pixel-objective">找齐三枚调查碎片</strong></div>
       <div id="pixel-phase-meter" class="pixel-phase-meter"><small>PHASE</small><strong id="pixel-phase-value">PREPARED</strong></div>
@@ -28,6 +29,10 @@
       <div class="guide-progress"><i></i><i></i><i></i></div>
       <small>你可以随时按 E 调查附近的对象</small>
     </section>
+    <aside id="pixel-story-log" class="pixel-story-log" aria-label="案件线索" hidden>
+      <div><small>CASE FILE · ATLAS-7</small><strong id="pixel-story-title">失联的量子前哨</strong></div>
+      <p id="pixel-story-line">Atlas-7 轨道站只发来一句话：不要观测第二条路径。</p>
+    </aside>
     <section id="pixel-quickbar" class="pixel-quickbar" aria-label="调查碎片快捷栏">
       <span class="quickbar-title">调查手册</span>
       <div class="quickbar-slot" data-slot="state"><i></i><small>状态</small></div>
@@ -45,6 +50,7 @@
     <section id="pixel-start" class="pixel-start">
       <div class="pixel-sun" aria-hidden="true"></div>
       <small>QUANTUM ATLAS · SIDE QUEST</small>
+      <img class="start-sponsor" src="/assets/shenicest-pixel-logo.png" alt="SheNicest">
       <h1>像素调查局</h1>
       <p>把三枚散落的调查碎片交给小满，<br>让量子井重新亮起来。</p>
       <div class="pixel-start-guide" aria-label="三步新手引导">

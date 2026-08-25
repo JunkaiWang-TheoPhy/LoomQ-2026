@@ -300,7 +300,7 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("text/html", headers["Content-Type"])
         page = body.decode()
-        self.assertIn("Quantum Atlas · 像素调查局", page)
+        self.assertIn("Quantum Atlas · Atlas-7 轨道站", page)
         self.assertIn('id="pixel-canvas"', page)
         self.assertIn('id="pixel-dialogue"', page)
         self.assertIn("像素风", page)
@@ -314,6 +314,8 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="pixel-music-toggle"', page)
         self.assertIn('id="pixel-phase-meter"', page)
         self.assertIn('class="pixel-start-guide"', page)
+        self.assertIn('id="pixel-story-log"', page)
+        self.assertIn('id="shenicest-logo"', page)
 
     def test_pixel_quantum_game_assets_are_served_locally(self):
         for path, content_type in (
@@ -334,12 +336,29 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(headers["Content-Type"], "image/png")
         self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
 
+    def test_pixel_space_background_and_control_sheet_are_served(self):
+        for path in (
+            "/assets/pixel-space-background.png",
+            "/assets/pixel-space-bridge.png",
+            "/assets/pixel-space-archive.png",
+            "/assets/pixel-controls.png",
+            "/assets/pixel-dpad.png",
+            "/assets/pixel-action.png",
+            "/assets/pixel-phase-ring.png",
+            "/assets/shenicest-pixel-logo.png",
+        ):
+            with self.subTest(path=path):
+                status, headers, body = self.request(path)
+                self.assertEqual(status, 200)
+                self.assertEqual(headers["Content-Type"], "image/png")
+                self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
+
     def test_pixel_stage_has_a_visual_map_fallback_and_cropped_mobile_view(self):
         status, headers, body = self.request("/pixel.css")
 
         css = body.decode()
         self.assertEqual(status, 200)
-        self.assertIn("pixel-map.png", css)
+        self.assertIn("pixel-space-background.png", css)
         self.assertIn("height:min(100vh, 66.6667vw)", css)
         self.assertIn("object-fit:cover", css)
         self.assertIn("max-aspect-ratio:3 / 2", css)
