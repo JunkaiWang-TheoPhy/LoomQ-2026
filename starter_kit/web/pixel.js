@@ -335,74 +335,95 @@ function label(text, x, y, color) {
   ctx.fillText(text, x * TILE + 1, y * TILE + 6);
 }
 
-function drawPerson(x, y, color, name, time = 0) {
+function drawHumanSprite(x, y, config, time = 0) {
   const px = x * TILE;
-  const bob = Math.floor(time / 260 + x) % 2;
+  const bob = Math.floor(time / (config.player ? 140 : 260) + x) % 2;
   const py = y * TILE - bob;
-  const isMentor = name === "林默";
-  ctx.fillStyle = "rgba(40,29,53,.25)";
-  ctx.fillRect(px + 1, py + 14, 14, 3);
+  const skin = config.skin || "#ffd8ad";
+  const hair = config.hair || COLORS.ink;
+  ctx.fillStyle = "rgba(3,10,23,.55)";
+  ctx.fillRect(px - 2, py + 21, 20, 4);
+  // boots and legs
   ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(px + 4, py + 14, 3, 3);
-  ctx.fillRect(px + 9, py + 14, 3, 3);
+  ctx.fillRect(px + 3, py + 17, 6, 7);
+  ctx.fillRect(px + 11, py + 17, 6, 7);
+  ctx.fillStyle = config.boots || "#334b76";
+  ctx.fillRect(px + 2, py + 21, 7, 4);
+  ctx.fillRect(px + 11, py + 21, 7, 4);
+  // torso silhouette, jacket, arms
   ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(px + 2, py + 7, 12, 8);
-  ctx.fillStyle = color;
-  ctx.fillRect(px + 3, py + 6, 10, 9);
-  ctx.fillRect(px + 1, py + 8, 3, 5);
-  ctx.fillRect(px + 12, py + 8, 3, 5);
-  ctx.fillStyle = isMentor ? COLORS.yellow : COLORS.pink;
-  ctx.fillRect(px + 5, py + 8, 6, 2);
+  ctx.fillRect(px + 1, py + 8, 18, 12);
+  ctx.fillStyle = config.body;
+  ctx.fillRect(px + 3, py + 8, 14, 11);
+  ctx.fillRect(px - 1, py + 10, 4, 7);
+  ctx.fillRect(px + 17, py + 10, 4, 7);
+  ctx.fillStyle = config.accent;
+  ctx.fillRect(px + 7, py + 9, 6, 3);
+  ctx.fillRect(px + 8, py + 12, 4, 6);
+  // neck and head outline
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(px + 5, py - 4, 10, 13);
+  ctx.fillStyle = skin;
+  ctx.fillRect(px + 6, py - 2, 8, 9);
+  // hair shape, with side locks to make silhouettes distinct
+  ctx.fillStyle = hair;
+  ctx.fillRect(px + 4, py - 5, 12, 4);
+  ctx.fillRect(px + 3, py - 2, 3, 7);
+  ctx.fillRect(px + 13, py - 2, 3, 5);
   ctx.fillStyle = COLORS.paper;
-  ctx.fillRect(px + 4, py + 1, 8, 7);
+  ctx.fillRect(px + 6, py, 2, 2);
+  // face: two eyes, nose, mouth, and a tiny cheek highlight
   ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(px + 3, py, 10, 3);
-  ctx.fillRect(px + 4, py + 3, 2, 3);
-  ctx.fillRect(px + 10, py + 3, 2, 3);
-  ctx.fillRect(px + 5, py + 5, 2, 2);
-  ctx.fillRect(px + 9, py + 5, 2, 2);
-  if (isMentor) {
-    ctx.fillStyle = COLORS.yellow;
-    ctx.fillRect(px + 13, py + 9, 3, 5);
+  const eyeOffset = config.facing === "left" ? -1 : config.facing === "right" ? 1 : 0;
+  ctx.fillRect(px + 7 + eyeOffset, py + 2, 2, 2);
+  ctx.fillRect(px + 11 + eyeOffset, py + 2, 2, 2);
+  ctx.fillRect(px + 9, py + 4, 2, 1);
+  ctx.fillRect(px + 8, py + 6, 5, 1);
+  ctx.fillStyle = config.eye || COLORS.sky;
+  ctx.fillRect(px + 8 + eyeOffset, py + 2, 1, 1);
+  ctx.fillRect(px + 12 + eyeOffset, py + 2, 1, 1);
+  // character accessory
+  if (config.accessory === "satchel") {
     ctx.fillStyle = COLORS.sky;
-    ctx.fillRect(px + 14, py + 8, 2, 2);
-  } else {
+    ctx.fillRect(px + 16, py + 11, 5, 7);
+    ctx.fillStyle = COLORS.yellow;
+    ctx.fillRect(px + 17, py + 12, 3, 1);
+  } else if (config.accessory === "clipboard") {
+    ctx.fillStyle = COLORS.yellow;
+    ctx.fillRect(px + 17, py + 10, 4, 7);
     ctx.fillStyle = COLORS.paper;
-    ctx.fillRect(px + 1, py + 5, 3, 2);
+    ctx.fillRect(px + 18, py + 12, 2, 1);
+  } else {
     ctx.fillStyle = COLORS.pink;
-    ctx.fillRect(px + 12, py + 2, 3, 5);
+    ctx.fillRect(px + 3, py + 7, 12, 2);
   }
-  label(name, x - 1, y - 2, COLORS.paper);
+  if (config.name) label(config.name, x - 1, y - 3, COLORS.paper);
+}
+
+function drawPerson(x, y, color, name, time = 0) {
+  drawHumanSprite(x, y, {
+    body: color,
+    accent: name === "林默" ? COLORS.yellow : COLORS.sky,
+    hair: name === "林默" ? "#e6edf5" : "#f06a7b",
+    boots: "#263b5b",
+    accessory: name === "林默" ? "clipboard" : "satchel",
+    eye: COLORS.sky,
+    name,
+    facing: "down",
+  }, time);
 }
 
 function drawPlayer(time = 0) {
-  const px = game.player.x * TILE;
-  const bob = Math.floor(time / 180) % 2;
-  const py = game.player.y * TILE - bob;
-  ctx.fillStyle = "rgba(40,29,53,.3)";
-  ctx.fillRect(px + 1, py + 14, 14, 3);
-  ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(px + 4, py + 14, 3, 3);
-  ctx.fillRect(px + 9, py + 14, 3, 3);
-  ctx.fillRect(px + 2, py + 7, 12, 8);
-  ctx.fillStyle = COLORS.player;
-  ctx.fillRect(px + 3, py + 6, 10, 9);
-  ctx.fillRect(px + 1, py + 8, 3, 5);
-  ctx.fillRect(px + 12, py + 8, 3, 5);
-  ctx.fillStyle = COLORS.yellow;
-  ctx.fillRect(px + 2, py + 8, 2, 5);
-  ctx.fillStyle = COLORS.paper;
-  ctx.fillRect(px + 4, py + 1, 8, 7);
-  ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(px + 3, py, 10, 3);
-  ctx.fillRect(px + 4, py + 3, 2, 3);
-  ctx.fillRect(px + 10, py + 3, 2, 3);
-  const eyeX = game.player.facing === "left" ? px + 5 : game.player.facing === "right" ? px + 9 : px + 6;
-  ctx.fillRect(eyeX, py + 5, 2, 2);
-  ctx.fillStyle = COLORS.yellow;
-  ctx.fillRect(px + 5, py + 9, 6, 3);
-  ctx.fillStyle = COLORS.sky;
-  ctx.fillRect(px + 12, py + 10, 4, 4);
+  drawHumanSprite(game.player.x, game.player.y, {
+    body: COLORS.player,
+    accent: COLORS.yellow,
+    hair: "#e6edf5",
+    boots: "#263b5b",
+    accessory: "satchel",
+    eye: COLORS.sky,
+    facing: game.player.facing,
+    player: true,
+  }, time);
 }
 
 function drawShard(x, y, time, index) {
