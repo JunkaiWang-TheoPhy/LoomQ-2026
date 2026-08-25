@@ -15,7 +15,7 @@ kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background
 .pixel-logo, .pixel-objective, .pixel-counter, .pixel-hud button { border:3px solid var(--ink); background:rgba(40,29,53,.93); box-shadow:4px 4px 0 rgba(17,24,45,.48); }
 .pixel-logo { display:flex; gap:8px; align-items:center; padding:9px 12px; color:var(--yellow); text-decoration:none; font-weight:900; }
 .pixel-logo span { color:var(--paper); font-size:11px; }
-.shenicest-logo { width:104px; height:34px; object-fit:contain; image-rendering:pixelated; filter:drop-shadow(2px 2px 0 rgba(0,0,0,.35)); }
+.shenicest-logo { width:168px; height:58px; padding:3px 7px; object-fit:contain; image-rendering:pixelated; border:2px solid #263b5b; background:#050b17; box-shadow:3px 3px 0 rgba(0,0,0,.32); filter:drop-shadow(2px 2px 0 rgba(0,0,0,.35)); }
 .pixel-scene-name { min-width:135px; padding:8px 11px; border:3px solid var(--ink); background:rgba(17,24,45,.94); box-shadow:4px 4px 0 rgba(0,0,0,.3); }
 .pixel-scene-name small, .pixel-scene-name strong { display:block; }
 .pixel-scene-name small { color:var(--mint); font-size:8px; }
@@ -78,7 +78,7 @@ kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background
 .pixel-start::before { position:absolute; inset:0; content:""; opacity:.45; background:repeating-linear-gradient(0deg, rgba(40,29,53,.18) 0 2px, transparent 2px 6px); }
 .pixel-start > * { position:relative; z-index:1; }
 .pixel-start > small { color:var(--ink); font-weight:900; letter-spacing:2px; }
-.start-sponsor { width:150px; height:48px; object-fit:contain; object-position:left center; image-rendering:pixelated; margin-bottom:-8px; filter:drop-shadow(3px 3px 0 rgba(40,29,53,.6)); }
+.start-sponsor { width:230px; height:90px; object-fit:contain; object-position:left center; image-rendering:pixelated; margin-bottom:-8px; filter:drop-shadow(3px 3px 0 rgba(40,29,53,.6)); }
 .pixel-start h1 { margin:22px 0 12px; color:var(--paper); text-shadow:6px 6px 0 var(--ink); font-size:clamp(42px,9vw,92px); line-height:.95; }
 .pixel-start p { color:var(--ink); font-family:var(--sans,system-ui); font-size:18px; line-height:1.7; }
 .pixel-start-guide { display:flex; gap:6px; margin-top:8px; }
@@ -105,7 +105,7 @@ kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background
   .pixel-hud { top:9px; left:9px; right:9px; gap:6px; }
   .pixel-logo { padding:7px; font-size:12px; }
   .pixel-logo span { display:none; }
-  .shenicest-logo { width:84px; height:28px; }
+  .shenicest-logo { width:112px; height:40px; padding:2px 4px; }
   .pixel-scene-name { min-width:0; padding:7px; }
   .pixel-scene-name strong { font-size:10px; }
   .pixel-phase-meter { display:none; }
