@@ -104,6 +104,33 @@ process.stdout.write(JSON.stringify({steps: pixel.GUIDE_STEPS, scenes: pixel.SCE
         self.assertGreaterEqual(result["moveInterval"], 0.1)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_capsule_rpg_exposes_three_future_interaction_zones(self):
+        script = """
+const pixel = require(process.argv[1]);
+process.stdout.write(JSON.stringify(pixel.CAPSULE_ZONES));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "pixel_adventure_engine.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        zones = json.loads(completed.stdout)
+        self.assertEqual(
+            [zone["id"] for zone in zones],
+            ["quantum-workbench", "quantum-engine", "rest-area"],
+        )
+        self.assertEqual([zone["interaction"] for zone in zones], ["experiment", "engine-status", "rest"])
+        self.assertTrue(all(zone["bounds"]["width"] > 0 for zone in zones))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_pixel_story_and_obstacle_layers_are_separate_from_background(self):
         """Story beats and collision objects must remain data, not baked into the background bitmap."""
         script = """

@@ -6,6 +6,11 @@ const ctx = canvas.getContext("2d");
 const $ = (selector) => document.querySelector(selector);
 const TILE = 16;
 const COLORS = { grass: "#75b59e", grass2: "#83c1a4", wall: "#3e3657", wallTop: "#5f577b", water: "#78c7d4", flower: "#f06a7b", yellow: "#f6dd78", player: "#f06a7b", ink: "#281d35", paper: "#fff2c8" };
+const MUSIC_PATTERNS = {
+  village: { root: 0, tempo: 260, pad: [0, 7, 12], bass: [0, 0, -5, -5], melody: [12, 10, 7, 5, 7, 10, 12, 15] },
+  river: { root: -5, tempo: 220, pad: [-5, 2, 7, 14], bass: [-5, -5, 2, 2], melody: [7, 10, 14, 17, 14, 10, 7, 5] },
+  archive: { root: 3, tempo: 300, pad: [3, 10, 15], bass: [3, 3, -2, -2], melody: [15, 14, 10, 7, 10, 14, 17, 14] },
+};
 const mapImages = Object.fromEntries(Object.entries(worldEngine.SCENES).map(([id, scene]) => {
   const image = new Image();
   image.src = scene.background;
@@ -26,9 +31,11 @@ let toastTimer = 0;
 let lastFrame = performance.now();
 let currentScene = worldEngine.sceneAt(game.player);
 let audioContext = null;
+let audioGraph = null;
 let musicTimer = null;
 let musicOn = false;
 let musicStep = 0;
+let musicScene = "village";
 let movementClock = 0;
 const MOVE_INTERVAL = worldEngine.MOVE_INTERVAL;
 let playerAction = "idle";
@@ -65,7 +72,6 @@ function updateHud() {
   });
   $("#pixel-scene-name strong").textContent = worldEngine.SCENES[currentScene].name;
   $("#pixel-phase-value").textContent = worldEngine.SCENES[currentScene].phase.toUpperCase();
-  $(".pixel-stage").style.backgroundImage = `url('${worldEngine.SCENES[currentScene].background}')`;
   $("#pixel-zoom-meter strong").textContent = `${Math.round(zoom * 100)}%`;
   updateGuide();
   updateStoryLog();
@@ -131,45 +137,91 @@ function noteFrequency(note) {
   return 110 * (2 ** (note / 12));
 }
 
-function playMusicNote(note, duration = .18, volume = .018) {
-  if (!audioContext || !musicOn) return;
+function createMusicGraph() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioContext) audioContext = new AudioContextClass();
+  if (audioGraph) return audioGraph;
+  const masterGain = audioContext.createGain();
+  const padGain = audioContext.createGain();
+  const bassGain = audioContext.createGain();
+  const melodyGain = audioContext.createGain();
+  const percussionGain = audioContext.createGain();
+  masterGain.gain.value = 0.0001;
+  padGain.gain.value = 0.42;
+  bassGain.gain.value = 0.34;
+  melodyGain.gain.value = 0.26;
+  percussionGain.gain.value = 0.18;
+  [padGain, bassGain, melodyGain, percussionGain].forEach((gain) => gain.connect(masterGain));
+  masterGain.connect(audioContext.destination);
+  audioGraph = { masterGain, padGain, bassGain, melodyGain, percussionGain };
+  return audioGraph;
+}
+
+function scheduleTone(note, duration, volume, type, when, destination) {
+  if (!audioContext || !audioGraph || !musicOn) return;
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  oscillator.type = "triangle";
+  oscillator.type = type;
   oscillator.frequency.value = noteFrequency(note);
-  gain.gain.setValueAtTime(volume, audioContext.currentTime);
-  gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + duration);
-  oscillator.connect(gain).connect(audioContext.destination);
-  oscillator.start();
-  oscillator.stop(audioContext.currentTime + duration);
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.linearRampToValueAtTime(volume, when + 0.018);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+  oscillator.connect(gain).connect(destination);
+  oscillator.start(when);
+  oscillator.stop(when + duration + 0.03);
+}
+
+function scheduleMusicStep() {
+  if (!audioContext || !audioGraph || !musicOn) return;
+  const pattern = MUSIC_PATTERNS[musicScene] || MUSIC_PATTERNS.village;
+  const step = musicStep % pattern.melody.length;
+  const when = audioContext.currentTime + 0.025;
+  if (step === 0) pattern.pad.forEach((note) => scheduleTone(pattern.root + note, 1.8, 0.018, "sine", when, audioGraph.padGain));
+  if (step % 2 === 0) scheduleTone(pattern.root + pattern.bass[(step / 2) % pattern.bass.length] - 12, 0.38, 0.035, "triangle", when, audioGraph.bassGain);
+  scheduleTone(pattern.root + pattern.melody[step], 0.24, 0.028, "sine", when, audioGraph.melodyGain);
+  if (step === 0 || step === 4) scheduleTone(pattern.root - 24, 0.055, 0.018, "square", when, audioGraph.percussionGain);
+  musicStep += 1;
+}
+
+function playEventStinger(kind) {
+  if (!audioContext || !audioGraph || !musicOn) return;
+  const patterns = { shard: [12, 19, 24], transition: [0, 7, 12], success: [12, 16, 19, 24], error: [0, -3, -7] };
+  const when = audioContext.currentTime + 0.02;
+  (patterns[kind] || patterns.shard).forEach((note, index) => scheduleTone(note, 0.16 + index * 0.02, 0.045, "sine", when + index * 0.075, audioGraph.melodyGain));
+}
+
+function setMusicScene(scene) {
+  if (!MUSIC_PATTERNS[scene] || scene === musicScene) return;
+  musicScene = scene;
+  musicStep = 0;
+  playEventStinger("transition");
 }
 
 function startMusic() {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) {
+  const graph = createMusicGraph();
+  if (!graph) {
     toast("当前浏览器不支持环境音乐，但调查仍可继续");
     return;
   }
-  if (!audioContext) audioContext = new AudioContextClass();
   audioContext.resume();
   musicOn = true;
+  graph.masterGain.gain.cancelScheduledValues(audioContext.currentTime);
+  graph.masterGain.gain.setValueAtTime(Math.max(graph.masterGain.gain.value, 0.0001), audioContext.currentTime);
+  graph.masterGain.gain.linearRampToValueAtTime(0.13, audioContext.currentTime + 0.45);
   $("#pixel-music-toggle").textContent = "♫ ON";
   $("#pixel-music-toggle").setAttribute("aria-pressed", "true");
   $("#pixel-music-toggle").setAttribute("aria-label", "关闭量子环境音乐");
   if (musicTimer) return;
-  const motifs = [0, 7, 12, 7, 3, 10, 15, 10];
-  musicTimer = window.setInterval(() => {
-    const root = currentScene === "river" ? -7 : currentScene === "archive" ? 3 : 0;
-    playMusicNote(root + motifs[musicStep % motifs.length], .22, .014);
-    if (musicStep % 4 === 0) playMusicNote(root - 12, .35, .008);
-    musicStep += 1;
-  }, 310);
+  scheduleMusicStep();
+  musicTimer = window.setInterval(scheduleMusicStep, MUSIC_PATTERNS[musicScene].tempo);
 }
 
 function stopMusic() {
   musicOn = false;
   if (musicTimer) window.clearInterval(musicTimer);
   musicTimer = null;
+  if (audioContext && audioGraph) audioGraph.masterGain.gain.linearRampToValueAtTime(0.0001, audioContext.currentTime + 0.25);
   $("#pixel-music-toggle").textContent = "♫ OFF";
   $("#pixel-music-toggle").setAttribute("aria-pressed", "false");
   $("#pixel-music-toggle").setAttribute("aria-label", "打开量子环境音乐");
@@ -617,6 +669,7 @@ function triggerJump() {
 
 function collect(id) {
   mission.shards = [...mission.shards, id];
+  playEventStinger("shard");
   if (mission.shards.length === 1) setStoryBeat(1);
   if (mission.shards.length === 3) setStoryBeat(2);
   updateHud();
@@ -636,6 +689,7 @@ async function runWell() {
     const passport = await response.json();
     if (!response.ok) throw new Error(passport.error || "井没有返回护照");
     mission.complete = true;
+    playEventStinger("success");
     completedNodes = ["observer-zero"];
     await loadStoryWorld();
     $("#pixel-complete-text").textContent = `量子井记录了 ${Object.keys(passport.experiment.control.probabilities).length} 种控制结果和 ${Object.keys(passport.experiment.variant.probabilities).length} 种变体结果。你可以把它们带回 LoomQ 实验室继续复查。`;
@@ -644,6 +698,7 @@ async function runWell() {
     dialogueOpen = false;
     updateHud();
   } catch (error) {
+    playEventStinger("error");
     dialogueLocked = false;
     openDialogue({ speaker: "量子井", kicker: "点亮失败", text: error.message });
   }
@@ -682,6 +737,7 @@ function update(delta) {
   const nextScene = worldEngine.sceneAt(game.player);
   if (nextScene !== currentScene) {
     currentScene = nextScene;
+    setMusicScene(currentScene);
     updateHud();
     toast(`进入${worldEngine.SCENES[currentScene].name}`);
   }

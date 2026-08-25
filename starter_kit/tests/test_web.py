@@ -391,6 +391,19 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("drawContain(mapImage)", script)
         self.assertNotIn("function drawCover(image)", script)
 
+    def test_pixel_music_has_layered_scene_patterns_and_event_stingers(self):
+        status, headers, body = self.request("/pixel.js")
+        script = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("MUSIC_PATTERNS", script)
+        self.assertIn("village:", script)
+        self.assertIn("river:", script)
+        self.assertIn("archive:", script)
+        self.assertIn("scheduleMusicStep", script)
+        self.assertIn("playEventStinger", script)
+        self.assertIn("masterGain", script)
+        self.assertIn("musicOn", script)
+
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
 
