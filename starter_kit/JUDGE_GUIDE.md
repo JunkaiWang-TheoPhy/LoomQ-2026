@@ -1,5 +1,9 @@
 # LoomQ 评委快速复核
 
+## 技术贡献的一句话定位
+
+LoomQ 将量子 Agent 的输出定义为带证据的实验候选：从自然语言候选电路，到目标 IR、执行 provenance、断言和可重放证书，评委可以沿同一源操作坐标检查每一步。详细贡献陈述、基线比较和非声明见 [`docs/INNOVATION_POSITIONING.md`](../docs/INNOVATION_POSITIONING.md)。
+
 页面首屏先给零基础用户一条三幕 Quantum World 旅程，第一章后是标题为“每项结论都能复核”的评委附录。附录中的真机卡区分 OriginQ finite-shot counts 与 SpinQ provider probabilities；本地路径不需要模型密钥、平台账号或网络服务。主视觉由 OpenAI 图像生成工具生成，不参与科学判定。
 
 ## 30 秒入口

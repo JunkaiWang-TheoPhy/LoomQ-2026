@@ -21,6 +21,7 @@ try:
     from .witness import build_causal_audit, verify_causal_audit
     from .story_world import build_story_world
     from .quantum_intro import build_quantum_intro, measure_quantum_coin
+    from .hardware import HardwareGateway
 except ImportError:  # Direct execution from starter_kit/.
     import adapter
     from loomq.agent import normalize_history
@@ -31,6 +32,7 @@ except ImportError:  # Direct execution from starter_kit/.
     from loomq.witness import build_causal_audit, verify_causal_audit
     from loomq.story_world import build_story_world
     from loomq.quantum_intro import build_quantum_intro, measure_quantum_coin
+    from loomq.hardware import HardwareGateway
 
 
 _WEB_ROOT = Path(__file__).resolve().parents[1] / "web"
@@ -41,6 +43,7 @@ _STATIC = {
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/inquiry.js": ("inquiry.js", "text/javascript; charset=utf-8"),
     "/quantum-guide.js": ("quantum-guide.js", "text/javascript; charset=utf-8"),
+    "/hardware.js": ("hardware.js", "text/javascript; charset=utf-8"),
     "/assets/quantum-world-journey.png": (
         "assets/quantum-world-journey.png",
         "image/png",
@@ -136,6 +139,13 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         if path == "/api/quantum-intro":
             self._send_json(HTTPStatus.OK, build_quantum_intro())
             return
+        if path == "/api/hardware/backends":
+            self._send_json(HTTPStatus.OK, {"schema_version": "loomq-hardware-catalog-v1", "backends": self.server.hardware.discover()})
+            return
+        if path.startswith("/api/hardware/jobs/"):
+            job_id = path.rsplit("/", 1)[-1]
+            self._send_json(HTTPStatus.OK, self.server.hardware.poll(job_id))
+            return
         asset = _STATIC.get(path)
         if asset is None:
             self._error(HTTPStatus.NOT_FOUND, "not_found", "页面不存在")
@@ -182,6 +192,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             if path == "/api/quantum-intro/measure":
                 self._quantum_intro_measure(payload)
                 return
+            if path == "/api/hardware/submit":
+                self._hardware_submit(payload)
+                return
             if path == "/api/agent":
                 self._agent(payload)
                 return
@@ -209,6 +222,17 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
         if outcome is not None and isinstance(outcome, bool):
             raise ValueError("outcome 必须是 0 或 1")
         self._send_json(HTTPStatus.OK, measure_quantum_coin(outcome))
+
+    def _hardware_submit(self, payload: Dict[str, Any]) -> None:
+        backend = payload.get("backend")
+        qasm = payload.get("qasm")
+        shots = payload.get("shots", 1024)
+        try:
+            job = self.server.hardware.submit(qasm, backend, shots)
+        except RuntimeError as exc:
+            self._error(HTTPStatus.SERVICE_UNAVAILABLE, "provider_unavailable", str(exc))
+            return
+        self._send_json(HTTPStatus.ACCEPTED, job)
 
     def _run(self, payload: Dict[str, Any]) -> None:
         qasm = payload.get("qasm")
@@ -600,7 +624,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
 
 def create_server(host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
     """Create a local threaded server; callers own serve/shutdown lifecycle."""
-    return ThreadingHTTPServer((host, port), LoomQWebHandler)
+    server = ThreadingHTTPServer((host, port), LoomQWebHandler)
+    server.hardware = HardwareGateway()
+    return server
 
 
 def main() -> int:

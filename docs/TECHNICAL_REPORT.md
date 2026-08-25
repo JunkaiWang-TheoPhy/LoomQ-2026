@@ -10,6 +10,14 @@ LoomQ 将自然语言量子编程、统一电路中间表示、三平台转译�
 
 本提交的公开证据包含 225/225 个 ProofTrace 变异检出、132 项安全重写检查、15 项 portability 检查、40,000 项固定种子离线压力、500 条 L2 语料、120 项 PyQuafu 交叉验证、4 个 Hybrid 路径证书样例、6/6 L1 公开电路、L3 分支语义和量子 RISC-V 端到端检查。证据材料同时包含 OriginQ 与 SpinQ 两个平台的可追溯 Bell 运行记录。
 
+本文的中心命题、贡献边界、基线比较和非声明见 [`INNOVATION_POSITIONING.md`](INNOVATION_POSITIONING.md)。摘要中的数字是公开脚本在声明输入范围内的工程证据，不代表隐藏评测成绩或物理量子优势。
+
+## 0. 中心命题与创新边界
+
+LoomQ 将 Agent 输出定义为“带证据的实验候选”：模型提出源电路，确定性验证器确认语义与资源约束，执行层保留 provider provenance，ProofTrace、Witness Chain 和 Hybrid path certificate 将结果重新连接到源操作。这个分解使生成、执行和结论可以分别替换与审计。
+
+这项定位不宣称无界形式化证明、作者身份签名、量子优势或既有研究中的优先权。完整的形式化对象、评价协议、基线比较和局限见 [`INNOVATION_POSITIONING.md`](INNOVATION_POSITIONING.md)。
+
 ## 1. 系统目标与用户路径
 
 LoomQ 面向三类用户：第一次接触量子计算的学习者、需要自然语言辅助的开发者，以及需要复核转译结果的工程评审者。系统提供 Learn、Build、Repair、Backend Match 四条入口，并用 Quantum World 旅程把一次实验拆成“预测—A/B 实验—结论审计—回放护照”四个动作。
