@@ -369,11 +369,25 @@ class WebLabTests(unittest.TestCase):
 
         css = body.decode()
         self.assertEqual(status, 200)
-        self.assertIn("pixel-space-background-v2.png", css)
+        self.assertIn("background:#081522", css)
         self.assertIn("height:min(100vh, 66.6667vw)", css)
         self.assertIn("object-fit:contain", css)
         self.assertNotIn("object-fit:cover", css)
         self.assertNotIn("background:#081522 url('/assets/pixel-space-background.png') center / cover", css)
+
+        status, headers, body = self.request("/pixel-adventure-engine.js")
+        engine = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("pixel-space-background-v2.png", engine)
+        self.assertIn("pixel-space-bridge-v2.png", engine)
+        self.assertIn("pixel-space-archive-v2.png", engine)
+
+        status, headers, body = self.request("/pixel.js")
+        script = body.decode()
+        self.assertEqual(status, 200)
+        self.assertIn("function drawContain(image)", script)
+        self.assertIn("drawContain(mapImage)", script)
+        self.assertNotIn("function drawCover(image)", script)
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")

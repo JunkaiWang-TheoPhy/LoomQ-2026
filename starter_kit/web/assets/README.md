@@ -13,3 +13,17 @@ The page repeats this claim boundary next to the artwork. All scientific conclus
 Prompt brief: a wide paper-textured investigation atlas with three connected landmarks—an observatory, a branching meadow, and an evidence archive tower—plus one novice investigator; editorial cut-paper/screen-print treatment in LoomQ's ivory, ink green, teal, acid-lime, and coral palette; no text, logo, watermark, atom icon, equations, circuit diagrams, cyberpunk styling, or pixel art.
 
 The map labels and progress controls are semantic HTML layered over the image. Their unlocked states come from completed briefing, experiment, and audit actions; the picture itself never determines a scientific result.
+
+## Story case illustrations
+
+The `story/` directory contains six original chapter illustrations generated on 2026-08-25 with the built-in GPT image tool. They cover the Zero Point observatory, Shen Yao's two ages, the tide-line city, the second badge, the night grid, and the evidence archive.
+
+The images share one narrative device: a woman is small inside an overwhelming environment, so the viewer can feel the difference between a private decision and the system surrounding it. Each image uses a distinct treatment and composition. They are visual fiction for the Quantum Atlas story layer, not photographs, scientific diagrams, quantum-state plots, measurement results, hardware evidence, or claims about real people.
+
+The six files were resized to 1200×800 for archive and browser weight. No text, logos, watermarks, or third-party franchise assets are embedded. The case titles, progress states, experiment contracts, and evidence boundaries remain server-owned in `loomq/story_world.py`; artwork cannot unlock a case or support a conclusion.
+
+## Complete-scene background set (v2)
+
+`pixel-space-background-v2.png`, `pixel-space-bridge-v2.png`, and `pixel-space-archive-v2.png` were generated on 2026-08-25 with the built-in GPT Image tool. They are 1672×941 16:9 environment illustrations for the pixel route: the observatory, the entanglement river valley, and the evidence archive. They contain no characters, text, logos, watermarks, or scientific claims.
+
+The renderer displays these assets with a contain fit and letterboxing instead of cover cropping. The canvas draws the complete scene in screen space, then draws collision, buildings, characters, and evidence objects in the camera-transformed world layer. This keeps the full architecture visible while preserving movement and interaction overlays.
