@@ -316,6 +316,7 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('class="pixel-start-guide"', page)
         self.assertIn('id="pixel-story-log"', page)
         self.assertIn('id="shenicest-logo"', page)
+        self.assertIn('id="pixel-canvas"', page)
 
     def test_pixel_quantum_game_assets_are_served_locally(self):
         for path, content_type in (

@@ -7,6 +7,8 @@
 
   const WIDTH = 24;
   const HEIGHT = 16;
+  const TILE = 16;
+  const WORLD_SCALE = 2;
   const MOVE_INTERVAL = 0.14;
   const SHARDS = ["state", "repeat", "control"];
   const GUIDE_STEPS = [
@@ -89,6 +91,15 @@
     return Object.entries(SCENES).find(([, scene]) => x >= scene.range[0] && x <= scene.range[1])[0];
   }
 
+  function cameraFor(player, viewport) {
+    const worldWidth = WIDTH * TILE * WORLD_SCALE;
+    const worldHeight = HEIGHT * TILE * WORLD_SCALE;
+    return {
+      x: Math.max(0, Math.min(worldWidth - viewport.width, player.x * TILE * WORLD_SCALE - viewport.width / 2)),
+      y: Math.max(0, Math.min(worldHeight - viewport.height, player.y * TILE * WORLD_SCALE - viewport.height / 2)),
+    };
+  }
+
   function move(state, dx, dy) {
     const stepX = Math.sign(dx);
     const stepY = Math.sign(dy);
@@ -121,5 +132,5 @@
     return { event: target.kind, id: target.id };
   }
 
-  return { BUILDINGS, GUIDE_STEPS, HEIGHT, MAP, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, STORY_BEATS, TARGETS, WIDTH, createPixelGame, interact, isWall, isWater, move, obstacleAt, sceneAt };
+  return { BUILDINGS, GUIDE_STEPS, HEIGHT, MAP, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, STORY_BEATS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, interact, isWall, isWater, move, obstacleAt, sceneAt };
 });

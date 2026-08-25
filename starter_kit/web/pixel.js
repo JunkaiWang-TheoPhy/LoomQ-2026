@@ -29,6 +29,7 @@ let musicStep = 0;
 let movementClock = 0;
 const MOVE_INTERVAL = worldEngine.MOVE_INTERVAL;
 let currentStory = "arrival";
+let camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height });
 
 function announce(text) { $("#pixel-sr").textContent = text; }
 
@@ -447,8 +448,13 @@ function drawQuantumWell(x, y, time) {
 
 function render(time) {
   ctx.imageSmoothingEnabled = false;
+  const targetCamera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height });
+  camera.x += (targetCamera.x - camera.x) * .18;
+  camera.y += (targetCamera.y - camera.y) * .18;
+  ctx.setTransform(worldEngine.WORLD_SCALE, 0, 0, worldEngine.WORLD_SCALE, -camera.x, -camera.y);
   drawMap(time);
   drawPlayer(time);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 
 function performMove(dx, dy) {
@@ -538,6 +544,7 @@ function reset() {
   currentScene = worldEngine.sceneAt(game.player);
   currentStory = "arrival";
   movementClock = 0;
+  camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height });
   dialogueOpen = false;
   dialogueLocked = false;
   $("#pixel-dialogue").hidden = true;
