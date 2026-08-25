@@ -9,6 +9,7 @@ from loomq.quantum_riscv import (
     QuantumRISCVError,
     decode_program,
     encode_circuit,
+    trace_program,
 )
 from riscv_emulator import TinyRISCVEmulator
 
@@ -134,6 +135,25 @@ class ArchivedQuantumRISCVTests(unittest.TestCase):
                 self.assertEqual(decode_program(encode_circuit(circuit)), circuit)
 
         self.assertEqual(coverage, set(gate_names))
+
+    def test_machine_trace_binds_words_bytes_decoding_and_integrity(self):
+        circuit = Circuit(
+            2,
+            2,
+            [Gate("h", (0,)), Gate("cx", (0, 1)), Measurement(0, 0), Measurement(1, 1)],
+        )
+        program = encode_circuit(circuit)
+
+        trace = trace_program(program)
+
+        self.assertEqual(trace["schema_version"], "loomq-quantum-riscv-trace-v1")
+        self.assertEqual(trace["custom_opcode"], "0x0b")
+        self.assertEqual(len(trace["instructions"]), 4)
+        self.assertEqual(trace["instructions"][0]["decoded_operation"], "h q[0]")
+        self.assertEqual(trace["instructions"][1]["decoded_operation"], "cx q[0],q[1]")
+        self.assertEqual(trace["instructions"][0]["bytes_le"], "0b000000")
+        self.assertEqual(trace["machine_code_sha256"], trace_program(program)["machine_code_sha256"])
+        self.assertEqual(trace["decoded_circuit"], ["h q[0]", "cx q[0],q[1]", "measure q[0] -> c[0]", "measure q[1] -> c[1]"])
 
 
 if __name__ == "__main__":

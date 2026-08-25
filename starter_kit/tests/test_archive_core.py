@@ -111,8 +111,10 @@ classical {{
 
         self.assertTrue(report["passed"], report)
         self.assertEqual(report["counts"], {"00": 512, "11": 512})
+        self.assertEqual(report["machine_trace"]["schema_version"], "loomq-quantum-riscv-trace-v1")
+        self.assertEqual(len(report["machine_trace"]["instructions"]), 4)
+        self.assertEqual(report["machine_trace"]["decoded_circuit"][-1], "measure q[1] -> c[1]")
 
 
 if __name__ == "__main__":
     unittest.main()
-

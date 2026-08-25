@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import math
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
@@ -259,3 +260,46 @@ def decode_program(program: EncodedQuantumProgram) -> Circuit:
         operations.append(Gate(gate_name, qubits))
 
     return Circuit(program.num_qubits, program.num_clbits, operations)
+
+
+def _operation_text(operation: Gate | Measurement) -> str:
+    if isinstance(operation, Measurement):
+        return f"measure q[{operation.qubit}] -> c[{operation.clbit}]"
+    operands = ",".join(f"q[{qubit}]" for qubit in operation.qubits)
+    if operation.parameter is None:
+        return f"{operation.name} {operands}"
+    return f"{operation.name}({operation.parameter!r}) {operands}"
+
+
+def trace_program(program: EncodedQuantumProgram) -> dict:
+    """Return a deterministic, machine-word-level audit of a custom program.
+
+    The trace deliberately includes both the serialized bytes and the decoded
+    source operations.  A reviewer can therefore compare the exact artifact
+    that entered the emulator with the operation sequence that was executed.
+    """
+
+    circuit = decode_program(program)
+    machine_code = program.to_bytes()
+    instructions = []
+    for pc, word in enumerate(program.words):
+        operation = circuit.operations[pc]
+        instructions.append(
+            {
+                "pc": pc,
+                "word": f"0x{word:08x}",
+                "bytes_le": word.to_bytes(4, "little").hex(),
+                "decoded_operation": _operation_text(operation),
+            }
+        )
+    return {
+        "schema_version": "loomq-quantum-riscv-trace-v1",
+        "custom_opcode": f"0x{CUSTOM_0_OPCODE:02x}",
+        "num_qubits": program.num_qubits,
+        "num_clbits": program.num_clbits,
+        "parameter_table": list(program.parameters),
+        "machine_words": [f"0x{word:08x}" for word in program.words],
+        "machine_code_sha256": hashlib.sha256(machine_code).hexdigest(),
+        "instructions": instructions,
+        "decoded_circuit": [_operation_text(operation) for operation in circuit.operations],
+    }
