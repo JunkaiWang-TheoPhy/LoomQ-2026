@@ -892,3 +892,51 @@
   .inquiry-audit { grid-column: auto; }
   .inquiry-conclusion .proof-download { width: 100%; text-align: center; }
 }
+
+.quantum-guide {
+  margin: 18px 0 52px;
+  padding: clamp(22px, 4vw, 48px);
+  background: #efe7d6;
+  border: 1px solid #aab4a4;
+  box-shadow: 8px 8px 0 var(--orange);
+}
+.quantum-guide-heading { display: grid; grid-template-columns: 1.05fr .95fr; gap: 34px; align-items: end; }
+.quantum-guide-heading h1 { margin: 8px 0 14px; font-size: clamp(38px, 5vw, 64px); line-height: .98; }
+.quantum-guide-heading h1 em { color: var(--blue); font-style: normal; }
+.quantum-guide-heading > div > p:last-child { max-width: 620px; font-size: 17px; }
+.quantum-guide-lessons { display: grid; grid-template-columns: repeat(2, 1fr); padding: 0; margin: 0; list-style: none; border: 1px solid #88968b; }
+.quantum-guide-lessons li { display: grid; grid-template-columns: 30px 1fr; gap: 3px 9px; padding: 13px 14px; border-right: 1px solid #88968b; border-bottom: 1px solid #88968b; cursor: pointer; }
+.quantum-guide-lessons li:nth-child(2n) { border-right: 0; }
+.quantum-guide-lessons li:nth-last-child(-n+2) { border-bottom: 0; }
+.quantum-guide-lessons span { grid-row: span 2; color: var(--blue); font-weight: 800; font-size: 20px; }
+.quantum-guide-lessons strong { font-size: 14px; }
+.quantum-guide-lessons small { color: #52615a; }
+.quantum-guide-lessons li.complete { background: #d9e7c7; }
+.quantum-guide-lab { display: grid; grid-template-columns: 1.3fr .7fr; gap: 22px; margin-top: 28px; }
+.quantum-guide-coin { display: grid; grid-template-columns: minmax(220px, .82fr) 1fr; background: #203d42; color: #fff8e8; }
+.quantum-guide-face-wrap { position: relative; min-height: 300px; overflow: hidden; }
+.quantum-guide-face-wrap img { width: 100%; height: 100%; min-height: 300px; display: block; object-fit: cover; }
+.quantum-guide-face-state { position: absolute; left: 14px; right: 14px; bottom: 14px; padding: 8px 10px; background: rgba(21, 32, 31, .88); color: #f5ebcc; font-size: 13px; }
+.quantum-guide-coin-copy { padding: 28px 26px; }
+.quantum-guide-coin-copy h2 { margin: 8px 0 10px; font-size: clamp(25px, 3vw, 38px); line-height: 1.05; }
+.quantum-guide-coin-copy p { color: #e9e0cb; }
+.quantum-guide-status { min-height: 24px; font-size: 13px; }
+.quantum-guide-source { font-size: 12px; }
+.quantum-guide-source a { color: #d9e769; }
+.quantum-guide-concept { display: flex; flex-direction: column; gap: 17px; padding: 24px; background: #d8e8df; border: 1px solid #789287; }
+.quantum-guide-concept h3 { margin: 0 0 7px; font-size: 23px; }
+.quantum-guide-concept p { margin: 0; }
+.quantum-guide-concept code { display: block; padding: 12px; background: #f8f1df; color: #244a48; font-size: 12px; overflow-wrap: anywhere; }
+.quantum-guide-concept .story-secondary { margin-top: auto; text-align: center; border-color: #244a48; color: #244a48; }
+.quantum-guide-boundary { display: block; margin-top: 12px; color: #52615a; }
+@media (max-width: 860px) {
+  .quantum-guide-heading, .quantum-guide-lab { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .quantum-guide { padding: 20px; }
+  .quantum-guide-coin { grid-template-columns: 1fr; }
+  .quantum-guide-face-wrap, .quantum-guide-face-wrap img { min-height: 240px; height: 240px; }
+  .quantum-guide-lessons { grid-template-columns: 1fr; }
+  .quantum-guide-lessons li, .quantum-guide-lessons li:nth-child(2n), .quantum-guide-lessons li:nth-last-child(-n+2) { border-right: 0; border-bottom: 1px solid #88968b; }
+  .quantum-guide-lessons li:last-child { border-bottom: 0; }
+}
