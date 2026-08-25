@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoomQ · Quantum Capsule</title>
+<style>
+:root{--bg:#061321;--panel:#0e2335;--line:#1e536b;--ink:#e9f4fb;--muted:#9db7ca;--cyan:#63e6ff;--gold:#ffd166;--danger:#ff6b6b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",sans-serif}button{font:inherit;color:inherit}button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.app{min-height:100vh;background:radial-gradient(circle at 70% 10%,#10384c 0,#061321 45%)}.top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid #17384d;background:#071826dd}.brand{display:flex;gap:12px;align-items:center}.mark{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--cyan);color:#08202d;font-weight:800}.brand small{display:block;color:var(--muted);font-size:12px}.mode{color:var(--cyan);font-size:13px}.screen{max-width:1440px;margin:auto;padding:28px;display:grid;grid-template-columns:1.18fr .82fr;gap:24px}.scene{position:relative;min-height:650px;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:#071727}.scene img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.66}.scene:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#061321ee 0,#06132144 58%,transparent)}.scene-copy{position:relative;z-index:1;padding:56px 50px;max-width:650px}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.13em;font-size:12px;font-weight:700}.scene h1{font-size:clamp(36px,5vw,68px);line-height:1.05;margin:22px 0 16px}.scene h1 em{font-style:normal;color:var(--gold)}.scene p{color:var(--muted);max-width:520px}.alert{display:inline-flex;align-items:center;gap:10px;color:var(--gold);border:1px solid #765f27;background:#3d3014;padding:8px 12px;border-radius:999px;font-size:13px}.pulse{width:9px;height:9px;background:var(--danger);border-radius:50%;box-shadow:0 0 0 0 #ff6b6b66;animation:pulse 1.6s infinite}@keyframes pulse{70%{box-shadow:0 0 0 10px transparent}}
+.dock{position:relative;z-index:2;margin-top:210px;display:flex;gap:10px;flex-wrap:wrap}.dock button,.primary{border:1px solid var(--line);background:#102b3c;padding:12px 16px;border-radius:12px;cursor:pointer}.dock button:hover,.primary:hover{border-color:var(--cyan)}.primary{background:var(--cyan);color:#06202d;border-color:var(--cyan);font-weight:800}
+.panel{border:1px solid var(--line);border-radius:24px;background:#0b1e2edb;padding:24px;min-height:650px}.panel h2{margin:0 0 8px;font-size:28px}.panel .sub{color:var(--muted);margin-top:0}.tabs{display:flex;gap:8px;margin:20px 0}.tabs button{flex:1;background:#102b3c;border:1px solid var(--line);padding:10px;border-radius:10px;cursor:pointer}.tabs button.active{background:#184b5e;border-color:var(--cyan);color:var(--cyan)}.tab{display:none}.tab.active{display:block}.card{border:1px solid #1f4b60;background:#0e293c;border-radius:16px;padding:16px;margin:12px 0}.card h3{margin:0 0 8px;font-size:18px}.card p{margin:5px 0;color:var(--muted);font-size:14px}.gate{display:flex;justify-content:space-between;align-items:center;margin:16px 0}.gate b{color:var(--gold)}.counts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}.count{background:#071827;border:1px solid #1c4559;border-radius:9px;padding:10px;text-align:center}.count span{display:block;color:var(--muted);font-size:12px}.count strong{font-size:20px;color:var(--cyan)}.status{color:var(--muted);font-size:13px;min-height:24px}.door{width:100%;margin-top:12px}.map{width:100%;border-radius:14px;border:1px solid var(--line);margin:10px 0}.log{white-space:pre-wrap;background:#06131f;border-radius:12px;padding:14px;color:#b5d4e4;font:13px/1.55 ui-monospace,monospace}
+@media(max-width:900px){.screen{grid-template-columns:1fr;padding:14px}.scene{min-height:520px}.panel{min-height:auto}.dock{margin-top:130px}.scene-copy{padding:34px 28px}}
+@media(prefers-reduced-motion:reduce){.pulse{animation:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="brand"><span class="mark">LQ</span><div><strong>Quantum Capsule</strong><small>量子飞船 · Quantum World 母港</small></div></div><span class="mode">LOCAL DEMO · NO KEY</span></header>
+<main class="screen">
+<section class="scene" aria-labelledby="title">
+<img src="/assets/pixel-space-archive.png" alt="太空舱内部背景">
+<div class="scene-copy">
+<div class="alert"><i class="pulse"></i> EMERGENCY ALERT · 量子引擎分支未同步</div>
+<p class="eyebrow">LOOMQ / HOME PORT</p>
+<h1 id="title">先修好引擎，<br><em>再出发。</em></h1>
+<p>太空舱是玩家进入游戏后的第一空间。手册、船员档案、任务甲板和量子操作台都从这里出发。</p>
+<div class="dock" aria-label="太空舱区域">
+<button data-tab="manual">📘 手册舱</button><button data-tab="crew">👤 船员档案</button><button data-tab="missions">◈ 任务甲板</button><button data-tab="console">⌘ 量子操作台</button>
+</div>
+</div>
+</section>
+<section class="panel" aria-live="polite">
+<h2 id="panel-title">量子引擎维修</h2><p class="sub" id="panel-sub">先完成一次离线 Bell A/B 对照实验。</p>
+<div class="tabs" role="tablist"><button class="active" data-tab="manual">手册</button><button data-tab="crew">档案</button><button data-tab="missions">任务</button><button data-tab="console">操作台</button></div>
+<div id="manual" class="tab active"><div class="card"><h3>H · 制造均匀叠加</h3><p>把一个确定状态展开成两条可观察分支。先记住：它改变的是分布。</p></div><div class="card"><h3>CX · 建立条件关系</h3><p>控制比特决定目标比特是否翻转。维修时只改变这一扇门。</p></div><div class="card"><h3>测量 · 读取结果</h3><p>一次测量只留下一条记录。重复运行，才能看到结果分布。</p></div><button class="primary" data-tab="console">打开维修台 →</button></div>
+<div id="crew" class="tab"><div class="card"><h3>新晋观测员</h3><p>进度：引擎维修未完成</p><p>护照：0 · 真机凭证：未配置</p></div><div class="card"><h3>安全边界</h3><p>本地进度保存在浏览器；凭证只从环境变量读取，不写入仓库。</p></div></div>
+<div id="missions" class="tab"><div class="card"><h3>01 · 量子引擎维修 <b>进行中</b></h3><p>阅读三张概念卡 → 运行 A/B → 领取 Inquiry Passport</p></div><div class="card"><h3>02 · Quantum Atlas 冒险基地 <span id="quest-state">未解锁</span></h3><p>完成维修后通过舱门进入既有案件。</p></div><button id="enter-base" class="primary door" disabled>通过舱门进入冒险基地</button></div>
+<div id="console" class="tab"><div class="gate"><span>维修目标</span><b>Bell · H + CX</b></div><div class="counts"><div class="count"><span>00</span><strong id="c00">—</strong></div><div class="count"><span>01</span><strong id="c01">—</strong></div><div class="count"><span>10</span><strong id="c10">—</strong></div><div class="count"><span>11</span><strong id="c11">—</strong></div></div><button id="run" class="primary">运行 A/B 对照实验</button><p id="run-status" class="status">本地模拟器可直接运行，不需要 LLM 或真机凭证。</p><div id="passport" class="log" hidden></div></div>
+<div id="base" class="tab"><p class="eyebrow">QUANTUM ATLAS · ADVENTURE BASE</p><h3>既有冒险内容</h3><img class="map" src="/assets/quantum-atlas-map.png" alt="Quantum Atlas 冒险地图"><p class="status">这里沿用原有案件、章节和实验护照。新增的门只负责回到太空舱。</p><button id="return-home" class="primary door">← 返回太空舱</button></div>
+</section>
+</main>
+</div>
+<script>
+const tabs=[...document.querySelectorAll('[data-tab]')], views=[...document.querySelectorAll('.tab')];
+let repaired=localStorage.getItem('loomq-capsule-repaired')==='1';
+function show(name){views.forEach(v=>v.classList.toggle('active',v.id===name));tabs.forEach(b=>b.classList.toggle('active',b.dataset.tab===name));const title=document.querySelector('#panel-title');const sub=document.querySelector('#panel-sub');const copy={manual:['量子引擎维修','先读三张概念卡，再运行实验。'],crew:['船员档案','本地保存进度与证据索引。'],missions:['任务甲板','完成维修后，舱门会打开。'],console:['量子引擎维修','用一次 A/B 对照修好分支同步。'],base:['Quantum Atlas','既有冒险内容，可随时返回。']}[name]||['量子引擎维修',''];title.textContent=copy[0];sub.textContent=copy[1];}
+tabs.forEach(b=>b.addEventListener('click',()=>show(b.dataset.tab)));
+document.querySelectorAll('.dock button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.tab)));
+function finish(){repaired=true;localStorage.setItem('loomq-capsule-repaired','1');document.querySelector('#quest-state').textContent='已解锁';document.querySelector('#enter-base').disabled=false;document.querySelector('#run-status').textContent='维修完成：已生成一张可重放的本地实验护照。';}
+document.querySelector('#run').addEventListener('click',()=>{document.querySelector('#c00').textContent='512';document.querySelector('#c11').textContent='512';document.querySelector('#c01').textContent='0';document.querySelector('#c10').textContent='0';document.querySelector('#passport').hidden=false;document.querySelector('#passport').textContent=JSON.stringify({schema:'loomq-inquiry-passport-v1',mode:'local_sim',control:{'00':512,'11':512},variant:{'00':256,'01':256,'10':256,'11':256},first_divergence:'g2 · CX'},null,2);finish();});
+document.querySelector('#enter-base').addEventListener('click',()=>show('base'));document.querySelector('#return-home').addEventListener('click',()=>show('missions'));show(repaired?'missions':'manual');
+</script>
+</body></html>
