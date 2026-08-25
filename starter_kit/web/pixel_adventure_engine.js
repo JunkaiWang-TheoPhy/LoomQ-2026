@@ -67,6 +67,32 @@
     river: { name: "纠缠能道", range: [9, 15], accent: "#78c7d4", phase: "entangled", background: "/assets/pixel-space-bridge-v2.png" },
     archive: { name: "证据环站", range: [16, 23], accent: "#f06a7b", phase: "audited", background: "/assets/pixel-space-archive-v2.png" },
   };
+  const CAPSULE_ZONES = [
+    {
+      id: "quantum-workbench",
+      kind: "workbench",
+      label: "量子工作台",
+      purpose: "设计、运行和复查一条量子实验",
+      bounds: { x: 2, y: 2, width: 9, height: 7 },
+      interaction: "experiment",
+    },
+    {
+      id: "quantum-engine",
+      kind: "engine",
+      label: "量子引擎",
+      purpose: "检查能量、稳定性和当前世界状态",
+      bounds: { x: 14, y: 1, width: 8, height: 7 },
+      interaction: "engine-status",
+    },
+    {
+      id: "rest-area",
+      kind: "rest",
+      label: "休息区",
+      purpose: "休息、保存和回顾调查记录",
+      bounds: { x: 14, y: 8, width: 8, height: 7 },
+      interaction: "rest",
+    },
+  ];
 
   function createPixelGame() {
     return { player: { x: 2, y: 14, facing: "down" } };
@@ -145,5 +171,5 @@
     return { event: target.kind, id: target.id };
   }
 
-  return { BUILDINGS, CHARACTER_FRAMES, DEFAULT_ZOOM, GUIDE_STEPS, HEIGHT, MAP, MAX_ZOOM, MIN_ZOOM, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt };
+  return { BUILDINGS, CAPSULE_ZONES, CHARACTER_FRAMES, DEFAULT_ZOOM, GUIDE_STEPS, HEIGHT, MAP, MAX_ZOOM, MIN_ZOOM, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt };
 });

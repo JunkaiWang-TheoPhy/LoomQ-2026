@@ -350,6 +350,8 @@ class WebLabTests(unittest.TestCase):
             "/assets/pixel-space-background-v2.png",
             "/assets/pixel-space-bridge-v2.png",
             "/assets/pixel-space-archive-v2.png",
+            "/assets/pixel-building-sheet-v2.png",
+            "/assets/pixel-space-capsule-rpg-v1.png",
             "/assets/pixel-controls.png",
             "/assets/pixel-dpad.png",
             "/assets/pixel-action.png",

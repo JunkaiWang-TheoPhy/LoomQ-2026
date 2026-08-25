@@ -22,8 +22,10 @@ The images share one narrative device: a woman is small inside an overwhelming e
 
 The six files were resized to 1200×800 for archive and browser weight. No text, logos, watermarks, or third-party franchise assets are embedded. The case titles, progress states, experiment contracts, and evidence boundaries remain server-owned in `loomq/story_world.py`; artwork cannot unlock a case or support a conclusion.
 
-## Complete-scene background set (v2)
+## Complete 2D map background set (v2)
 
-`pixel-space-background-v2.png`, `pixel-space-bridge-v2.png`, and `pixel-space-archive-v2.png` were generated on 2026-08-25 with the built-in GPT Image tool. They are 1672×941 16:9 environment illustrations for the pixel route: the observatory, the entanglement river valley, and the evidence archive. They contain no characters, text, logos, watermarks, or scientific claims.
+`pixel-space-background-v2.png`, `pixel-space-bridge-v2.png`, and `pixel-space-archive-v2.png` were generated on 2026-08-25 with the built-in GPT Image tool. They are 1672×941 16:9 strict top-down 2D RPG map backgrounds: observatory terrain, entanglement river/bridge terrain, and archive courtyard terrain. They are background layers, not perspective illustrations; they contain no characters, text, logos, watermarks, or scientific claims.
 
-The renderer displays these assets with a contain fit and letterboxing instead of cover cropping. The canvas draws the complete scene in screen space, then draws collision, buildings, characters, and evidence objects in the camera-transformed world layer. This keeps the full architecture visible while preserving movement and interaction overlays.
+`pixel-building-sheet-v2.png` is a 1254×1254 transparent 2×2 sprite sheet containing four separate top-down building designs. `pixel-space-capsule-rpg-v1.png` is a 1672×941 light-ivory top-down RPG capsule layout, kept as a separate scene candidate for the next map chapter.
+
+The renderer displays the background with a contain fit and letterboxing instead of cover cropping. The canvas draws the complete background in screen space, then draws collision, buildings, characters, and evidence objects in the camera-transformed world layer. This keeps the full architecture visible while preserving movement and interaction overlays.
