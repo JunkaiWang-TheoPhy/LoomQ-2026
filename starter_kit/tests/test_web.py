@@ -112,7 +112,7 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("运行电路", page)
         self.assertIn("量子比特", page)
         self.assertIn('rel="icon"', page)
-        self.assertIn("/favicon.ico", page)
+        self.assertIn('href="favicon.svg"', page)
 
     def test_favicon_route_is_served_without_404(self):
         status, headers, body = self.request("/favicon.ico")
@@ -120,6 +120,18 @@ class WebLabTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("image", headers["Content-Type"])
         self.assertTrue(body)
+
+    def test_story_mode_art_assets_are_served(self):
+        for asset in (
+            "/assets/story/zero-point-station.png",
+            "/assets/story/eighty-years-window.png",
+            "/assets/story/double-life-village-earth-2d.png",
+            "/assets/story/double-life-village-cosmos-2d.png",
+        ):
+            status, headers, body = self.request(asset)
+            self.assertEqual(status, 200, asset)
+            self.assertIn("image/png", headers["Content-Type"], asset)
+            self.assertGreater(len(body), 1000, asset)
 
     def test_home_exposes_learn_repair_backend_and_accessible_results(self):
         _status, _headers, body = self.request("/")
@@ -228,7 +240,7 @@ class WebLabTests(unittest.TestCase):
 
         page = body.decode()
         self.assertIn('class="story-hero"', page)
-        self.assertIn('src="/assets/quantum-world-journey.png"', page)
+        self.assertRegex(page, r'src="(?:/)?assets/quantum-world-journey\.png"')
         self.assertIn('id="story-chapters"', page)
         self.assertIn('id="story-progress-copy"', page)
         self.assertIn('href="#inquiry-world"', page)

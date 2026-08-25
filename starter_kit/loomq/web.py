@@ -42,9 +42,55 @@ _STATIC = {
         "assets/quantum-world-journey.png",
         "image/png",
     ),
+    "/assets/story/zero-point-station.png": (
+        "assets/story/zero-point-station.png",
+        "image/png",
+    ),
+    "/assets/story/eighty-years-window.png": (
+        "assets/story/eighty-years-window.png",
+        "image/png",
+    ),
+    "/assets/story/second-badge.png": (
+        "assets/story/second-badge.png",
+        "image/png",
+    ),
+    "/assets/story/inside-tide-line.png": (
+        "assets/story/inside-tide-line.png",
+        "image/png",
+    ),
+    "/assets/story/night-grid.png": (
+        "assets/story/night-grid.png",
+        "image/png",
+    ),
+    "/assets/story/evidence-tower.png": (
+        "assets/story/evidence-tower.png",
+        "image/png",
+    ),
+    "/assets/story/double-life-village-earth-2d.png": (
+        "assets/story/double-life-village-earth-2d.png",
+        "image/png",
+    ),
+    "/assets/story/double-life-village-cosmos-2d.png": (
+        "assets/story/double-life-village-cosmos-2d.png",
+        "image/png",
+    ),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/enhancements.css": ("enhancements.css", "text/css; charset=utf-8"),
 }
+
+# Story artwork is local-only and explicitly allow-listed so the narrative
+# page can load the same assets in the browser and in the file-mode preview.
+for _story_asset in (
+    "zero-point-station.png",
+    "eighty-years-window.png",
+    "second-badge.png",
+    "inside-tide-line.png",
+    "night-grid.png",
+    "evidence-tower.png",
+    "double-life-village-earth-2d.png",
+    "double-life-village-cosmos-2d.png",
+):
+    _STATIC[f"/assets/story/{_story_asset}"] = (f"assets/story/{_story_asset}", "image/png")
 
 _BELL_INQUIRY_CONTROL = """OPENQASM 2.0;
 include "qelib1.inc";

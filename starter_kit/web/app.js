@@ -149,6 +149,116 @@ let lastWitnessUrl = null;
 let lastInquiryUrl = null;
 let currentInquiryPassport = null;
 
+const doubleLifeScenes = {
+  "quiet-village": {
+    name: "静默村庄",
+    earth: "assets/story/double-life-village-earth-2d.png",
+    cosmos: "assets/story/double-life-village-cosmos-2d.png",
+    probability: 0.38,
+    transitionMechanisms: ["quantum-superposition", "quantum-entanglement"],
+  },
+};
+
+function initDoubleLife() {
+  const stage = $("[data-double-life-stage]");
+  const enter = $("#double-life-enter");
+  if (!stage || !enter) return;
+  const scene = doubleLifeScenes["quiet-village"];
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const earth = stage.querySelector('[data-double-life-layer="earth"]');
+  const cosmos = stage.querySelector('[data-double-life-layer="cosmos"]');
+  const sideCopy = stage.querySelector("[data-double-life-side]");
+  const transitionCopy = $("[data-double-life-transition]");
+  const probabilityCopy = $("[data-double-life-probability]");
+  const toast = stage.querySelector("[data-double-life-toast]");
+  let timer = null;
+  let entered = false;
+  let activeSide = "earth";
+
+  probabilityCopy.textContent = `量子切换概率 ${Math.round(scene.probability * 100)}%`;
+
+  function setSide(side, announce = false) {
+    activeSide = side;
+    earth.classList.toggle("is-visible", side === "earth");
+    cosmos.classList.toggle("is-visible", side === "cosmos");
+    stage.dataset.side = side;
+    sideCopy.textContent = side === "earth" ? "地球现实层" : "量子意识层";
+    transitionCopy.textContent = side === "earth" ? "脚下仍是熟悉的村庄" : "另一时空正在覆盖地图";
+    if (announce) {
+      toast.textContent = side === "cosmos"
+        ? "哎呀，这是因为量子叠加、量子纠缠，静默村庄暂时显现了另一条时空。"
+        : "量子相位重新对齐，村庄回到了地球现实层。";
+      toast.hidden = false;
+      clearTimeout(setSide.toastTimer);
+      setSide.toastTimer = setTimeout(() => { toast.hidden = true; }, 5200);
+    }
+  }
+
+  function schedule() {
+    clearTimeout(timer);
+    if (!entered || reducedMotion.matches || document.hidden) return;
+    timer = setTimeout(() => {
+      const switched = Math.random() < scene.probability;
+      setSide(switched ? (activeSide === "earth" ? "cosmos" : "earth") : activeSide, switched);
+      schedule();
+    }, 5200 + Math.floor(Math.random() * 4600));
+  }
+
+  function enterScene() {
+    entered = true;
+    setSide("earth");
+    enter.textContent = "已进入 · 等待时空波动";
+    enter.setAttribute("aria-pressed", "true");
+    toast.textContent = "你进入了静默村庄。这里的两张地图，仍然是同一个地点。";
+    toast.hidden = false;
+    clearTimeout(setSide.toastTimer);
+    setSide.toastTimer = setTimeout(() => { toast.hidden = true; }, 4200);
+    schedule();
+  }
+
+  enter.addEventListener("click", enterScene);
+  document.addEventListener("visibilitychange", schedule);
+  reducedMotion.addEventListener?.("change", schedule);
+  setSide("earth");
+}
+
+function initStoryCaseboard() {
+  const caseCopy = {
+    "eightieth-year": "你打开第一份档案：先记录一个预测，再让实验决定它能走多远。",
+    "second-badge": "第二枚工牌没有替你签字；它只把签字发生过的路径留下来。",
+    "inside-tide-line": "潮线以内的地图提醒你：预测会改变被预测者的条件。",
+    "night-grid": "夜班日志里，绿色数字越漂亮，越需要追问谁承担代价。",
+    "testimony-checker": "无法验证不等于虚假；证据的缺口也要进入档案。",
+  };
+  document.querySelectorAll("[data-story-case]").forEach((card) => {
+    card.addEventListener("click", () => {
+      const message = caseCopy[card.dataset.storyCase];
+      if (message) tell(message);
+    });
+  });
+}
+
+function initBeginnerDemo() {
+  const stage = $("[data-beginner-demo]");
+  const replayButton = $("[data-beginner-demo-replay]");
+  if (!stage) return;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const replay = () => {
+    if (reducedMotion.matches) return;
+    stage.classList.remove("is-replaying");
+    void stage.offsetWidth;
+    stage.classList.add("is-replaying");
+  };
+  stage.addEventListener("click", replay);
+  stage.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      replay();
+    }
+  });
+  replayButton?.addEventListener("click", replay);
+}
+
 function tell(message) {
   notice.textContent = message;
   notice.classList.add("show");
@@ -1305,3 +1415,7 @@ $("#clear-conversation").addEventListener("click", () => {
   $("#agent-error").hidden = true;
   tell("多轮上下文已清空");
 });
+
+initBeginnerDemo();
+initStoryCaseboard();
+initDoubleLife();
