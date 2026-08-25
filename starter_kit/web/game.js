@@ -47,6 +47,8 @@ let regionTimer = 0;
 let toastTimer = 0;
 let experimentPulse = 0;
 let lastExperiment = null;
+let storyWorld = null;
+let storyWorldRequest = null;
 const keys = new Set();
 const touchVector = { x: 0, y: 0 };
 
@@ -86,6 +88,67 @@ function updateHud() {
   $("#clue-count").textContent = `${mission.clues.length} / 4`;
   $("#game-score").value = mission.score;
   $("#game-score").textContent = String(mission.score);
+  renderStoryBoard();
+}
+
+function completedStoryNodes() {
+  return mission.audit ? ["observer-zero"] : [];
+}
+
+function renderStoryBoard() {
+  if (!storyWorld) return;
+  const status = $("#case-board-status");
+  const list = $("#case-list");
+  if (!status || !list) return;
+  status.textContent = storyWorld.progress.mainline === "complete"
+    ? "主线已完成 · 五个案件已开放。点击案件查看它的调查问题。"
+    : "完成主线实验后，五个案件会从地图上亮起。";
+  list.replaceChildren();
+  storyWorld.cases.forEach((caseFile) => {
+    const state = storyWorld.progress.cases[caseFile.id];
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+    const copy = document.createElement("span");
+    const title = document.createElement("strong");
+    const theme = document.createElement("small");
+    const stateLabel = document.createElement("em");
+    button.type = "button";
+    button.className = state;
+    button.disabled = state === "locked";
+    button.setAttribute("aria-label", `${caseFile.title} · ${state}`);
+    title.textContent = caseFile.title;
+    theme.textContent = caseFile.theme;
+    stateLabel.textContent = state === "complete" ? "已归档" : state === "current" ? "可调查" : "待解锁";
+    copy.append(title, theme);
+    button.append(copy, stateLabel);
+    button.addEventListener("click", () => openCaseBriefing(caseFile));
+    item.append(button);
+    list.append(item);
+  });
+}
+
+async function refreshStoryWorld(force = false) {
+  if (storyWorldRequest && !force) return storyWorldRequest;
+  if (force) storyWorldRequest = null;
+  const query = completedStoryNodes().join(",");
+  storyWorldRequest = fetch(`/api/story-world?completed=${encodeURIComponent(query)}`)
+    .then((response) => {
+      if (!response.ok) throw new Error("故事地图暂时无法读取");
+      return response.json();
+    })
+    .then((payload) => {
+      storyWorld = payload;
+      renderStoryBoard();
+      return payload;
+    })
+    .catch((error) => {
+      announce(error.message);
+      return null;
+    })
+    .finally(() => {
+      storyWorldRequest = null;
+    });
+  return storyWorldRequest;
 }
 
 function announce(message) {
@@ -154,6 +217,25 @@ function closeDialogue() {
   dialogueAfterClose = null;
   canvas.focus();
   if (callback) callback();
+}
+
+function openCaseBriefing(caseFile) {
+  const contract = caseFile.evidence_contract;
+  showDialogue({
+    speaker: caseFile.title,
+    kicker: `地图案件 · ${caseFile.theme}`,
+    text: `${caseFile.question} ${caseFile.identities.public} ${caseFile.identities.hidden}`,
+    choices: [
+      {
+        label: "查看这宗案件的证据边界",
+        action: () => showDialogue({
+          speaker: caseFile.title,
+          kicker: "证据契约",
+          text: `调查动作：${contract.changed_variable.operation}。可观察对象：${contract.observable}。${caseFile.claim_boundary}`,
+        }),
+      },
+    ],
+  });
 }
 
 function worldToScreen(x, y) {
@@ -548,6 +630,7 @@ function openExperiment() {
 function finishAudit(conclusion) {
   mission = missionEngine.auditConclusion(mission, conclusion);
   updateHud();
+  refreshStoryWorld(true);
   const supported = mission.audit.status === "supported";
   showDialogue({
     speaker: "档案员 赫辛",
@@ -640,6 +723,7 @@ function resetGame() {
   $("#dialogue-box").hidden = true;
   $("#case-complete").hidden = true;
   updateHud();
+  refreshStoryWorld(true);
   lastRegion = adventure.regionAt(world.player.x);
   showRegion(lastRegion);
   canvas.focus();
@@ -726,4 +810,5 @@ stick.addEventListener("pointercancel", releaseStick);
 
 resizeCanvas();
 updateHud();
+refreshStoryWorld();
 requestAnimationFrame(frame);
