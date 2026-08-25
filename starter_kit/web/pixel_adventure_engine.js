@@ -67,6 +67,14 @@
     river: { name: "纠缠能道", range: [9, 15], accent: "#78c7d4", phase: "entangled", background: "/assets/pixel-space-bridge-v2.png" },
     archive: { name: "证据环站", range: [16, 23], accent: "#f06a7b", phase: "audited", background: "/assets/pixel-space-archive-v2.png" },
   };
+  const MUSIC_TRACKS = {
+    "observatory-dawn": { title: "零点穹顶", style: "ambient", scene: "village", root: 0, tempo: 290, pad: [0, 7, 12], bass: [0, 0, -5, -5], melody: [12, 10, 7, 5, 7, 10, 12, 15] },
+    "observatory-inquiry": { title: "第一次观测", style: "investigation", scene: "village", root: 2, tempo: 230, pad: [2, 9, 14], bass: [2, -3, 2, 5], melody: [9, 12, 14, 16, 14, 12, 9, 7] },
+    "entangled-current": { title: "纠缠水脉", style: "exploration", scene: "river", root: -5, tempo: 220, pad: [-5, 2, 7, 14], bass: [-5, -5, 2, 2], melody: [7, 10, 14, 17, 14, 10, 7, 5] },
+    "bridge-crossing": { title: "两条路径的桥", style: "momentum", scene: "river", root: -2, tempo: 185, pad: [-2, 5, 10], bass: [-2, 5, -2, 8], melody: [10, 12, 15, 17, 19, 17, 15, 12] },
+    "archive-whisper": { title: "未结案的回声", style: "mystery", scene: "archive", root: 3, tempo: 310, pad: [3, 10, 15], bass: [3, 3, -2, -2], melody: [15, 14, 10, 7, 10, 14, 17, 14] },
+    "archive-resolution": { title: "证据归档之后", style: "resolution", scene: "archive", root: 5, tempo: 250, pad: [5, 12, 17], bass: [5, 0, 5, 7], melody: [12, 16, 19, 21, 19, 16, 14, 12] },
+  };
   const CAPSULE_ZONES = [
     {
       id: "quantum-workbench",
@@ -116,6 +124,13 @@
   function sceneAt(player) {
     const x = Math.max(0, Math.min(WIDTH - 1, player.x));
     return Object.entries(SCENES).find(([, scene]) => x >= scene.range[0] && x <= scene.range[1])[0];
+  }
+
+  function selectMusicTrack(scene, mission) {
+    const shardCount = Array.isArray(mission?.shards) ? mission.shards.length : 0;
+    if (scene === "village") return shardCount ? "observatory-inquiry" : "observatory-dawn";
+    if (scene === "river") return shardCount >= SHARDS.length ? "bridge-crossing" : "entangled-current";
+    return mission?.complete ? "archive-resolution" : "archive-whisper";
   }
 
   function cameraFor(player, viewport, zoom = 1) {
@@ -171,5 +186,5 @@
     return { event: target.kind, id: target.id };
   }
 
-  return { BUILDINGS, CAPSULE_ZONES, CHARACTER_FRAMES, DEFAULT_ZOOM, GUIDE_STEPS, HEIGHT, MAP, MAX_ZOOM, MIN_ZOOM, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt };
+  return { BUILDINGS, CAPSULE_ZONES, CHARACTER_FRAMES, DEFAULT_ZOOM, GUIDE_STEPS, HEIGHT, MAP, MAX_ZOOM, MIN_ZOOM, MOVE_INTERVAL, MUSIC_TRACKS, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt, selectMusicTrack };
 });

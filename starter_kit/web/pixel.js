@@ -6,11 +6,7 @@ const ctx = canvas.getContext("2d");
 const $ = (selector) => document.querySelector(selector);
 const TILE = 16;
 const COLORS = { grass: "#75b59e", grass2: "#83c1a4", wall: "#3e3657", wallTop: "#5f577b", water: "#78c7d4", flower: "#f06a7b", yellow: "#f6dd78", player: "#f06a7b", ink: "#281d35", paper: "#fff2c8" };
-const MUSIC_PATTERNS = {
-  village: { root: 0, tempo: 260, pad: [0, 7, 12], bass: [0, 0, -5, -5], melody: [12, 10, 7, 5, 7, 10, 12, 15] },
-  river: { root: -5, tempo: 220, pad: [-5, 2, 7, 14], bass: [-5, -5, 2, 2], melody: [7, 10, 14, 17, 14, 10, 7, 5] },
-  archive: { root: 3, tempo: 300, pad: [3, 10, 15], bass: [3, 3, -2, -2], melody: [15, 14, 10, 7, 10, 14, 17, 14] },
-};
+const MUSIC_TRACKS = worldEngine.MUSIC_TRACKS;
 const mapImages = Object.fromEntries(Object.entries(worldEngine.SCENES).map(([id, scene]) => {
   const image = new Image();
   image.src = scene.background;
@@ -38,7 +34,7 @@ let audioGraph = null;
 let musicTimer = null;
 let musicOn = false;
 let musicStep = 0;
-let musicScene = "village";
+let musicTrack = worldEngine.selectMusicTrack(currentScene, mission);
 let movementClock = 0;
 const MOVE_INTERVAL = worldEngine.MOVE_INTERVAL;
 let playerAction = "idle";
@@ -177,7 +173,7 @@ function scheduleTone(note, duration, volume, type, when, destination) {
 
 function scheduleMusicStep() {
   if (!audioContext || !audioGraph || !musicOn) return;
-  const pattern = MUSIC_PATTERNS[musicScene] || MUSIC_PATTERNS.village;
+  const pattern = MUSIC_TRACKS[musicTrack] || MUSIC_TRACKS["observatory-dawn"];
   const step = musicStep % pattern.melody.length;
   const when = audioContext.currentTime + 0.025;
   if (step === 0) pattern.pad.forEach((note) => scheduleTone(pattern.root + note, 1.8, 0.018, "sine", when, audioGraph.padGain));
@@ -195,10 +191,16 @@ function playEventStinger(kind) {
 }
 
 function setMusicScene(scene) {
-  if (!MUSIC_PATTERNS[scene] || scene === musicScene) return;
-  musicScene = scene;
+  const nextTrack = worldEngine.selectMusicTrack(scene, mission);
+  if (!MUSIC_TRACKS[nextTrack] || nextTrack === musicTrack) return;
+  musicTrack = nextTrack;
   musicStep = 0;
   playEventStinger("transition");
+  if (musicTimer) {
+    window.clearInterval(musicTimer);
+    musicTimer = window.setInterval(scheduleMusicStep, MUSIC_TRACKS[musicTrack].tempo);
+  }
+  $("#pixel-music-toggle").title = `${MUSIC_TRACKS[musicTrack].title} · ${MUSIC_TRACKS[musicTrack].style}`;
 }
 
 function startMusic() {
@@ -217,7 +219,8 @@ function startMusic() {
   $("#pixel-music-toggle").setAttribute("aria-label", "关闭量子环境音乐");
   if (musicTimer) return;
   scheduleMusicStep();
-  musicTimer = window.setInterval(scheduleMusicStep, MUSIC_PATTERNS[musicScene].tempo);
+  musicTimer = window.setInterval(scheduleMusicStep, MUSIC_TRACKS[musicTrack].tempo);
+  $("#pixel-music-toggle").title = `${MUSIC_TRACKS[musicTrack].title} · ${MUSIC_TRACKS[musicTrack].style}`;
 }
 
 function stopMusic() {
@@ -696,6 +699,7 @@ function triggerJump() {
 
 function collect(id) {
   mission.shards = [...mission.shards, id];
+  setMusicScene(currentScene);
   playEventStinger("shard");
   if (mission.shards.length === 1) setStoryBeat(1);
   if (mission.shards.length === 3) setStoryBeat(2);
@@ -716,6 +720,7 @@ async function runWell() {
     const passport = await response.json();
     if (!response.ok) throw new Error(passport.error || "井没有返回护照");
     mission.complete = true;
+    setMusicScene(currentScene);
     playEventStinger("success");
     completedNodes = ["observer-zero"];
     await loadStoryWorld();
@@ -782,7 +787,7 @@ function reset() {
   game = worldEngine.createPixelGame();
   mission = { shards: [], complete: false };
   currentScene = worldEngine.sceneAt(game.player);
-  musicScene = currentScene;
+  musicTrack = worldEngine.selectMusicTrack(currentScene, mission);
   musicStep = 0;
   completedNodes = [];
   storyWorld = null;

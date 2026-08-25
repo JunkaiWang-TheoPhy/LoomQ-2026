@@ -104,6 +104,26 @@ process.stdout.write(JSON.stringify({steps: pixel.GUIDE_STEPS, scenes: pixel.SCE
         self.assertGreaterEqual(result["moveInterval"], 0.1)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_music_library_has_at_least_six_tracks_and_three_distinct_styles(self):
+        script = """
+const pixel = require(process.argv[1]);
+process.stdout.write(JSON.stringify(pixel.MUSIC_TRACKS));
+"""
+        completed = subprocess.run(
+            [shutil.which("node"), "-e", script, str(ROOT / "web" / "pixel_adventure_engine.js")],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        tracks = json.loads(completed.stdout)
+        self.assertGreaterEqual(len(tracks), 6)
+        self.assertGreaterEqual(len({track["style"] for track in tracks.values()}), 3)
+        self.assertEqual({track["scene"] for track in tracks.values()}, {"village", "river", "archive"})
+        self.assertTrue(all(len(track["melody"]) >= 8 for track in tracks.values()))
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_capsule_rpg_exposes_three_future_interaction_zones(self):
         script = """
 const pixel = require(process.argv[1]);
