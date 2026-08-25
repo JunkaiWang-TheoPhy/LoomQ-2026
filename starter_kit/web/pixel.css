@@ -8,8 +8,8 @@ button { cursor:pointer; }
 :focus-visible { outline:3px solid var(--yellow); outline-offset:4px; }
 kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background:var(--yellow); font-size:10px; }
 .pixel-shell { position:fixed; inset:0; overflow:hidden; background:var(--deep); }
-.pixel-stage { position:absolute; top:50%; left:50%; width:min(100vw, 150vh); height:min(100vh, 66.6667vw); overflow:hidden; border:4px solid #090e1e; background:#081522 url('/assets/pixel-space-background.png') center / cover no-repeat; box-shadow:0 0 0 2px rgba(120,199,212,.22), 0 14px 0 rgba(0,0,0,.22); transform:translate(-50%,-50%); }
-#pixel-canvas { display:block; width:100%; height:100%; object-fit:cover; object-position:center; image-rendering:pixelated; touch-action:none; }
+.pixel-stage { position:absolute; top:50%; left:50%; width:min(100vw, 150vh); height:min(100vh, 66.6667vw); overflow:hidden; border:4px solid #090e1e; background:#081522; box-shadow:0 0 0 2px rgba(120,199,212,.22), 0 14px 0 rgba(0,0,0,.22); transform:translate(-50%,-50%); }
+#pixel-canvas { display:block; width:100%; height:100%; object-fit:contain; object-position:center; image-rendering:pixelated; touch-action:none; }
 .pixel-hud { position:absolute; z-index:5; top:14px; left:16px; right:16px; display:flex; gap:10px; align-items:stretch; pointer-events:none; }
 .pixel-hud > * { pointer-events:auto; }
 .pixel-logo, .pixel-objective, .pixel-counter, .pixel-hud button { border:3px solid var(--ink); background:rgba(40,29,53,.93); box-shadow:4px 4px 0 rgba(17,24,45,.48); }
@@ -98,7 +98,8 @@ kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background
 .pixel-complete button, .pixel-complete a { display:inline-block; margin-top:16px; padding:10px 12px; border:3px solid var(--ink); text-decoration:none; font-size:11px; font-weight:900; }
 .pixel-complete button { color:var(--paper); background:var(--ink); }
 .pixel-complete a { margin-left:7px; color:var(--ink); background:#ffe6a3; }
-.pixel-stick, .pixel-touch-action { display:none; }
+.pixel-intro-character { position:absolute !important; z-index:1 !important; right:3%; bottom:-4%; width:min(38vw,520px); height:min(78vh,720px); object-fit:contain; object-position:center bottom; image-rendering:pixelated; filter:drop-shadow(7px 8px 0 rgba(40,29,53,.42)); pointer-events:none; }
+.pixel-stick, .pixel-touch-action, .pixel-touch-jump { display:none; }
 .pixel-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
 @media (max-width:700px), (max-aspect-ratio:3 / 2) {
   .pixel-stage { top:50%; left:50%; width:100vw; height:100vh; border-width:2px; box-shadow:none; }
@@ -117,6 +118,7 @@ kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background
   .pixel-start-guide b { font-size:13px; }
   .pixel-start-guide strong { font-size:10px; }
   .pixel-start-guide small { font-size:7px; }
+  .pixel-intro-character { right:-8%; bottom:-1%; width:min(55vw,360px); height:min(62vh,520px); opacity:.82; }
   .pixel-controls { display:none; }
   .pixel-zoom-meter { right:9px; bottom:132px; min-width:95px; padding:5px 7px; }
   .pixel-guide { top:82px; left:9px; width:min(260px,calc(100% - 18px)); }
@@ -128,9 +130,10 @@ kbd { padding:3px 5px; color:var(--ink); border:2px solid var(--ink); background
   .pixel-avatar { display:none; }
   .pixel-dialogue p { font-size:12px; }
   .pixel-dialogue > button { grid-column:2; }
-  .pixel-stick { position:absolute; z-index:10; bottom:24px; left:20px; display:grid; width:112px; height:112px; place-items:center; border:0; border-radius:0; background:transparent url('/assets/pixel-dpad.png') center / contain no-repeat; touch-action:none; }
+  .pixel-stick { position:absolute; z-index:10; bottom:24px; left:12px; display:grid; width:112px; height:112px; place-items:center; border:0; border-radius:0; background:transparent url('/assets/pixel-dpad.png') center / contain no-repeat; touch-action:none; }
   .pixel-stick i { display:none; }
   .pixel-touch-action { position:absolute; z-index:10; right:25px; bottom:29px; display:grid; width:86px; height:86px; place-items:center; color:var(--paper); border:0; border-radius:0; background:transparent url('/assets/pixel-action.png') center / contain no-repeat; text-shadow:2px 2px 0 var(--ink); font-weight:900; }
+  .pixel-touch-jump { position:absolute; z-index:10; right:111px; bottom:78px; display:grid; width:48px; height:48px; place-items:center; color:var(--yellow); border:3px solid var(--ink); border-radius:50%; background:#263b5b; box-shadow:3px 3px 0 rgba(0,0,0,.35); font-size:24px; font-weight:900; }
   .pixel-complete { padding:23px; }
   .pixel-complete a { margin-left:0; }
 }

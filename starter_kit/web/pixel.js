@@ -11,6 +11,9 @@ const mapImages = Object.fromEntries(Object.entries(worldEngine.SCENES).map(([id
   image.src = scene.background;
   return [id, image];
 }));
+const heroineSheet = new Image();
+heroineSheet.src = "/assets/pixel-heroine-sheet.png";
+const HEROINE_CELL = { width: 384, height: 512 };
 
 let game = worldEngine.createPixelGame();
 let mission = { shards: [], complete: false };
@@ -28,6 +31,9 @@ let musicOn = false;
 let musicStep = 0;
 let movementClock = 0;
 const MOVE_INTERVAL = worldEngine.MOVE_INTERVAL;
+let playerAction = "idle";
+let jumpStartedAt = 0;
+let jumpUntil = 0;
 let storyWorld = null;
 let completedNodes = [];
 let storyBeatIndex = 0;
@@ -206,21 +212,17 @@ function drawPixelRect(x, y, width, height, color) {
   ctx.fillRect(x * TILE, y * TILE, width * TILE, height * TILE);
 }
 
-function drawCover(image) {
-  const scale = Math.max(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+function drawContain(image) {
+  const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
   const width = image.naturalWidth * scale;
   const height = image.naturalHeight * scale;
+  ctx.fillStyle = "#081522";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(image, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
 }
 
 function drawMap(time) {
   const mapImage = mapImages[currentScene];
-  if (mapImage.complete && mapImage.naturalWidth) {
-    drawCover(mapImage);
-  } else {
-    ctx.fillStyle = COLORS.grass;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
   if (!mapImage.complete || !mapImage.naturalWidth) {
     for (let y = 0; y < worldEngine.HEIGHT; y += 1) {
       for (let x = 0; x < worldEngine.WIDTH; x += 1) {
@@ -340,28 +342,44 @@ function label(text, x, y, color) {
   ctx.fillText(text, x * TILE + 1, y * TILE + 6);
 }
 
+function animationFrame(character, action, time) {
+  const frames = worldEngine.CHARACTER_FRAMES?.[character] || worldEngine.CHARACTER_FRAMES?.player;
+  const sequence = frames?.[action] || frames?.idle || [0];
+  const cadence = action === "walk" ? 105 : action === "jump" ? 90 : 280;
+  return sequence[Math.floor(time / cadence) % sequence.length];
+}
+
 function drawHumanSprite(x, y, config, time = 0) {
   const px = x * TILE;
-  const bob = Math.floor(time / (config.player ? 140 : 260) + x) % 2;
-  const py = y * TILE - bob;
+  const action = config.action || "idle";
+  const frame = Number.isFinite(config.frame) ? config.frame : animationFrame(config.character, action, time);
+  const walking = action === "walk";
+  const jumping = action === "jump";
+  const jumpProgress = Math.max(0, Math.min(1, config.jumpProgress ?? 0));
+  const jumpLift = jumping ? Math.round(Math.sin(jumpProgress * Math.PI) * 7) : 0;
+  const idleBob = jumping ? 0 : Math.floor(time / (config.player ? 140 : 260) + x) % 2;
+  const py = y * TILE - idleBob - jumpLift;
+  const stride = walking ? (frame % 2 === 0 ? 1 : -1) : 0;
+  const jumpPose = jumping ? -1 : 0;
+  const armSwing = jumping ? -2 : stride;
   const skin = config.skin || "#ffd8ad";
   const hair = config.hair || COLORS.ink;
   ctx.fillStyle = "rgba(3,10,23,.55)";
-  ctx.fillRect(px - 2, py + 21, 20, 4);
+  ctx.fillRect(px - 2, y * TILE + 21, 20, 4);
   // boots and legs
   ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(px + 3, py + 17, 6, 7);
-  ctx.fillRect(px + 11, py + 17, 6, 7);
+  ctx.fillRect(px + 3 - (jumping ? 1 : 0), py + 17 + stride + jumpPose, 6, 7);
+  ctx.fillRect(px + 11 + (jumping ? 1 : 0), py + 17 - stride + jumpPose, 6, 7);
   ctx.fillStyle = config.boots || "#334b76";
-  ctx.fillRect(px + 2, py + 21, 7, 4);
-  ctx.fillRect(px + 11, py + 21, 7, 4);
+  ctx.fillRect(px + 2 - (jumping ? 1 : 0), py + 21 + stride + jumpPose, 7, 4);
+  ctx.fillRect(px + 11 + (jumping ? 1 : 0), py + 21 - stride + jumpPose, 7, 4);
   // torso silhouette, jacket, arms
   ctx.fillStyle = COLORS.ink;
   ctx.fillRect(px + 1, py + 8, 18, 12);
   ctx.fillStyle = config.body;
   ctx.fillRect(px + 3, py + 8, 14, 11);
-  ctx.fillRect(px - 1, py + 10, 4, 7);
-  ctx.fillRect(px + 17, py + 10, 4, 7);
+  ctx.fillRect(px - 1, py + 10 + armSwing, 4, 7);
+  ctx.fillRect(px + 17, py + 10 - armSwing, 4, 7);
   ctx.fillStyle = config.accent;
   ctx.fillRect(px + 7, py + 9, 6, 3);
   ctx.fillRect(px + 8, py + 12, 4, 6);
@@ -375,18 +393,36 @@ function drawHumanSprite(x, y, config, time = 0) {
   ctx.fillRect(px + 4, py - 5, 12, 4);
   ctx.fillRect(px + 3, py - 2, 3, 7);
   ctx.fillRect(px + 13, py - 2, 3, 5);
+  const facingUp = config.facing === "up";
+  const facingSide = config.facing === "left" || config.facing === "right";
   ctx.fillStyle = COLORS.paper;
   ctx.fillRect(px + 6, py, 2, 2);
-  // face: two eyes, nose, mouth, and a tiny cheek highlight
+  // Face: a readable JRPG front profile, with a hair-only back profile.
   ctx.fillStyle = COLORS.ink;
-  const eyeOffset = config.facing === "left" ? -1 : config.facing === "right" ? 1 : 0;
-  ctx.fillRect(px + 7 + eyeOffset, py + 2, 2, 2);
-  ctx.fillRect(px + 11 + eyeOffset, py + 2, 2, 2);
-  ctx.fillRect(px + 9, py + 4, 2, 1);
-  ctx.fillRect(px + 8, py + 6, 5, 1);
-  ctx.fillStyle = config.eye || COLORS.sky;
-  ctx.fillRect(px + 8 + eyeOffset, py + 2, 1, 1);
-  ctx.fillRect(px + 12 + eyeOffset, py + 2, 1, 1);
+  if (facingUp) {
+    ctx.fillStyle = hair;
+    ctx.fillRect(px + 5, py - 1, 10, 8);
+    ctx.fillStyle = config.accent;
+    ctx.fillRect(px + 7, py + 5, 6, 2);
+  } else {
+    const eyeOffset = config.facing === "left" ? -1 : config.facing === "right" ? 1 : 0;
+    const blink = action === "idle" && frame % 2 === 1;
+    if (blink) {
+      ctx.fillRect(px + 7 + eyeOffset, py + 3, 2, 1);
+      ctx.fillRect(px + 11 + eyeOffset, py + 3, 2, 1);
+    } else {
+      ctx.fillRect(px + 7 + eyeOffset, py + 2, 2, 2);
+      ctx.fillRect(px + 11 + eyeOffset, py + 2, 2, 2);
+    }
+    ctx.fillRect(px + 9, py + 4, 2, 1);
+    ctx.fillRect(px + 8, py + 6, 5, 1);
+    if (!blink) {
+      ctx.fillStyle = config.eye || COLORS.sky;
+      ctx.fillRect(px + 8 + eyeOffset, py + 2, 1, 1);
+      ctx.fillRect(px + 12 + eyeOffset, py + 2, 1, 1);
+    }
+    if (facingSide) ctx.fillRect(px + (config.facing === "left" ? 4 : 14), py + 3, 2, 3);
+  }
   // character accessory
   if (config.accessory === "satchel") {
     ctx.fillStyle = COLORS.sky;
@@ -406,28 +442,78 @@ function drawHumanSprite(x, y, config, time = 0) {
 }
 
 function drawPerson(x, y, color, name, time = 0) {
+  const mentor = name === "林默";
   drawHumanSprite(x, y, {
+    character: mentor ? "mentor" : "xiaoman",
     body: color,
-    accent: name === "林默" ? COLORS.yellow : COLORS.sky,
-    hair: name === "林默" ? "#e6edf5" : "#f06a7b",
+    accent: mentor ? COLORS.yellow : COLORS.sky,
+    hair: mentor ? "#e6edf5" : "#f06a7b",
+    skin: mentor ? "#e7b18a" : "#f1c39a",
     boots: "#263b5b",
-    accessory: name === "林默" ? "clipboard" : "satchel",
-    eye: COLORS.sky,
+    accessory: mentor ? "clipboard" : "satchel",
+    eye: mentor ? COLORS.sky : COLORS.yellow,
     name,
     facing: "down",
+    action: "idle",
+    frame: animationFrame(mentor ? "mentor" : "xiaoman", "idle", time),
   }, time);
 }
 
+function heroineFrame(action, facing, time) {
+  const step = Math.floor(time / 105) % 2;
+  if (action === "jump") return { col: 3, row: 0 };
+  if (action === "walk") {
+    if (facing === "left") return { col: 0, row: 1 };
+    if (facing === "right") return { col: 1, row: 1 };
+    if (facing === "up") return { col: 2, row: 1 };
+    return { col: step ? 2 : 1, row: 0 };
+  }
+  if (facing === "left" || facing === "right") return { col: 3, row: 1 };
+  if (facing === "up") return { col: 2, row: 1 };
+  return { col: 0, row: 0 };
+}
+
+function drawHeroineSprite(x, y, action, facing, time, jumpProgress = 0) {
+  if (!heroineSheet.complete || !heroineSheet.naturalWidth) return false;
+  const frame = heroineFrame(action, facing, time);
+  const lift = action === "jump" ? Math.round(Math.sin(jumpProgress * Math.PI) * 7) : 0;
+  const px = x * TILE;
+  const py = y * TILE;
+  ctx.fillStyle = "rgba(3,10,23,.55)";
+  ctx.fillRect(px - 6, py + 22, 28, 4);
+  ctx.drawImage(
+    heroineSheet,
+    frame.col * HEROINE_CELL.width,
+    frame.row * HEROINE_CELL.height,
+    HEROINE_CELL.width,
+    HEROINE_CELL.height,
+    px - 10,
+    py - 22 - lift,
+    36,
+    48,
+  );
+  return true;
+}
+
 function drawPlayer(time = 0) {
+  const jumpProgress = jumpUntil > jumpStartedAt
+    ? Math.max(0, Math.min(1, (time - jumpStartedAt) / (jumpUntil - jumpStartedAt)))
+    : 0;
+  if (drawHeroineSprite(game.player.x, game.player.y, playerAction, game.player.facing, time, jumpProgress)) return;
   drawHumanSprite(game.player.x, game.player.y, {
+    character: "player",
     body: COLORS.player,
     accent: COLORS.yellow,
-    hair: "#e6edf5",
+    hair: "#d46b3c",
+    skin: "#f2c08a",
     boots: "#263b5b",
     accessory: "satchel",
     eye: COLORS.sky,
     facing: game.player.facing,
     player: true,
+    action: playerAction,
+    frame: animationFrame("player", playerAction, time),
+    jumpProgress,
   }, time);
 }
 
@@ -501,6 +587,13 @@ function render(time) {
   const targetCamera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height }, zoom);
   camera.x += (targetCamera.x - camera.x) * .18;
   camera.y += (targetCamera.y - camera.y) * .18;
+  const mapImage = mapImages[currentScene];
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (mapImage.complete && mapImage.naturalWidth) drawContain(mapImage);
+  else {
+    ctx.fillStyle = COLORS.grass;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
   ctx.setTransform(worldEngine.WORLD_SCALE * zoom, 0, 0, worldEngine.WORLD_SCALE * zoom, -camera.x, -camera.y);
   drawMap(time);
   drawPlayer(time);
@@ -510,6 +603,16 @@ function render(time) {
 function performMove(dx, dy) {
   if (!started || dialogueOpen || $("#pixel-complete").hidden === false) return;
   game = worldEngine.move(game, dx, dy);
+}
+
+function triggerJump() {
+  if (!started || dialogueOpen || $("#pixel-complete").hidden === false) return;
+  const now = performance.now();
+  if (now < jumpUntil) return;
+  playerAction = "jump";
+  jumpStartedAt = now;
+  jumpUntil = now + 480;
+  toast("调查员跳跃 · 观察路径的高度变化");
 }
 
 function collect(id) {
@@ -569,10 +672,13 @@ function update(delta) {
   if (keys.has("arrowright") || keys.has("d")) dx += 1;
   if (keys.has("arrowup") || keys.has("w")) dy -= 1;
   if (keys.has("arrowdown") || keys.has("s")) dy += 1;
-  if ((dx || dy) && movementClock >= MOVE_INTERVAL) {
+  const moving = Boolean(dx || dy);
+  if (moving && movementClock >= MOVE_INTERVAL) {
     performMove(dx, dy);
     movementClock = 0;
   }
+  if (performance.now() >= jumpUntil) playerAction = moving ? "walk" : "idle";
+  else playerAction = "jump";
   const nextScene = worldEngine.sceneAt(game.player);
   if (nextScene !== currentScene) {
     currentScene = nextScene;
@@ -597,6 +703,9 @@ function reset() {
   storyWorld = null;
   storyBeatIndex = 0;
   movementClock = 0;
+  playerAction = "idle";
+  jumpStartedAt = 0;
+  jumpUntil = 0;
   zoom = worldEngine.DEFAULT_ZOOM;
   camera = worldEngine.cameraFor(game.player, { width: canvas.width, height: canvas.height }, zoom);
   dialogueOpen = false;
@@ -611,12 +720,13 @@ function reset() {
 
 function handleKeydown(event) {
   const key = event.key.toLowerCase();
-  if (["arrowleft", "arrowright", "arrowup", "arrowdown", "w", "a", "s", "d", "e", " "].includes(key)) event.preventDefault();
+  if (["arrowleft", "arrowright", "arrowup", "arrowdown", "w", "a", "s", "d", "e", "j", "shift", " "].includes(key)) event.preventDefault();
   if (!started && key === "enter") { $("#pixel-start-button").click(); return; }
   if (dialogueOpen) {
     if ((key === " " || key === "e" || key === "enter") && !dialogueLocked && !$("#pixel-close").hidden) closeDialogue();
     return;
   }
+  if (key === "j" || key === "shift") { triggerJump(); return; }
   if (key === "e" || key === " ") interact();
   else {
     const direction = worldEngine.directionForKey(key);
@@ -640,6 +750,7 @@ $("#pixel-music-toggle").addEventListener("click", () => {
 });
 $("#pixel-continue").addEventListener("click", () => { $("#pixel-complete").hidden = true; canvas.focus(); });
 $("#pixel-touch-action").addEventListener("click", interact);
+$("#pixel-touch-jump").addEventListener("click", triggerJump);
 
 function setZoom(nextZoom) {
   zoom = Math.max(worldEngine.MIN_ZOOM, Math.min(worldEngine.MAX_ZOOM, nextZoom));

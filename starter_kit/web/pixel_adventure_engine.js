@@ -13,6 +13,11 @@
   const MIN_ZOOM = 0.65;
   const MAX_ZOOM = 2.4;
   const MOVE_INTERVAL = 0.14;
+  const CHARACTER_FRAMES = {
+    player: { idle: [0, 1], walk: [0, 1, 2, 3], jump: [0, 1], left: [0], right: [1], up: [2], down: [3] },
+    mentor: { idle: [0, 1], walk: [0, 1, 0, 2], jump: [0, 1], left: [0], right: [1], up: [2], down: [3] },
+    xiaoman: { idle: [0, 1], walk: [0, 2, 1, 3], jump: [1, 0], left: [1], right: [0], up: [2], down: [3] },
+  };
   const SHARDS = ["state", "repeat", "control"];
   const GUIDE_STEPS = [
     { id: "move", action: "用方向键 / WASD 移动到林默身边" },
@@ -58,13 +63,13 @@
     { id: "well-wall", x: 18, y: 13, width: 3, height: 1, kind: "building" },
   ];
   const SCENES = {
-    village: { name: "量子前哨", range: [0, 8], accent: "#f6dd78", phase: "prepared", background: "/assets/pixel-space-background.png" },
-    river: { name: "纠缠能道", range: [9, 15], accent: "#78c7d4", phase: "entangled", background: "/assets/pixel-space-bridge.png" },
-    archive: { name: "证据环站", range: [16, 23], accent: "#f06a7b", phase: "audited", background: "/assets/pixel-space-archive.png" },
+    village: { name: "量子前哨", range: [0, 8], accent: "#f6dd78", phase: "prepared", background: "/assets/pixel-space-background-v2.png" },
+    river: { name: "纠缠能道", range: [9, 15], accent: "#78c7d4", phase: "entangled", background: "/assets/pixel-space-bridge-v2.png" },
+    archive: { name: "证据环站", range: [16, 23], accent: "#f06a7b", phase: "audited", background: "/assets/pixel-space-archive-v2.png" },
   };
 
   function createPixelGame() {
-    return { player: { x: 2, y: 14, facing: "right" } };
+    return { player: { x: 2, y: 14, facing: "down" } };
   }
 
   function isWall(x, y) {
@@ -140,5 +145,5 @@
     return { event: target.kind, id: target.id };
   }
 
-  return { BUILDINGS, DEFAULT_ZOOM, GUIDE_STEPS, HEIGHT, MAP, MAX_ZOOM, MIN_ZOOM, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt };
+  return { BUILDINGS, CHARACTER_FRAMES, DEFAULT_ZOOM, GUIDE_STEPS, HEIGHT, MAP, MAX_ZOOM, MIN_ZOOM, MOVE_INTERVAL, OBSTACLES, SCENES, SHARDS, TARGETS, TILE, WIDTH, WORLD_SCALE, cameraFor, createPixelGame, directionForKey, interact, isWall, isWater, move, obstacleAt, sceneAt };
 });

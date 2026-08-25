@@ -40,7 +40,7 @@
       <div class="quickbar-slot" data-slot="control"><i></i><small>对照</small></div>
       <span class="quickbar-tip">靠近发光碎片按 <kbd>E</kbd></span>
     </section>
-    <aside class="pixel-controls"><kbd>方向键 / WASD</kbd> 移动 <kbd>E</kbd> 调查</aside>
+    <aside class="pixel-controls"><kbd>方向键 / WASD</kbd> 移动 <kbd>J / Shift</kbd> 跳跃 <kbd>E</kbd> 调查</aside>
     <div id="pixel-zoom-meter" class="pixel-zoom-meter" aria-live="polite"><strong>82%</strong><small>双指捏合 / 滚轮缩放</small></div>
     <div id="pixel-toast" class="pixel-toast" aria-hidden="true"></div>
     <section id="pixel-dialogue" class="pixel-dialogue" role="dialog" aria-modal="true" aria-labelledby="pixel-speaker" hidden>
@@ -50,6 +50,7 @@
     </section>
     <section id="pixel-start" class="pixel-start">
       <div class="pixel-sun" aria-hidden="true"></div>
+      <img id="pixel-intro-character" class="pixel-intro-character" src="/assets/pixel-protagonist-intro.png" alt="Atlas-7 调查员，科幻日式 RPG 角色">
       <small>QUANTUM ATLAS · SIDE QUEST</small>
       <img class="start-sponsor" src="/assets/shenicest-pixel-logo.png" alt="SheNicest">
       <h1>像素调查局</h1>
@@ -60,12 +61,13 @@
         <div><b>03</b><strong>过桥</strong><small>让两条路径相遇</small></div>
       </div>
       <button id="pixel-start-button" type="button">开始调查 <span>ENTER</span></button>
-      <em>方向键 / WASD 移动 · E 调查</em>
+      <em>方向键 / WASD 移动 · J / Shift 跳跃 · E 调查</em>
     </section>
     <section id="pixel-complete" class="pixel-complete" role="dialog" aria-modal="true" hidden>
       <small>QUEST CLEAR</small><h2>量子井亮了！</h2><p id="pixel-complete-text"></p><button id="pixel-continue" type="button">继续在地图里走走</button><a href="/">回到 LoomQ 实验室</a>
     </section>
     <button id="pixel-touch-action" class="pixel-touch-action" type="button" aria-label="调查附近目标">E</button>
+    <button id="pixel-touch-jump" class="pixel-touch-jump" type="button" aria-label="跳跃">↟</button>
     <div id="pixel-stick" class="pixel-stick" aria-label="像素版触屏移动摇杆"><i></i></div>
     <p id="pixel-sr" class="pixel-sr" aria-live="polite"></p>
   </main>

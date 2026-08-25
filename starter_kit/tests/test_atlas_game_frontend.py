@@ -191,6 +191,44 @@ process.stdout.write(JSON.stringify({
         self.assertIsNone(result["none"])
 
     @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
+    def test_pixel_characters_declare_directional_animation_frames(self):
+        script = """
+const pixel = require(process.argv[1]);
+process.stdout.write(JSON.stringify(pixel.CHARACTER_FRAMES));
+"""
+        completed = subprocess.run(
+            [
+                shutil.which("node"),
+                "-e",
+                script,
+                str(ROOT / "web" / "pixel_adventure_engine.js"),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        frames = json.loads(completed.stdout)
+        self.assertEqual(set(frames), {"player", "mentor", "xiaoman"})
+        for character in frames.values():
+            self.assertTrue({"idle", "walk", "jump", "left", "right", "up", "down"}.issubset(character))
+            self.assertGreaterEqual(len(character["walk"]), 3)
+            self.assertGreaterEqual(len(character["jump"]), 2)
+        self.assertNotEqual(frames["mentor"]["walk"], frames["xiaoman"]["walk"])
+
+    def test_pixel_renderer_has_distinct_walk_jump_and_facing_poses(self):
+        source = (ROOT / "web" / "pixel.js").read_text()
+        self.assertIn('function animationFrame(', source)
+        self.assertIn('action === "walk"', source)
+        self.assertIn('action === "jump"', source)
+        self.assertIn('function triggerJump()', source)
+        self.assertIn('pixel-heroine-sheet.png', source)
+        self.assertIn('drawHeroineSprite(', source)
+        self.assertIn('facingUp', source)
+        self.assertIn('pixel-touch-jump', (ROOT / "web" / "pixel.html").read_text())
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js is optional")
     def test_adventure_world_moves_collides_and_unlocks_interactions(self):
         """A missing collision or quest gate would let players walk through the case."""
         script = """

@@ -319,6 +319,9 @@ class WebLabTests(unittest.TestCase):
         self.assertIn('id="pixel-canvas"', page)
         self.assertIn('id="pixel-zoom-meter"', page)
         self.assertIn("双指捏合", page)
+        self.assertIn('id="pixel-intro-character"', page)
+        self.assertIn('id="pixel-touch-jump"', page)
+        self.assertIn("J / Shift", page)
 
     def test_pixel_quantum_game_assets_are_served_locally(self):
         for path, content_type in (
@@ -344,11 +347,16 @@ class WebLabTests(unittest.TestCase):
             "/assets/pixel-space-background.png",
             "/assets/pixel-space-bridge.png",
             "/assets/pixel-space-archive.png",
+            "/assets/pixel-space-background-v2.png",
+            "/assets/pixel-space-bridge-v2.png",
+            "/assets/pixel-space-archive-v2.png",
             "/assets/pixel-controls.png",
             "/assets/pixel-dpad.png",
             "/assets/pixel-action.png",
             "/assets/pixel-phase-ring.png",
             "/assets/shenicest-pixel-logo.png",
+            "/assets/pixel-protagonist-intro.png",
+            "/assets/pixel-heroine-sheet.png",
         ):
             with self.subTest(path=path):
                 status, headers, body = self.request(path)
@@ -356,15 +364,16 @@ class WebLabTests(unittest.TestCase):
                 self.assertEqual(headers["Content-Type"], "image/png")
                 self.assertTrue(body.startswith(b"\x89PNG\r\n\x1a\n"))
 
-    def test_pixel_stage_has_a_visual_map_fallback_and_cropped_mobile_view(self):
+    def test_pixel_stage_preserves_the_complete_scene_without_cover_cropping(self):
         status, headers, body = self.request("/pixel.css")
 
         css = body.decode()
         self.assertEqual(status, 200)
-        self.assertIn("pixel-space-background.png", css)
+        self.assertIn("pixel-space-background-v2.png", css)
         self.assertIn("height:min(100vh, 66.6667vw)", css)
-        self.assertIn("object-fit:cover", css)
-        self.assertIn("max-aspect-ratio:3 / 2", css)
+        self.assertIn("object-fit:contain", css)
+        self.assertNotIn("object-fit:cover", css)
+        self.assertNotIn("background:#081522 url('/assets/pixel-space-background.png') center / cover", css)
 
     def test_frontend_renders_trace_amplitudes_and_can_clear_history(self):
         status, headers, body = self.request("/app.js")
