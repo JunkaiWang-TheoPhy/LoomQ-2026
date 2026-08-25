@@ -15,6 +15,8 @@ class StoryWorldFrontendContractTests(unittest.TestCase):
         self.assertIn("/api/story-world", script)
         self.assertIn("renderStoryBoard", script)
         self.assertIn("refreshStoryWorld(true)", script)
+        self.assertIn("runCaseExperiment", script)
+        self.assertIn("/api/compare", script)
         self.assertIn("caseFile.title", script)
         self.assertNotIn("她的第八十年", script)
         self.assertNotIn("第二个工牌", script)

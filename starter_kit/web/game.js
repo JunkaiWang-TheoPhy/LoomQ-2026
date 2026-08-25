@@ -227,6 +227,10 @@ function openCaseBriefing(caseFile) {
     text: `${caseFile.question} ${caseFile.identities.public} ${caseFile.identities.hidden}`,
     choices: [
       {
+        label: "运行这宗案件的最小对照实验",
+        action: () => runCaseExperiment(caseFile),
+      },
+      {
         label: "查看这宗案件的证据边界",
         action: () => showDialogue({
           speaker: caseFile.title,
@@ -236,6 +240,50 @@ function openCaseBriefing(caseFile) {
       },
     ],
   });
+}
+
+async function runCaseExperiment(caseFile) {
+  const contract = caseFile.evidence_contract;
+  busy = true;
+  dialogueLocked = true;
+  showDialogue({
+    speaker: caseFile.title,
+    kicker: "正在比较两条可重放线路",
+    text: "两条线路只改变证据契约中标出的条件；结果来自本地精确状态比较。",
+    object: true,
+    locked: true,
+  });
+  try {
+    const response = await fetch("/api/compare", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reference_qasm: contract.reference_qasm,
+        candidate_qasm: contract.variant_qasm,
+      }),
+    });
+    const report = await response.json();
+    if (!response.ok) throw new Error(report.error?.message || "对照实验失败");
+    const gate = report.first_divergent_gate == null
+      ? "没有发现首个分歧门"
+      : `首个分歧在 g${report.first_divergent_gate + 1}`;
+    showDialogue({
+      speaker: caseFile.title,
+      kicker: "实验记录已写入案件",
+      text: `${gate}；最终分布总变差距离 ${Number(report.final_distribution_distance || 0).toFixed(6)}。${report.scope_note} ${caseFile.claim_boundary}`,
+      object: true,
+    });
+  } catch (error) {
+    showDialogue({
+      speaker: caseFile.title,
+      kicker: "实验中断",
+      text: `没有生成可复核结果：${error.message}`,
+      object: true,
+    });
+  } finally {
+    busy = false;
+    dialogueLocked = false;
+  }
 }
 
 function worldToScreen(x, y) {
