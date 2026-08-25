@@ -185,6 +185,9 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             if path == "/api/agent":
                 self._agent(payload)
                 return
+            if path == "/api/cross-platform-agent":
+                self._cross_platform_agent(payload)
+                return
             self._error(HTTPStatus.NOT_FOUND, "not_found", "API 路径不存在")
         except (TypeError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "invalid_request", str(exc))
@@ -596,6 +599,28 @@ class LoomQWebHandler(BaseHTTPRequestHandler):
             return
         reply = adapter.agent_chat(prompt, history)
         self._send_json(HTTPStatus.OK, {"reply": reply})
+
+    def _cross_platform_agent(self, payload: Dict[str, Any]) -> None:
+        prompt = payload.get("prompt")
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("prompt 必须是非空字符串")
+        if len(prompt) > 20_000:
+            raise ValueError("prompt 最多 20000 个字符")
+        history = normalize_history(payload.get("history"))
+        required = ("LOOMQ_LLM_BASE_URL", "LOOMQ_LLM_API_KEY", "LOOMQ_LLM_MODEL")
+        missing = [name for name in required if not os.environ.get(name)]
+        if missing:
+            self._error(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "llm_not_configured",
+                "请先在启动服务的 shell 配置 " + "、".join(missing),
+            )
+            return
+        raw_shots = payload.get("shots", 128)
+        if isinstance(raw_shots, bool) or not isinstance(raw_shots, int):
+            raise ValueError("shots 必须是整数")
+        plan = adapter.cross_platform_agent(prompt, history, shots=raw_shots)
+        self._send_json(HTTPStatus.OK, plan)
 
 
 def create_server(host: str = "127.0.0.1", port: int = 8765) -> ThreadingHTTPServer:
