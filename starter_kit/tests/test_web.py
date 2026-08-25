@@ -133,6 +133,12 @@ class WebLabTests(unittest.TestCase):
             self.assertIn("image/png", headers["Content-Type"], asset)
             self.assertGreater(len(body), 1000, asset)
 
+    def test_case_page_assets_are_served(self):
+        for path in ("/case.html", "/case.js", "/case.css"):
+            status, _headers, body = self.request(path)
+            self.assertEqual(status, 200, path)
+            self.assertTrue(body, path)
+
     def test_home_exposes_learn_repair_backend_and_accessible_results(self):
         _status, _headers, body = self.request("/")
 

@@ -36,6 +36,14 @@ class StoryModeConsoleTests(unittest.TestCase):
         self.assertIn("data-beginner-demo-replay", page)
         self.assertIn("prefers-reduced-motion", js)
 
+    def test_case_cards_open_the_interactive_case_page(self):
+        page = (WEB / "index.html").read_text(encoding="utf-8")
+        case_page = (WEB / "case.html").read_text(encoding="utf-8")
+        for case_id in ("eightieth-year", "second-badge", "inside-tide-line", "night-grid", "testimony-checker"):
+            self.assertIn(f"case.html?case={case_id}", page)
+        for marker in ("case-intro", "case-interaction", "case-summary", "进行一次小实验", "你学会了"):
+            self.assertIn(marker, case_page)
+
 
 if __name__ == "__main__":
     unittest.main()

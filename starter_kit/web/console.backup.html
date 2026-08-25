@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Quantum Atlas · 无形世界调查局：把量子实验、推理与证据写进一段可重放的故事">
-  <title>Quantum Atlas · 无形世界调查局</title>
+  <meta name="description" content="LoomQ 零依赖量子电路实验台">
+  <title>LoomQ · 量子电路实验台</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="enhancements.css">
@@ -20,62 +20,6 @@
   </header>
 
   <main id="top">
-    <section class="story-mode" aria-labelledby="story-mode-title">
-      <div class="story-mode-art">
-        <img src="assets/story/zero-point-station.png" alt="零点观测站的二维故事插图">
-        <span class="story-mode-stamp">QUANTUM ATLAS · 观测档案</span>
-      </div>
-      <div class="story-mode-copy">
-        <p class="eyebrow">Quantum Atlas · 无形世界调查局</p>
-        <p class="story-mode-kicker">序章 · 她的第八十年</p>
-        <h1 id="story-mode-title">她不是来寻找答案的，<em>她是来检查答案。</em></h1>
-        <p class="story-mode-lede">沈遥在零点观测站收到一份来自自己年轻版本的档案。系统说一切都已经预测完毕；她只相信四条规则：先留下预测，只改变一扇门，等待结果，如果证据不够就把“不够”留下。</p>
-        <div class="story-mode-ruleline" aria-label="调查规则"><span>01 先猜</span><span>02 只改一扇门</span><span>03 看首个分歧</span><span>04 再下结论</span></div>
-        <p class="story-mode-boundary">故事里的选择由实验留下证据。插画与台词不参与量子判定；真正的结果来自下面每一次本地运行、比较、推理和审计。</p>
-      </div>
-    </section>
-
-    <section class="beginner-intro" aria-labelledby="beginner-intro-title">
-      <div class="beginner-intro-copy">
-        <p class="eyebrow">第一次来量子世界？从这里开始</p>
-        <p class="beginner-tag">零基础也能直接用 · 先看小球，再看结果</p>
-        <h2 id="beginner-intro-title">从一个小球开始，<em>看懂结果。</em></h2>
-        <p>你不需要先会 QASM，也不用记住门的名字。把下面的小球当成一个“可能性”，我们只看三件事：它怎样移动、我们改了什么、最后看见了什么。</p>
-        <ol class="beginner-steps">
-          <li><b>1</b><span><strong>先观察</strong><small>小球代表一次待验证的可能性。</small></span></li>
-          <li><b>2</b><span><strong>拨动一扇门</strong><small>系统只改变一个条件，保留公平比较。</small></span></li>
-          <li><b>3</b><span><strong>看懂结果</strong><small>结果出现后，再决定你的解释是否站得住。</small></span></li>
-        </ol>
-        <a class="story-primary beginner-cta" href="#inquiry-world">我想试一次</a>
-      </div>
-      <div class="qubit-demo" aria-label="量子可能性入门动画">
-        <div class="qubit-demo-stage" data-beginner-demo tabindex="0" role="img" aria-label="小球从可能性移动到观测">
-          <span class="qubit-demo-orbit orbit-one"></span><span class="qubit-demo-orbit orbit-two"></span>
-          <span class="qubit-demo-ball" aria-hidden="true"></span>
-          <span class="qubit-demo-node node-left">可能性</span><span class="qubit-demo-node node-right">观测</span>
-          <span class="qubit-demo-gate">只改一个条件</span>
-        </div>
-        <div class="qubit-demo-caption">
-          <p><strong>动画只是比喻</strong><span>真正的答案会在后面的本地实验中产生。</span></p>
-          <button class="qubit-demo-replay" type="button" data-beginner-demo-replay>重播小球演示</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="story-caseboard" aria-labelledby="caseboard-title">
-      <div class="story-caseboard-heading">
-        <div><p class="eyebrow">五份档案 · 五次回到现场</p><h2 id="caseboard-title">她的双面人生</h2></div>
-        <p>每个案件都有一个公开身份、一个隐藏身份，以及一项必须被重新检查的实验。</p>
-      </div>
-      <div class="story-case-grid">
-        <a class="story-case" data-story-case="eightieth-year" href="case.html?case=eightieth-year"><img src="assets/story/eighty-years-window.png" alt="她的第八年十档案插图"><span>第一案</span><strong>她的第八十年</strong><small>数字记忆与同意</small></a>
-        <a class="story-case" data-story-case="second-badge" href="case.html?case=second-badge"><img src="assets/story/second-badge.png" alt="第二个工牌档案插图"><span>第二案</span><strong>第二个工牌</strong><small>谁替谁签字</small></a>
-        <a class="story-case" data-story-case="inside-tide-line" href="case.html?case=inside-tide-line"><img src="assets/story/inside-tide-line.png" alt="潮线以内档案插图"><span>第三案</span><strong>潮线以内</strong><small>预测与被预测者</small></a>
-        <a class="story-case" data-story-case="night-grid" href="case.html?case=night-grid"><img src="assets/story/night-grid.png" alt="电网的夜班档案插图"><span>第四案</span><strong>电网的夜班</strong><small>谁承担最优的代价</small></a>
-        <a class="story-case" data-story-case="testimony-checker" href="case.html?case=testimony-checker"><img src="assets/story/evidence-tower.png" alt="证词校验器档案插图"><span>第五案</span><strong>证词校验器</strong><small>不知道也要留下</small></a>
-      </div>
-    </section>
-
     <section class="story-hero" aria-labelledby="hero-title">
       <img src="assets/quantum-world-journey.png" alt="一位初学者从观测站走向由量子电路线构成的分岔世界，手中拿着实验护照">
       <div class="story-hero-copy">

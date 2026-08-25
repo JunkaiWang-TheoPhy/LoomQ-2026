@@ -36,6 +36,7 @@ _STATIC = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/favicon.ico": ("favicon.svg", "image/svg+xml"),
+    "/favicon.svg": ("favicon.svg", "image/svg+xml"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/inquiry.js": ("inquiry.js", "text/javascript; charset=utf-8"),
     "/assets/quantum-world-journey.png": (
@@ -76,6 +77,9 @@ _STATIC = {
     ),
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/enhancements.css": ("enhancements.css", "text/css; charset=utf-8"),
+    "/case.html": ("case.html", "text/html; charset=utf-8"),
+    "/case.js": ("case.js", "text/javascript; charset=utf-8"),
+    "/case.css": ("case.css", "text/css; charset=utf-8"),
 }
 
 # Story artwork is local-only and explicitly allow-listed so the narrative
