@@ -1,6 +1,6 @@
 # 固定提交能力覆盖矩阵
 
-本表只比较截止前已由官方机器人归档的固定 commit，不比较赛后分支，也不把“申报”当成“得分”。当前公开可审对手基线为：
+本表只比较截止前已由官方机器人归档的固定 commit，不比较赛后分支，也不把“申报”当成“得分”。截至 2026-08-25 08:00 CST，当前公开可审对手基线为：
 
 - [mayloveless #75](https://github.com/QAIDAO/LoomQ-2026/issues/75)，`9b1fe15596f8c63f51ddd08caaa323ca51dbcf77`
 - [0Dionysus0 #80](https://github.com/QAIDAO/LoomQ-2026/issues/80)，`e9c273dab15447827df8ca093bdea43b6fef8101`
@@ -14,6 +14,17 @@
 - [3dmove #102](https://github.com/QAIDAO/LoomQ-2026/issues/102)，`1c7b4e74ee968819bc88a78240aafee938c6892c`（仅申报 L1/L2，无真机证据或 L3）
 - [danjituya #103](https://github.com/QAIDAO/LoomQ-2026/issues/103)，`5773b3f451f0163030cee3c15ba008a8246fd10e`（L1/L2/L3、零依赖 Web；未申报真机或量子 RISC-V）
 - [Pennie514 #126](https://github.com/QAIDAO/LoomQ-2026/issues/126)，`2878b858d981d6b1667c434b8550deb662c895df`（L1/L2/L3、Web/CLI、量子 RISC-V；已归档 SpinQ 与 OriginQ 两平台真机结果）
+- [Pennie514 #148](https://github.com/QAIDAO/LoomQ-2026/issues/148)，`f2aefd3498771329fa0af35d3f87a87f569aef01`（L1/L2/L3；更新后的 Web、UX 截图、Hybrid/RISC-V 测试与 SpinQ/OriginQ 证据目录）
+- [lil4notfound #151](https://github.com/QAIDAO/LoomQ-2026/issues/151)，`5c01de484a69945e9bf8d347e581332c8f8939b9`（L1/L2/L3；自定义 Agent、Web、Hybrid 模块；Issue 未申报真机证据）
+- [danjituya #153](https://github.com/QAIDAO/LoomQ-2026/issues/153)，`98ed138acd326d1af8990734d1ce4a49ecfb6977`（L1/L2/L3；零依赖 Web、Agent、Hybrid 与多组公开测试；Issue 未申报真机证据）
+- [Yolanlanlanda #155](https://github.com/QAIDAO/LoomQ-2026/issues/155)，`91a484ce9a5b822ba3aaf408735b1933e802e112`（L1/L2/L3；自定义 Hybrid 与双平台证据文件；Issue 未申报硬件证据路径）
+- [iiixiscientia #158](https://github.com/QAIDAO/LoomQ-2026/issues/158)，`bbe5f1ce1baffc5109304776742f351f234f7708`（L1/L2/L3；自定义 Agent、Web app、Hybrid 与压力测试；Issue 申报 evidence 目录）
+- [PHTPSN #162](https://github.com/QAIDAO/LoomQ-2026/issues/162)，`01faef3ef986bf548283951d77d09e7262e6ed55`（L1/L2；Issue 未勾选 L3）
+- [LinXuan2576 #163](https://github.com/QAIDAO/LoomQ-2026/issues/163)，`49e88391754d7f7a17d5702eecffff7cbd4df4af`（L1/L2/L3；自然语言 Agent、自验重试、后端选择、Hybrid compiler 与多平台证据文件）
+- [CloverLiu03 #164](https://github.com/QAIDAO/LoomQ-2026/issues/164)，`cf8e943169d89e3a7e22fc34243a3d79398fe6fc`（仅 L1；Issue 申报 evidence 目录）
+- [arwenlinzhaoqing #165](https://github.com/QAIDAO/LoomQ-2026/issues/165)，`c1d2a800984976720d9382ca9a196be3d3bff3d8`（仅 L1）
+- [softeight #166](https://github.com/QAIDAO/LoomQ-2026/issues/166)，`b00edb6281617db43ff1ca11a5fc92de8f53b310`（L1/L3；未勾选 L2）
+- [zhaoqianyuan24 #168](https://github.com/QAIDAO/LoomQ-2026/issues/168)，`c5a7822b8bbe522cc334047838cfc50bc54e3357`（L1/L2/L3；自定义 L2 Agent、Hybrid executor 与完整测试目录）
 - [QBridge #108](https://github.com/QAIDAO/LoomQ-2026/issues/108)，`ef58b3387b8c942581f4a507fdf1f06fd929006f`（四页零依赖 Web、L1/L2/L3、单个 SpinQ 真机 job）
 - [jessicaruan #120](https://github.com/QAIDAO/LoomQ-2026/issues/120)，`434b01daf12b165dc18dd458c241a8977e4f62f4`（相对 #112 只修改 `evidence/README.md` 14 行；L1/L2/L3、双厂商真机材料、随机 L3 差分与 `CUSTOM-0` 机器码闭环保持不变）
 - [yiyuanrvk77 #115](https://github.com/QAIDAO/LoomQ-2026/issues/115)，`d85e5c2cd39f19082e640a435ec1a38d65844329`（Quantum Cave、四个纠错交互、L1/L2/L3、三门 `QUANT custom-0` 与单个 SpinQ 真机 job）
@@ -35,7 +46,7 @@
 | P1 断言证据面板 | 新增公开审计重点：Huxingyu、Duanice、UokyI、orange-city 均需人工点开验证 | `/api/assert` 与 Web 断言面板区分 exact-local、finite-shots、provider-probabilities；显式展示 pass/fail/inconclusive 和不归因具体噪声机制 | 已实现并提供复核入口 |
 | P2 Hybrid 分支回放 | 新增公开审计重点：Huxingyu、Duanice、UokyI、orange-city 均需人工点开验证 | `/api/hybrid-trace` 与 Web 回放面板显示 branch path、machine jump vs source condition、measurement provenance、寄存器增量与机器字 | 已实现并提供复核入口 |
 | Hybrid 路径证书 | jessicaruan #120 有随机 L3 差分和量子 RISC-V 闭环，但未归档路径概率或不可达路径证书 | `/api/hybrid-paths` 穷举有界 declared clbits，正确处理 mid-circuit measurement 后续量子门，聚合精确路径概率并标出 dead/unreachable path；验证端从源程序重新计算 | 额外提供可重算的概率完备证书 |
-| 跨模块 Witness Chain | 十五份固定提交未展示共享源操作坐标的统一审计工件 | 稳定 `gN/mN` ID 对齐 ProofTrace、反事实、断言与 Hybrid provenance；内容地址 JSON 可下载并从输入全量重算，结构不匹配时失败关闭 | 额外提供可重算审计链 |
+| 跨模块 Witness Chain | 本表列出的公开固定提交中，尚未抽查到与本仓库相同的共享源操作坐标审计工件 | 稳定 `gN/mN` ID 对齐 ProofTrace、反事实、断言与 Hybrid provenance；内容地址 JSON 可下载并从输入全量重算，结构不匹配时失败关闭 | 额外提供可重算审计链；不把未审查分支写成能力缺失 |
 | 多轮 Agent 会话 | 0Dionysus0 的 session 交互 | 严格 `user/assistant` 交替、最多四轮、40k 字符总限额、清空上下文 | 已实现并补充边界检查 |
 | 生成、修复、后端推荐 | talk2joan、danjituya、Pennie514、QBridge 与 jessicaruan 等公开 Web Agent | Web 四条引导路径；能力表 grounding；QASM 语法、门集、目标态确定性复核与一次诊断重试；最坏路径中模型连续返回 1000 次无效内容，500/500 固定语料仍由同一判据安全恢复 | 500 条固定语料可安全回退 |
 | Prompt Contract | jessicaruan #120、QBridge #108 与 yiyuanrvk77 #115 均有 prompt 分类或 QASM 验证，未展示由模型与验证器共享、可重建的请求合同 | fence 外语义抽取、否定与混合意图、目标基态和后端约束进入同一确定性合同；原文/语义/合同 SHA-256 可重建并明确不是数字签名 | 额外提供模型前后的同一语义判据 |
@@ -56,4 +67,4 @@
 1. **真实 DeepSeek 成绩**：runner、500 例语料和防篡改 summary 都已存在，但当前没有获授权的 `LOOMQ_LLM_*` 服务。仓库不会把本地 fixture 或其他模型冒充正式 DeepSeek。
 2. **额外真机层析/多电路 job**：现有两平台 Bell job 合法且完整；若要覆盖 Wayne 的补充层析，必须在赛程窗口内获得新的平台登录、真实 job ID 和原始返回。模拟器不能替代这项证据。
 
-这两项是外部实验材料差距，不是本地软件缺少接口。基于上述十五个公开固定提交，本表只记录当前仓库已经放进仓库、且能直接复核的软件能力；私有 12 例 DeepSeek 评测和未公开 entrant 的最终比较结论仍然未知。
+这两项是外部实验材料差距，不是本地软件缺少接口。基于本页列出的公开固定提交及其归档 Issue，本表只记录当前仓库已经放进仓库、且能直接复核的软件能力；私有 12 例 DeepSeek 评测和未公开 entrant 的最终比较结论仍然未知。
