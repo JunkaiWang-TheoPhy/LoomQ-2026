@@ -19,6 +19,9 @@ const mapImages = Object.fromEntries(Object.entries(worldEngine.SCENES).map(([id
 const heroineSheet = new Image();
 heroineSheet.src = "/assets/pixel-heroine-sheet.png";
 const HEROINE_CELL = { width: 384, height: 512 };
+const buildingSheet = new Image();
+buildingSheet.src = "/assets/pixel-buildings-v2.png";
+const BUILDING_CELL = { width: 609, height: 646 };
 
 let game = worldEngine.createPixelGame();
 let mission = { shards: [], complete: false };
@@ -356,6 +359,30 @@ function drawBuildings() {
     ctx.fillStyle = COLORS.sky;
     ctx.fillRect(px + 3, py + 3, Math.max(3, obstacle.width * TILE - 6), 2);
   });
+  if (buildingSheet.complete && buildingSheet.naturalWidth) {
+    const spriteIndex = { outpost: 0, relay: 1, archive: 2, well: 3 };
+    worldEngine.BUILDINGS.forEach((building) => {
+      const index = spriteIndex[building.kind];
+      if (index == null) return;
+      const sourceX = (index % 2) * BUILDING_CELL.width;
+      const sourceY = Math.floor(index / 2) * BUILDING_CELL.height;
+      const destinationWidth = building.kind === "archive" ? 78 : 70;
+      const destinationHeight = building.kind === "archive" ? 78 : 70;
+      const destinationX = (building.x + building.width / 2) * TILE - destinationWidth / 2;
+      const destinationY = (building.y + building.height / 2) * TILE - destinationHeight / 2;
+      ctx.drawImage(
+        buildingSheet,
+        sourceX,
+        sourceY,
+        BUILDING_CELL.width,
+        BUILDING_CELL.height,
+        destinationX,
+        destinationY,
+        destinationWidth,
+        destinationHeight,
+      );
+    });
+  }
 }
 
 function drawQuantumField(time) {
@@ -755,6 +782,8 @@ function reset() {
   game = worldEngine.createPixelGame();
   mission = { shards: [], complete: false };
   currentScene = worldEngine.sceneAt(game.player);
+  musicScene = currentScene;
+  musicStep = 0;
   completedNodes = [];
   storyWorld = null;
   storyBeatIndex = 0;

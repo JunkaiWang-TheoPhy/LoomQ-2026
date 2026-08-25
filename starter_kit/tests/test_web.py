@@ -350,6 +350,7 @@ class WebLabTests(unittest.TestCase):
             "/assets/pixel-space-background-v2.png",
             "/assets/pixel-space-bridge-v2.png",
             "/assets/pixel-space-archive-v2.png",
+            "/assets/pixel-buildings-v2.png",
             "/assets/pixel-building-sheet-v2.png",
             "/assets/pixel-space-capsule-rpg-v1.png",
             "/assets/pixel-controls.png",
@@ -390,6 +391,8 @@ class WebLabTests(unittest.TestCase):
         self.assertIn("function drawContain(image)", script)
         self.assertIn("drawContain(mapImage)", script)
         self.assertNotIn("function drawCover(image)", script)
+        self.assertIn("pixel-buildings-v2.png", script)
+        self.assertIn("buildingSheet", script)
 
     def test_pixel_music_has_layered_scene_patterns_and_event_stingers(self):
         status, headers, body = self.request("/pixel.js")
