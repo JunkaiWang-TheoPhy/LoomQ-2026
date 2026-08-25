@@ -64,6 +64,13 @@ $("#run-case-experiment").addEventListener("click", async (event) => {
   button.disabled = true;
   button.textContent = "观察中…";
   try {
+    if (location.protocol === "file:") {
+      $(`[data-case-result]`).hidden = false;
+      $(`[data-result-title]`).textContent = "文件预览演示：两次观察的差异来自一个条件";
+      $(`[data-result-copy]`).textContent = "你正在直接打开文件，所以这里展示的是离线演示分布。若要运行真实本地实验，请启动 LoomQ 服务后访问 http://127.0.0.1:端口/case.html。";
+      renderBars({ "00": 0.5, "11": 0.5 });
+      return;
+    }
     const response = await fetch("/api/inquiry", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mission: "bell-gates", prediction: "not-sure", conclusion: "h-opens-branches-cx-correlates", shots: 128 }) });
     if (!response.ok) throw new Error("请通过本地服务打开案件页");
     const passport = await response.json();

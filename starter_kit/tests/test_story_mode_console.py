@@ -36,6 +36,11 @@ class StoryModeConsoleTests(unittest.TestCase):
         self.assertIn("data-beginner-demo-replay", page)
         self.assertIn("prefers-reduced-motion", js)
 
+    def test_quantum_basics_are_told_as_shenyaos_lesson(self):
+        page = (WEB / "index.html").read_text(encoding="utf-8")
+        for marker in ("quantum-basics", "沈遥给新观察员", "状态", "叠加", "测量", "纠缠", "干涉"):
+            self.assertIn(marker, page)
+
     def test_case_cards_open_the_interactive_case_page(self):
         page = (WEB / "index.html").read_text(encoding="utf-8")
         case_page = (WEB / "case.html").read_text(encoding="utf-8")
@@ -43,9 +48,20 @@ class StoryModeConsoleTests(unittest.TestCase):
             self.assertIn(f"case.html?case={case_id}", page)
         for marker in ("case-intro", "case-interaction", "case-summary", "进行一次小实验", "你学会了"):
             self.assertIn(marker, case_page)
+
+    def test_home_story_introduction_uses_researcher_daily_life_language(self):
+        page = (WEB / "index.html").read_text(encoding="utf-8")
+        self.assertIn("researcher-diary", page)
+        for phrase in ("清晨", "午后", "夜里", "沈遥", "研究员"):
+            self.assertIn(phrase, page)
+        opening = page[: page.index('<section class="story-hero"')]
+        self.assertNotIn("CX", opening)
+        self.assertNotIn("QASM", opening)
         case_js = (WEB / "case.js").read_text(encoding="utf-8")
         self.assertGreaterEqual(case_js.count("question:"), 5)
         self.assertGreaterEqual(case_js.count("lesson:"), 5)
+        self.assertIn("location.protocol === \"file:\"", case_js)
+        self.assertIn("文件预览演示", case_js)
 
 
 if __name__ == "__main__":
