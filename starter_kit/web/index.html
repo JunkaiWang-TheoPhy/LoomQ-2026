@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/enhancements.css">
 </head>
 <body>
-  <a class="skip-link" href="#inquiry-world">跳到探究任务</a>
+  <a class="skip-link" href="#quantum-guide">跳到量子入门</a>
   <header class="masthead">
     <a class="brand" href="#top" aria-label="LoomQ 首页">
       <span class="brand-mark" aria-hidden="true">LQ</span>
@@ -20,6 +20,42 @@
   </header>
 
   <main id="top">
+    <section id="quantum-guide" class="quantum-guide" aria-labelledby="quantum-guide-title" tabindex="-1">
+      <div class="quantum-guide-heading">
+        <div>
+          <p class="eyebrow">量子村庄 · RPG 前导手册</p>
+          <h1 id="quantum-guide-title">先认识量子世界，<br><em>再开始冒险。</em></h1>
+          <p>这不是一段预先录好的动画。每次按下测量，页面都会用公开的 OpenQASM 电路在本地精确模拟器中计算，再把 0/1 映射成两面世界贴图。</p>
+        </div>
+        <ol id="quantum-guide-lessons" class="quantum-guide-lessons" aria-label="量子入门四课"></ol>
+      </div>
+      <div class="quantum-guide-lab">
+        <article class="quantum-guide-coin" aria-labelledby="quantum-guide-coin-title">
+          <div class="quantum-guide-face-wrap">
+            <img id="quantum-guide-face" src="/assets/quantum-guide/village-face.png" alt="量子硬币尚未测量">
+            <span id="quantum-guide-face-state" class="quantum-guide-face-state">未测量 · 两面都在可能之中</span>
+          </div>
+          <div class="quantum-guide-coin-copy">
+            <span class="inquiry-label">第一关 · 量子硬币</span>
+            <h2 id="quantum-guide-coin-title">一次测量，选择一条世界线</h2>
+            <p id="quantum-guide-copy">H 门把硬币放进叠加态。测量前，村庄与宇宙都保留为可能；测量后，结果会落在其中一面。</p>
+            <button id="quantum-guide-measure" class="primary" type="button">测量这枚硬币</button>
+            <p id="quantum-guide-status" class="quantum-guide-status" role="status" aria-live="polite">准备好后，亲手测一次。</p>
+            <p class="quantum-guide-source">来源：<strong>本地精确模拟器</strong> · 电路与概率可展开复核 · <a href="#evidence-map">真机实验室证据</a></p>
+          </div>
+        </article>
+        <aside class="quantum-guide-concept" aria-label="概念提示">
+          <span class="inquiry-label">你会带进 RPG 的规则</span>
+          <div id="quantum-guide-concept-copy">
+            <h3>从比特到测量</h3>
+            <p>普通比特像落地的硬币；量子比特在测量前用概率描述可能结果。游戏里的两种贴图，是这个规则的可见入口。</p>
+          </div>
+          <code id="quantum-guide-qasm">H → measure q[0] → c[0]</code>
+          <a class="story-secondary" href="#agent-title">让 Agent 帮我设计下一次实验</a>
+        </aside>
+      </div>
+    </section>
+
     <section class="story-hero" aria-labelledby="hero-title">
       <img src="/assets/quantum-world-journey.png" alt="一位初学者从观测站走向由量子电路线构成的分岔世界，手中拿着实验护照">
       <div class="story-hero-copy">
@@ -444,6 +480,7 @@
   <footer><span>LoomQ 2026</span><span>OpenQASM → Native IR → Verified Counts</span></footer>
   <div id="notice" class="notice" role="status" aria-live="polite"></div>
   <script src="/inquiry.js" defer></script>
+  <script src="/quantum-guide.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
