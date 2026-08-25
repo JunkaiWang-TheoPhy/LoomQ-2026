@@ -13,3 +13,11 @@ The page repeats this claim boundary next to the artwork. All scientific conclus
 Prompt brief: a wide paper-textured investigation atlas with three connected landmarks—an observatory, a branching meadow, and an evidence archive tower—plus one novice investigator; editorial cut-paper/screen-print treatment in LoomQ's ivory, ink green, teal, acid-lime, and coral palette; no text, logo, watermark, atom icon, equations, circuit diagrams, cyberpunk styling, or pixel art.
 
 The map labels and progress controls are semantic HTML layered over the image. Their unlocked states come from completed briefing, experiment, and audit actions; the picture itself never determines a scientific result.
+
+## Story case illustrations
+
+The `story/` directory contains six original chapter illustrations generated on 2026-08-25 with the built-in GPT image tool. They cover the Zero Point observatory, Shen Yao's two ages, the tide-line city, the second badge, the night grid, and the evidence archive.
+
+The images share one narrative device: a woman is small inside an overwhelming environment, so the viewer can feel the difference between a private life and the system surrounding it. Each image uses a distinct treatment and composition. They are visual fiction for the Quantum Atlas story layer, not photographs, scientific diagrams, quantum-state plots, measurement results, hardware evidence, or claims about real people.
+
+The six files were resized to 1200×800 for archive and browser weight. No text, logos, watermarks, or third-party franchise assets are embedded. The case titles, progress states, experiment contracts, and evidence boundaries remain server-owned in `loomq/story_world.py`; artwork cannot unlock a case or support a conclusion.
