@@ -7,8 +7,12 @@ import math
 from typing import Dict, List, Tuple
 
 from .emitters import emit
-from .native_ir import verify_native_ir
+from .native_ir import parse_native_ir, verify_native_ir
 from .qasm import Circuit, Gate, Measurement, Operation, parse_qasm
+from .semantic_equivalence import (
+    compare_circuit_semantics,
+    verify_semantic_equivalence_certificate,
+)
 
 
 PROOFTRACE_SCHEMA = "loomq-prooftrace-v1"
@@ -125,6 +129,30 @@ def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+def _whole_circuit_validation(reference: Circuit, candidate: Circuit) -> Dict[str, object]:
+    report = compare_circuit_semantics(reference, candidate)
+    verification = verify_semantic_equivalence_certificate(reference, candidate, report)
+    if not verification["valid"]:
+        raise ValueError(verification["reason"])
+    return report
+
+
+def assess_portability(reference: Circuit, native_ir: str, target: str) -> Dict[str, object]:
+    parsed = parse_native_ir(native_ir, target)
+    report: Dict[str, object] = {
+        "roundtrip_verified": False,
+        "native_ir_sha256": _sha256(native_ir),
+        "whole_circuit_validation": _whole_circuit_validation(reference, parsed),
+    }
+    try:
+        verify_native_ir(reference, native_ir, target)
+    except ValueError as exc:
+        report["roundtrip_error"] = str(exc)
+        return report
+    report["roundtrip_verified"] = True
+    return report
+
+
 def compile_target(qasm_str: str, target: str) -> str:
     """Preserve source operations and verify only the explicitly requested backend."""
     if target not in SUPPORTED_TARGETS:
@@ -142,23 +170,30 @@ def compile_with_proof(qasm_str: str, target: str) -> Tuple[str, Dict[str, objec
     source = parse_qasm(qasm_str)
     optimized, rewrites, lineage = optimize_circuit(source)
     optimized_qasm = optimized.to_qasm2()
+    whole_circuit_validation = _whole_circuit_validation(source, optimized)
+    if not whole_circuit_validation["verified"]:
+        raise ValueError("optimized circuit failed whole-circuit semantic validation")
 
     native_outputs: Dict[str, str] = {}
     portability: Dict[str, Dict[str, object]] = {}
     for candidate_target in SUPPORTED_TARGETS:
         native_ir = emit(optimized, candidate_target)
-        verify_native_ir(optimized, native_ir, candidate_target)
         native_outputs[candidate_target] = native_ir
-        portability[candidate_target] = {
-            "roundtrip_verified": True,
-            "native_ir_sha256": _sha256(native_ir),
-        }
+        portability_report = assess_portability(optimized, native_ir, candidate_target)
+        if not portability_report["roundtrip_verified"]:
+            raise ValueError(str(portability_report["roundtrip_error"]))
+        if not portability_report["whole_circuit_validation"]["verified"]:
+            raise ValueError(
+                f"{candidate_target} native IR failed whole-circuit semantic validation"
+            )
+        portability[candidate_target] = portability_report
 
     certificate: Dict[str, object] = {
         "schema_version": PROOFTRACE_SCHEMA,
         "selected_target": target,
         "source_sha256": _sha256(qasm_str),
         "optimized_qasm_sha256": _sha256(optimized_qasm),
+        "whole_circuit_validation": whole_circuit_validation,
         "equivalence": {
             "verified": True,
             "method": "verified-local-rewrites-v1",

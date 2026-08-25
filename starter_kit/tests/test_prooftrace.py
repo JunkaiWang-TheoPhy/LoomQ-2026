@@ -7,6 +7,7 @@ import loomq.prooftrace as prooftrace_module
 from loomq.native_ir import parse_native_ir
 from loomq.prooftrace import optimize_circuit
 from loomq.qasm import Gate, Measurement, parse_qasm
+from loomq.semantic_equivalence import verify_semantic_equivalence_certificate
 
 
 REDUNDANT_BELL = '''OPENQASM 2.0;
@@ -33,6 +34,14 @@ sdg q[0];
 cu1(0.2) q[0],q[1];
 cu1(0.3) q[0],q[1];
 measure q -> c;
+'''
+
+PHASE_SENSITIVE_QASM = '''OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[1];
+creg c[1];
+h q[0];
+measure q[0] -> c[0];
 '''
 
 
@@ -120,11 +129,26 @@ measure q -> c;
 
         self.assertEqual(first, second)
         json.dumps(first, sort_keys=True)
+        self.assertIn("whole_circuit_validation", first)
+        self.assertTrue(first["whole_circuit_validation"]["verified"])
+        self.assertTrue(first["whole_circuit_validation"]["one_global_phase"]["consistent"])
+        self.assertEqual(first["whole_circuit_validation"]["basis_columns_checked"], 4)
+        self.assertEqual(
+            verify_semantic_equivalence_certificate(
+                parse_qasm(REDUNDANT_BELL),
+                optimize_circuit(parse_qasm(REDUNDANT_BELL))[0],
+                first["whole_circuit_validation"],
+            )["valid"],
+            True,
+        )
         self.assertEqual(set(first["portability"]), set(adapter.SUPPORTED_TARGETS))
         for target, report in first["portability"].items():
             with self.subTest(target=target):
                 self.assertTrue(report["roundtrip_verified"])
                 self.assertRegex(report["native_ir_sha256"], r"^[0-9a-f]{64}$")
+                self.assertIn("whole_circuit_validation", report)
+                self.assertTrue(report["whole_circuit_validation"]["verified"])
+                self.assertTrue(report["whole_circuit_validation"]["one_global_phase"]["consistent"])
         self.assertRegex(first["source_sha256"], r"^[0-9a-f]{64}$")
         self.assertRegex(first["optimized_qasm_sha256"], r"^[0-9a-f]{64}$")
         self.assertEqual(first["selected_target"], "spinq")
@@ -164,6 +188,29 @@ measure q -> c;
             native = adapter.transpile(REDUNDANT_BELL, "spinq")
 
         self.assertIn("OPENQASM 2.0", native)
+
+    def test_phase_mutation_is_rejected_even_when_z_basis_probabilities_match(self):
+        source = parse_qasm(PHASE_SENSITIVE_QASM)
+        optimized, _rewrites, _lineage = optimize_circuit(source)
+        phase_mutated_native = '''OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[1];
+creg c[1];
+h q[0];
+s q[0];
+measure q[0] -> c[0];
+'''
+
+        report = prooftrace_module.assess_portability(optimized, phase_mutated_native, "spinq")
+
+        self.assertFalse(report["roundtrip_verified"])
+        self.assertFalse(report["whole_circuit_validation"]["verified"])
+        self.assertFalse(report["whole_circuit_validation"]["one_global_phase"]["consistent"])
+        self.assertEqual(
+            report["whole_circuit_validation"]["reason"],
+            "no single global phase aligns every matrix entry",
+        )
+        self.assertIsNotNone(report["whole_circuit_validation"]["operational_counterexample"])
 
 
 if __name__ == "__main__":
