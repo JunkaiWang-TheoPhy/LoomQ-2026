@@ -2,6 +2,7 @@
 
 const missionEngine = globalThis.AtlasGameEngine;
 const adventure = globalThis.AtlasAdventure;
+const questEngine = globalThis.EightyYearQuest;
 const $ = (selector) => document.querySelector(selector);
 const canvas = $("#adventure-canvas");
 const context = canvas.getContext("2d");
@@ -49,6 +50,7 @@ let experimentPulse = 0;
 let lastExperiment = null;
 let storyWorld = null;
 let storyWorldRequest = null;
+let eightyQuest = questEngine.createState();
 const keys = new Set();
 const touchVector = { x: 0, y: 0 };
 
@@ -92,7 +94,10 @@ function updateHud() {
 }
 
 function completedStoryNodes() {
-  return mission.audit ? ["observer-zero"] : [];
+  const completed = [];
+  if (mission.audit || eightyQuest.status === "complete") completed.push("observer-zero");
+  if (eightyQuest.status === "complete") completed.push("eightieth-year");
+  return completed;
 }
 
 function renderStoryBoard() {
@@ -121,7 +126,9 @@ function renderStoryBoard() {
     stateLabel.textContent = state === "complete" ? "已归档" : state === "current" ? "可调查" : "待解锁";
     copy.append(title, theme);
     button.append(copy, stateLabel);
-    button.addEventListener("click", () => openCaseBriefing(caseFile));
+    button.addEventListener("click", () => (
+      caseFile.id === "eightieth-year" ? openEightyYearQuest() : openCaseBriefing(caseFile)
+    ));
     item.append(button);
     list.append(item);
   });
@@ -240,6 +247,101 @@ function openCaseBriefing(caseFile) {
       },
     ],
   });
+}
+
+function saveEightyYearQuest() {
+  try {
+    window.localStorage.setItem("loomq:eighty-year-quest", JSON.stringify(eightyQuest));
+  } catch (_error) {
+    announce("浏览器没有允许本地存档；本次回访仍可继续，但刷新后会重新开始案件。");
+  }
+}
+
+function loadEightyYearQuest() {
+  try {
+    const raw = window.localStorage.getItem("loomq:eighty-year-quest");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed?.quest_id === questEngine.CASE_ID && Array.isArray(parsed.clues) && parsed.chapter) {
+      eightyQuest = parsed;
+    }
+  } catch (_error) {
+    eightyQuest = questEngine.createState();
+  }
+}
+
+const eightyYearLabels = {
+  "meet-shen-yao": "坐下，先听沈遥和青年副本各说一遍",
+  "collect-paper-diary": "查看沈遥的纸质日记",
+  "collect-copy-summary": "查看青年副本的自动摘要",
+  "collect-daughter-letter": "查看女儿留下的信",
+  "run-memory-probe": "只改变一个条件，运行记忆分歧实验",
+  "hear-copy-request": "听青年副本提出请求",
+  "hold-family-hearing": "召开一次家属听证",
+  "choose-autonomy-first": "让沈遥优先决定自己的记忆",
+  "choose-dual-signature": "建立本人和副本的双签协议",
+  "choose-defer": "暂不裁决，保留观察期",
+  "return-to-care-home": "第二天回到照护院回访",
+};
+
+function openEightyYearQuest() {
+  const scene = questEngine.scene(eightyQuest);
+  const complete = eightyQuest.status === "complete";
+  showDialogue({
+    speaker: "沈遥的案件",
+    kicker: `第一案 · ${scene.title}${complete ? " · 已归档" : ""}`,
+    text: complete
+      ? `你选择了“${eightyQuest.ending}”。${eightyQuest.consequences.join("；")}。下一个案件已经进入地图。`
+      : scene.text,
+    choices: complete
+      ? []
+      : scene.actions.map((action) => ({ label: eightyYearLabels[action] || action, action: () => advanceEightyYearQuest(action) })),
+  });
+}
+
+async function advanceEightyYearQuest(action) {
+  if (action === "run-memory-probe") {
+    const caseFile = storyWorld?.cases?.find((item) => item.id === "eightieth-year");
+    if (!caseFile) return;
+    busy = true;
+    dialogueLocked = true;
+    showDialogue({ speaker: "记忆分歧实验", kicker: "只改一个条件", text: "正在比较两条可重放线路；结果只说明电路差异，不判定人格。", object: true, locked: true });
+    try {
+      const contract = caseFile.evidence_contract;
+      const response = await fetch("/api/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference_qasm: contract.reference_qasm, candidate_qasm: contract.variant_qasm }),
+      });
+      const report = await response.json();
+      if (!response.ok) throw new Error(report.error?.message || "实验失败");
+      eightyQuest = questEngine.transition(eightyQuest, action, { first_divergent_gate: report.first_divergent_gate });
+      saveEightyYearQuest();
+      await refreshStoryWorld(true);
+      showDialogue({
+        speaker: "记忆分歧实验",
+        kicker: "证据已写入案件",
+        text: `首个分歧在 g${Number(report.first_divergent_gate) + 1}；总变差距离 ${Number(report.final_distribution_distance || 0).toFixed(6)}。${contract.observable}。`,
+        object: true,
+        afterClose: openEightyYearQuest,
+      });
+    } catch (error) {
+      showDialogue({ speaker: "记忆分歧实验", kicker: "实验中断", text: `没有生成可复核结果：${error.message}`, object: true });
+    } finally {
+      busy = false;
+      dialogueLocked = false;
+    }
+    return;
+  }
+  try {
+    eightyQuest = questEngine.transition(eightyQuest, action);
+    saveEightyYearQuest();
+    await refreshStoryWorld(true);
+    updateHud();
+    openEightyYearQuest();
+  } catch (error) {
+    showDialogue({ speaker: "案件状态", kicker: "不能跳过这一段", text: error.message, object: true });
+  }
 }
 
 async function runCaseExperiment(caseFile) {
@@ -857,6 +959,7 @@ stick.addEventListener("pointerup", releaseStick);
 stick.addEventListener("pointercancel", releaseStick);
 
 resizeCanvas();
+loadEightyYearQuest();
 updateHud();
 refreshStoryWorld();
 requestAnimationFrame(frame);

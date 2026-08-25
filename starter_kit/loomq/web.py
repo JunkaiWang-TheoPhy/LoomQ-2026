@@ -43,6 +43,7 @@ _STATIC = {
     "/game.js": ("game.js", "text/javascript; charset=utf-8"),
     "/atlas-game-engine.js": ("atlas_game_engine.js", "text/javascript; charset=utf-8"),
     "/atlas-adventure-engine.js": ("atlas_adventure_engine.js", "text/javascript; charset=utf-8"),
+    "/eighty-year-quest.js": ("eighty_year_quest.js", "text/javascript; charset=utf-8"),
     "/pixel.html": ("pixel.html", "text/html; charset=utf-8"),
     "/pixel.css": ("pixel.css", "text/css; charset=utf-8"),
     "/pixel.js": ("pixel.js", "text/javascript; charset=utf-8"),

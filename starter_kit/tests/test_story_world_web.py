@@ -29,6 +29,13 @@ class StoryWorldWebTests(unittest.TestCase):
         self.assertEqual(len(payload["cases"]), 5)
         self.assertIn("body_sha256", payload["integrity"])
 
+    def test_eightieth_year_quest_script_is_served(self):
+        with urllib.request.urlopen(self.base + "/eighty-year-quest.js", timeout=3) as response:
+            body = response.read().decode()
+        self.assertEqual(response.status, 200)
+        self.assertIn("EightyYearQuest", body)
+        self.assertIn("run-memory-probe", body)
+
     def test_story_world_endpoint_recomputes_progress_from_query(self):
         url = self.base + "/api/story-world?completed=observer-zero,eightieth-year"
         with urllib.request.urlopen(url, timeout=3) as response:
